@@ -1,27 +1,31 @@
-import 'package:meta/meta.dart';
+import 'package:equatable/equatable.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_model.dart';
+
 enum LoginStatus { initial, loading, success, failure }
 
-class LoginState {
+class LoginState extends Equatable {
   final LoginStatus status;
-  final LoginModel? loginModel;
+  final LoginModel? data;
   final String? error;
 
-  LoginState({
+  const LoginState({
     this.status = LoginStatus.initial,
-    this.loginModel,
+    this.data,
     this.error,
   });
 
   LoginState copyWith({
     LoginStatus? status,
-    LoginModel? loginModel,
+    LoginModel? data,
     String? error,
   }) {
     return LoginState(
       status: status ?? this.status,
-      loginModel: loginModel ?? this.loginModel,
+      data: data ?? this.data,
       error: error ?? this.error,
     );
   }
+
+  @override
+  List<Object?> get props => [status, data, error];
 }

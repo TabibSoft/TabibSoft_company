@@ -15,14 +15,14 @@ class ServicesLocator {
     // intro app
     locator.registerLazySingleton<IntroAppCubit>(() => IntroAppCubit());
 
-     // LoginRepository
-    locator.registerLazySingleton<LoginRepository>(
-      () => LoginRepository(apiService: locator<ApiService>()),
+    // LoginRepository
+    locator.registerLazySingleton<LoginReposetory>(
+      () => LoginReposetory(locator<Dio>()),
     );
-    
+
     // LoginCubit
     locator.registerFactory<LoginCubit>(
-      () => LoginCubit(repository: locator<LoginRepository>()),
+      () => LoginCubit(locator<LoginReposetory>()),
     );
   }
 

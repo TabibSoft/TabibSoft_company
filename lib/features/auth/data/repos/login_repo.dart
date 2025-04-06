@@ -1,32 +1,38 @@
 import 'package:dio/dio.dart';
-import 'package:tabib_soft_company/core/networking/api_error_handler.dart';
-import 'package:tabib_soft_company/core/networking/api_result.dart';
 import 'package:tabib_soft_company/core/networking/api_service.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_model.dart';
+import 'package:tabib_soft_company/features/auth/data/models/login_req.dart';
 
-class LoginRepository {
-  final ApiService apiService;
+class LoginReposetory {
+  final ApiService _apiService;
 
-  LoginRepository({required this.apiService});
+  LoginReposetory(Dio dio) : _apiService = ApiService(dio);
 
- Future<ApiResult<LoginModel>> login({
-  required String username,
-  required String password,
-  required String token,
-}) async {
-  try {
-    final loginModel = await apiService.login(
-      {
-        'username': username,
-        'password': password,
-      },
-      token,
-    );
-    return ApiResult.success(loginModel);
-  } on DioException catch (e) {
-    return ApiResult.failure(ServerFailure.fromDioError(e));
-  } catch (error) {
-    return ApiResult.failure(ServerFailure(error.toString()));
+
+  /// يُرجع [LoginModel] أو يرمي [DioException] إذا كانت الاستجابة غير 200
+  Future<LoginModel> login({
+    required String email,
+    required String password,
+    required String dKey,
+  }) async {
+    try {
+      final request = LoginRequest(
+        email: email,
+        password: password,
+        dKey: dKey,
+      );
+      final response = await _apiService.login(request);
+      return response;
+    } on DioException catch (e) {
+      // إذا كان هناك جسم استجابة JSON يحوي errors
+      if (e.response?.data is Map<String, dynamic>) {
+        final data = e.response!.data as Map<String, dynamic>;
+        final errors = data['errors'];
+        if (errors is List && errors.isNotEmpty) {
+          throw Exception(errors.join('\n'));
+        }
+      }
+      rethrow;
+    }
   }
-}
 }

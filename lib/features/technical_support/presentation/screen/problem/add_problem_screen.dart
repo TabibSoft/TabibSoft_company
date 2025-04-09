@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
 
-class TechnicalSupportScreen extends StatelessWidget {
-  const TechnicalSupportScreen({super.key});
+class AddProblemScreen extends StatelessWidget {
+  const AddProblemScreen({super.key});
 
   static const Color primaryColor = Color(0xFF56C7F1);
   static const Color secondaryColor = Color(0xFF75D6A9);
@@ -18,7 +18,6 @@ class TechnicalSupportScreen extends StatelessWidget {
       child: Scaffold(
         body: Stack(
           children: [
-            // AppBar في الخلفية
             const Positioned(
               top: 0,
               left: 0,
@@ -28,12 +27,10 @@ class TechnicalSupportScreen extends StatelessWidget {
                 height: 480,
               ),
             ),
-            // المحتوى فوق الـ AppBar
             Positioned.fill(
               top: 0,
               child: Stack(
                 children: [
-                  // المربع الشفاف
                   Positioned(
                     top: size.height * 0.33,
                     left: size.width * 0.05,
@@ -52,41 +49,40 @@ class TechnicalSupportScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: GridView.count(
-                          crossAxisCount: 2, // 2 أعمدة
-                          crossAxisSpacing: 16.0, // المسافة بين الأعمدة
-                          mainAxisSpacing: 16.0, // المسافة بين الصفوف
-                          childAspectRatio: 1.0, // نسبة العرض إلى الارتفاع
-                          children: [
-                            _buildSupportButton(
-                              context,
-                              'assets/images/pngs/sales.png',
-                              'جاري المتابعة',
-                              () {},
-                            ),
-                            _buildSupportButton(
-                              context,
-                              'assets/images/pngs/sales.png',
-                              'زياراتي',
-                              () {},
-                            ),
-                            _buildSupportButton(
-                              context,
-                              'assets/images/pngs/sales.png',
-                              'تم الحل',
-                              () {},
-                            ),
-                            _buildSupportButton(
-                              context,
-                              'assets/images/pngs/sales.png',
-                              'مؤجله',
-                              () {},
-                            ),
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16.0,
+                          mainAxisSpacing: 16.0,
+                          childAspectRatio: 1.0,
+                          children: const [
+                            // _buildSupportButton(
+                            //   context,
+                            //   'assets/images/pngs/sales.png',
+                            //   'جاري المتابعة',
+                            //   () {},
+                            // ),
+                            // _buildSupportButton(
+                            //   context,
+                            //   'assets/images/pngs/sales.png',
+                            //   'زياراتي',
+                            //   () {},
+                            // ),
+                            // _buildSupportButton(
+                            //   context,
+                            //   'assets/images/pngs/sales.png',
+                            //   'تم الحل',
+                            //   () {},
+                            // ),
+                            // _buildSupportButton(
+                            //   context,
+                            //   'assets/images/pngs/sales.png',
+                            //   'مؤجله',
+                            //   () {},
+                            // ),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  // زر إضافة مشكلة
                   Positioned(
                     top: size.height * 0.25,
                     left: size.width * 0.20,

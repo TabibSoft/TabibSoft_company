@@ -9,7 +9,6 @@ class LoginReposetory {
   LoginReposetory(Dio dio) : _apiService = ApiService(dio);
 
 
-  /// يُرجع [LoginModel] أو يرمي [DioException] إذا كانت الاستجابة غير 200
   Future<LoginModel> login({
     required String email,
     required String password,
@@ -24,7 +23,6 @@ class LoginReposetory {
       final response = await _apiService.login(request);
       return response;
     } on DioException catch (e) {
-      // إذا كان هناك جسم استجابة JSON يحوي errors
       if (e.response?.data is Map<String, dynamic>) {
         final data = e.response!.data as Map<String, dynamic>;
         final errors = data['errors'];

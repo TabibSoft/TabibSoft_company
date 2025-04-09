@@ -18,21 +18,15 @@ Map<String, dynamic> _$LoginModelToJson(LoginModel instance) =>
     };
 
 User _$UserFromJson(Map<String, dynamic> json) => User(
-      id: (json['id'] as num).toInt(),
-      name: json['name'] as String,
+      id: json['userId'] as String,
+      name: json['userName'] as String,
       email: json['email'] as String,
-      role: $enumDecode(_$UserRoleEnumMap, json['role']),
+      roles: (json['roles'] as List<dynamic>).map((e) => e as String).toList(),
     );
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
+      'userId': instance.id,
+      'userName': instance.name,
       'email': instance.email,
-      'role': _$UserRoleEnumMap[instance.role]!,
+      'roles': instance.roles,
     };
-
-const _$UserRoleEnumMap = {
-  UserRole.admin: 'admin',
-  UserRole.user: 'user',
-  UserRole.guest: 'guest',
-};

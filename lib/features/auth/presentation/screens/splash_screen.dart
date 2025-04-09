@@ -1,32 +1,44 @@
-import 'package:flutter/material.dart';
-import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 import 'dart:async';
-
+import 'package:flutter/material.dart';
+import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
+import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 import 'package:tabib_soft_company/features/home/presentation/screens/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  /// التحقق من حالة تسجيل الدخول عن طريق قراءة التوكن من SharedPreferences
+  void checkLoginStatus() {
+    String token = CacheHelper.getString(key: 'loginToken');
+    if (token.isNotEmpty) {
+      // إذا كان التوكن موجود ينتقل المستخدم إلى الصفحة الرئيسية
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } else {
+      // إن لم يكن موجود ينتقل المستخدم إلى شاشة تسجيل الدخول
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 5), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    });
+    // تأخير لمدة 5 ثوانٍ ثم التحقق من حالة تسجيل الدخول
+    Timer(const Duration(seconds: 5), checkLoginStatus);
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
     return Scaffold(
       body: Container(
         width: size.width,

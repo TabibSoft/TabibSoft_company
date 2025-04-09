@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
-import 'package:tabib_soft_company/features/home/presentation/screens/technical_support/technical_support_screen.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_screen.dart';
+import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
   static const Color primaryColor = Color(0xFF56C7F1);
   static const Color secondaryColor = Color(0xFF75D6A9);
 
@@ -13,31 +14,32 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     const navBarHeight = 60.0;
+    // جلب اسم المستخدم من SharedPreferences (في حالة تم تخزينه)
+    final userName = CacheHelper.getString(key: 'userName');
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         body: Stack(
           children: [
-            // AppBar without logo (logoAsset is optional)
-            const Positioned(
+            // AppBar مع عرض اسم المستخدم
+            Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: CustomAppBar(
-                title: 'شوف شغلك يا ...',
+                logoAsset: 'assets/images/pngs/tabibLogo.png',
+                title:
+                    'شوف شغلك يا ${userName.isNotEmpty ? userName : 'المستخدم'}',
                 height: 480,
-                // logoAsset: null, // ← omitted
-                // buttons: [...],  // ← add action icons here if needed
               ),
             ),
-
-            // Main content cards
+            // المحتوى الرئيسي مع البطاقات
             Positioned.fill(
               top: 0,
               child: Stack(
                 children: [
-                  // Grey background container
+                  // خلفية رمادية
                   Positioned(
                     top: size.height * 0.35,
                     left: size.width * 0.05,
@@ -55,8 +57,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
-                  // Four home buttons
+                  // أربع أزرار رئيسية
                   Positioned(
                     top: size.height * 0.4,
                     left: size.width * 0.1,
@@ -105,29 +106,28 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-
-        // NavBar now takes a list of items (icons/widgets) you choose
+        // شريط تنقل سفلي
         bottomNavigationBar: CustomNavBar(
           items: [
             GestureDetector(
               onTap: () {},
               child: Image.asset(
-                'assets/images/pngs/sales.png',
-                width: 28,
-                height: 28,
+                'assets/images/pngs/list.png',
+                width: 33,
+                height: 33,
               ),
             ),
-                   GestureDetector(
+            const Spacer(), // Add spacer to push items apart
+            GestureDetector(
               onTap: () {},
               child: Image.asset(
-                'assets/images/pngs/sales.png',
-                width: 28,
-                height: 28,
+                'assets/images/pngs/settings.png',
+                width: 33,
+                height: 33,
               ),
             ),
           ],
-          // you can tweak alignment/padding if desired:
-          alignment: MainAxisAlignment.spaceAround,
+          alignment: MainAxisAlignment.spaceBetween,
           padding: const EdgeInsets.symmetric(horizontal: 32),
         ),
       ),
@@ -171,7 +171,6 @@ class HomeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(30),

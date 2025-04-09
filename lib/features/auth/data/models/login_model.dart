@@ -15,20 +15,27 @@ class LoginModel {
 
 @JsonSerializable()
 class User {
-  final int id;
+  @JsonKey(name: 'userId')
+  final String id;
+
+  @JsonKey(name: 'userName')
   final String name;
+
   final String email;
-  final UserRole role;
+
+  @JsonKey(name: 'roles')
+  final List<String> roles;
 
   User({
     required this.id,
     required this.name,
     required this.email,
-    required this.role,
+    required this.roles,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
   Map<String, dynamic> toJson() => _$UserToJson(this);
 }
 
-enum UserRole { admin, user, guest }
+
+

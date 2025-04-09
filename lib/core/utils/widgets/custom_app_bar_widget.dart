@@ -5,15 +5,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? subtitle;
   final String? logoAsset;
   final double height;
-  final List<Widget>? buttons;
+  final Widget? leading; // ← Added leading widget
+  final List<Widget>? actions; // ← Renamed buttons to actions for clarity
 
   const CustomAppBar({
     Key? key,
     required this.title,
     this.subtitle,
-    this.logoAsset,              // ← new optional logo path
+    this.logoAsset,
     this.height = 280,
-    this.buttons,
+    this.leading, // ← New parameter
+    this.actions, // ← Renamed from buttons
   }) : super(key: key);
 
   static const Color primaryColor = Color(0xFF56C7F1);
@@ -26,7 +28,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // gradient background
+          // Gradient background
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -41,7 +43,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
 
-          // decorative circle
+          // Decorative circle
           Positioned(
             top: -70,
             left: -200,
@@ -61,7 +63,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
 
-          // logo + title
+          // Logo + title
           Positioned(
             top: height * 0.25,
             left: 0,
@@ -99,12 +101,20 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
 
-          // optional action buttons in the top-right
-          if (buttons != null)
+          // Leading widget in the top-left
+          if (leading != null)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8,
+              left: 16,
+              child: leading!,
+            ),
+
+          // Action buttons in the top-right
+          if (actions != null)
             Positioned(
               top: MediaQuery.of(context).padding.top + 8,
               right: 16,
-              child: Row(children: buttons!),
+              child: Row(children: actions!),
             ),
         ],
       ),

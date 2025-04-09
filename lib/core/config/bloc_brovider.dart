@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/add_customer_cubit.dart';
 
 Widget buildAppWithProviders({required Widget child}) {
   return MultiBlocProvider(
@@ -12,6 +13,9 @@ Widget buildAppWithProviders({required Widget child}) {
       ),
         BlocProvider<LoginCubit>(
         create: (_) => ServicesLocator.locator<LoginCubit>(),
+      ),
+      BlocProvider<CustomerCubit>(
+        create: (_) => ServicesLocator.locator<CustomerCubit>(),
       ),
     ],
     child: child,

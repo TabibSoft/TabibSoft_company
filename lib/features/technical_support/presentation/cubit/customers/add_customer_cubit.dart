@@ -101,7 +101,7 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
   }
 
-  Future<void> fetchProblemStatus() async {
+ Future<void> fetchProblemStatus() async {
     emit(state.copyWith(status: CustomerStatus.loading));
     final result = await _customerRepository.getProblemStatus();
     result.when(
@@ -111,15 +111,12 @@ class CustomerCubit extends Cubit<CustomerState> {
           problemStatusList: statusList,
         ));
       },
-      failure: (error) {
-        emit(state.copyWith(
-          status: CustomerStatus.failure,
-          errorMessage: error.errMessages,
-        ));
-      },
+      failure: (error) => emit(state.copyWith(
+        status: CustomerStatus.failure,
+        errorMessage: error.errMessages,
+      )),
     );
   }
-
   Future<void> updateProblemStatus({
     required String customerSupportId,
     required String note,

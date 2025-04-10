@@ -10,7 +10,8 @@ class CustomerState {
   final List<ProblemModel> techSupportIssues;
   final ProblemModel? selectedProblem;
   final String? errorMessage;
-  final List<ProblemStatusModel> problemStatusList; // جديد
+  final List<ProblemStatusModel> problemStatusList; 
+  final String? selectedStatus;
 
   CustomerState({
     required this.status,
@@ -19,6 +20,7 @@ class CustomerState {
     this.selectedProblem,
     this.errorMessage,
     this.problemStatusList = const [], 
+    this.selectedStatus
   });
 
   CustomerState copyWith({
@@ -28,6 +30,7 @@ class CustomerState {
     ProblemModel? selectedProblem,
     String? errorMessage,
     List<ProblemStatusModel>? problemStatusList,
+    String? selectedStatus,
   }) {
     return CustomerState(
       status: status ?? this.status,
@@ -36,6 +39,7 @@ class CustomerState {
       selectedProblem: selectedProblem ?? this.selectedProblem,
       errorMessage: errorMessage ?? this.errorMessage,
       problemStatusList: problemStatusList ?? this.problemStatusList,
+      selectedStatus: selectedStatus ?? this.selectedStatus,
     );
   }
 }

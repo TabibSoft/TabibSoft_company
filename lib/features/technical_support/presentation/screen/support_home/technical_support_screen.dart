@@ -1,3 +1,5 @@
+// lib/features/technical_support/presentation/screens/technical_support_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
@@ -15,52 +17,109 @@ class TechnicalSupportScreen extends StatefulWidget {
   const TechnicalSupportScreen({super.key});
 
   @override
-  State<TechnicalSupportScreen> createState() => _TechnicalSupportScreenState();
+  State<TechnicalSupportScreen> createState() =>
+      _TechnicalSupportScreenState();
 }
 
 class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
-  final TextEditingController _dateController = TextEditingController();
   final TextEditingController _field1Controller = TextEditingController();
   final TextEditingController _field2Controller = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
 
-  String? savedField1;
-  String? savedField2;
-  List<String> savedImageUrls = [];
   String _searchQuery = '';
-
+  String? _selectedStatus;
   static const Color primaryColor = Color(0xFF56C7F1);
-  static const Color secondaryColor = Color(0xFF75D6A9);
 
   final List<String> imageUrls = [
     'assets/images/pngs/tabibLogo.png',
-    'assets/images/pngs/tabibLogo.png',
-    'assets/images/pngs/tabibLogo.png',
-    'assets/images/pngs/tabibLogo.png',
-    'assets/images/pngs/tabibLogo.png',
-    'assets/images/pngs/tabibLogo.png',
   ];
-
   final List<String> _selectedImageUrls = [];
+
+  List<String?> _statuses = [];
+  final GlobalKey _statusKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     final token = CacheHelper.getString(key: 'loginToken');
-    print('Token in TechnicalSupportScreen: $token');
     if (token.isEmpty) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     } else {
-      context.read<CustomerCubit>().fetchTechSupportIssues(); // تغيير إلى fetchTechSupportIssues
+      context.read<CustomerCubit>().fetchProblemStatus();
+      context.read<CustomerCubit>().fetchTechSupportIssues();
     }
+
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
       });
     });
+
+    context.read<CustomerCubit>().stream.listen((state) {
+      if (state.problemStatusList.isNotEmpty) {
+        setState(() {
+          _statuses = [null, ...state.problemStatusList.map((status) => status.name)];
+        });
+      }
+    });
   }
+
+  void _onStatusSelected(String? status) {
+    setState(() => _selectedStatus = status);
+    context.read<CustomerCubit>().emit(
+          context.read<CustomerCubit>().state.copyWith(selectedStatus: status),
+        );
+  }
+
+ void _showStatusMenu() async {
+  final renderBox = _statusKey.currentContext!.findRenderObject() as RenderBox;
+  final offset = renderBox.localToGlobal(Offset.zero);
+  final selected = await showMenu<String?>(
+    context: context,
+    position: RelativeRect.fromLTRB(
+      offset.dx,
+      offset.dy + renderBox.size.height,
+      offset.dx + renderBox.size.width,
+      offset.dy,
+    ),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(15),
+    ),
+    color: Colors.white,
+    elevation: 8,
+    items: _statuses.map((status) {
+      final label = status ?? 'جميع الحالات';
+      final isSelected = status == _selectedStatus;
+
+      return PopupMenuItem<String?>(
+        value: status,
+        child: Row(
+          children: [
+            if (isSelected)
+              Icon(Icons.check_circle, color: Colors.green, size: 20)
+            else
+              const SizedBox(width: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? Colors.green : Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList(),
+  );
+
+  if (selected != null || (_statuses.isNotEmpty && selected == null)) {
+    _onStatusSelected(selected);
+  }
+}
 
   void _showImagePickerBottomSheet() {
     showModalBottomSheet(
@@ -69,7 +128,7 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => ImagePickerBottomSheet(
+      builder: (_) => ImagePickerBottomSheet(
         imageUrls: imageUrls,
         selectedImageUrls: _selectedImageUrls,
       ),
@@ -83,16 +142,16 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => const AddCustomerBottomSheet(),
+      builder: (_) => const AddCustomerBottomSheet(),
     );
   }
 
   void _showAddProblemDialog() {
-    _selectedImageUrls.clear(); // Reset selection for new dialog
+    _selectedImageUrls.clear();
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AddProblemDialog(
+      builder: (_) => AddProblemDialog(
         field1Controller: _field1Controller,
         field2Controller: _field2Controller,
         selectedImageUrls: _selectedImageUrls,
@@ -100,11 +159,6 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
           if (_field1Controller.text.isNotEmpty ||
               _field2Controller.text.isNotEmpty ||
               _selectedImageUrls.isNotEmpty) {
-            setState(() {
-              savedField1 = _field1Controller.text;
-              savedField2 = _field2Controller.text;
-              savedImageUrls = List.from(_selectedImageUrls);
-            });
             _field1Controller.clear();
             _field2Controller.clear();
             _selectedImageUrls.clear();
@@ -120,7 +174,6 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    const navBarHeight = 60.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -135,38 +188,25 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                 title: 'الدعم الفني',
                 height: 480,
                 leading: IconButton(
-                  icon: Image.asset(
-                    'assets/images/pngs/back.png',
-                    width: 30,
-                    height: 30,
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
+                  icon: Image.asset('assets/images/pngs/back.png',
+                      width: 30, height: 30),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
                 actions: [
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8),
                     child: Row(
                       children: [
                         GestureDetector(
                           onTap: _showAddCustomerBottomSheet,
-                          child: Image.asset(
-                            'assets/images/pngs/plus.png',
-                            width: 30,
-                            height: 30,
-                          ),
+                          child: Image.asset('assets/images/pngs/plus.png',
+                              width: 30, height: 30),
                         ),
                         const SizedBox(width: 8),
                         GestureDetector(
-                          onTap: () {
-                            // Add your action here
-                          },
-                          child: Image.asset(
-                            'assets/images/pngs/filter.png', // Replace with your icon
-                            width: 30,
-                            height: 30,
-                          ),
+                          onTap: () {},
+                          child: Image.asset('assets/images/pngs/filter.png',
+                              width: 30, height: 30),
                         ),
                       ],
                     ),
@@ -185,26 +225,27 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                     bottom: 0,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 95, 93, 93).withOpacity(0.3),
+                        color: const Color.fromARGB(255, 95, 93, 93)
+                            .withOpacity(0.3),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: primaryColor,
-                          width: 3.0,
-                        ),
+                        border: Border.all(color: primaryColor, width: 3),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
                             SearchBarWidget(
                               controller: _searchController,
-                              onChanged: (value) {
-                                setState(() {
-                                  _searchQuery = value;
-                                });
-                              },
+                              onChanged: (v) =>
+                                  setState(() => _searchQuery = v),
                             ),
-                            CustomerListWidget(searchQuery: _searchQuery),
+                            const SizedBox(height: 12),
+                            Expanded(
+                              child: CustomerListWidget(
+                                searchQuery: _searchQuery,
+                                selectedStatus: _selectedStatus,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -215,38 +256,31 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                     left: size.width * 0.20,
                     right: size.width * 0.20,
                     child: InkWell(
-                      onTap: _showAddProblemDialog, // استدعاء الديالوغ بدلاً من الانتقال
+                      key: _statusKey,
+                      onTap: _showStatusMenu,
                       borderRadius: BorderRadius.circular(30),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
+                            horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
-                            color: primaryColor,
-                            width: 2.0,
-                          ),
+                          border: Border.all(color: primaryColor, width: 2),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'حالة مشكلة',
-                              style: TextStyle(
+                            Text(
+                              _selectedStatus ?? 'حالة مشكلة',
+                              style: const TextStyle(
                                 color: primaryColor,
                                 fontSize: 19,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(width: 25),
-                            Image.asset(
-                              'assets/images/pngs/filter.png',
-                              width: size.width * 0.08,
-                              height: size.width * 0.08,
-                            ),
+                            Image.asset('assets/images/pngs/filter.png',
+                                width: size.width * 0.08,
+                                height: size.width * 0.08),
                           ],
                         ),
                       ),
@@ -261,20 +295,14 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
           items: [
             GestureDetector(
               onTap: () {},
-              child: Image.asset(
-                'assets/images/pngs/push_notification.png',
-                width: 35,
-                height: 35,
-              ),
+              child: Image.asset('assets/images/pngs/push_notification.png',
+                  width: 35, height: 35),
             ),
-            const SizedBox(), // Empty space in the middle
+            const SizedBox(),
             GestureDetector(
               onTap: () {},
-              child: Image.asset(
-                'assets/images/pngs/calendar.png',
-                width: 35,
-                height: 35,
-              ),
+              child: Image.asset('assets/images/pngs/calendar.png',
+                  width: 35, height: 35),
             ),
           ],
           alignment: MainAxisAlignment.spaceBetween,
@@ -287,7 +315,6 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
   @override
   void dispose() {
     _searchController.dispose();
-    _dateController.dispose();
     _field1Controller.dispose();
     _field2Controller.dispose();
     super.dispose();

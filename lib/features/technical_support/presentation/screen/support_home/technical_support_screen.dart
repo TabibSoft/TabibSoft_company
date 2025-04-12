@@ -17,8 +17,7 @@ class TechnicalSupportScreen extends StatefulWidget {
   const TechnicalSupportScreen({super.key});
 
   @override
-  State<TechnicalSupportScreen> createState() =>
-      _TechnicalSupportScreenState();
+  State<TechnicalSupportScreen> createState() => _TechnicalSupportScreenState();
 }
 
 class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
@@ -59,9 +58,14 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
 
     context.read<CustomerCubit>().stream.listen((state) {
       if (state.problemStatusList.isNotEmpty) {
-        setState(() {
-          _statuses = [null, ...state.problemStatusList.map((status) => status.name)];
-        });
+        if (mounted) {
+          setState(() {
+            _statuses = [
+              null,
+              ...state.problemStatusList.map((status) => status.name)
+            ];
+          });
+        }
       }
     });
   }
@@ -73,53 +77,54 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
         );
   }
 
- void _showStatusMenu() async {
-  final renderBox = _statusKey.currentContext!.findRenderObject() as RenderBox;
-  final offset = renderBox.localToGlobal(Offset.zero);
-  final selected = await showMenu<String?>(
-    context: context,
-    position: RelativeRect.fromLTRB(
-      offset.dx,
-      offset.dy + renderBox.size.height,
-      offset.dx + renderBox.size.width,
-      offset.dy,
-    ),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(15),
-    ),
-    color: Colors.white,
-    elevation: 8,
-    items: _statuses.map((status) {
-      final label = status ?? 'جميع الحالات';
-      final isSelected = status == _selectedStatus;
+  void _showStatusMenu() async {
+    final renderBox =
+        _statusKey.currentContext!.findRenderObject() as RenderBox;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final selected = await showMenu<String?>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        offset.dy + renderBox.size.height,
+        offset.dx + renderBox.size.width,
+        offset.dy,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      color: Colors.white,
+      elevation: 8,
+      items: _statuses.map((status) {
+        final label = status ?? 'جميع الحالات';
+        final isSelected = status == _selectedStatus;
 
-      return PopupMenuItem<String?>(
-        value: status,
-        child: Row(
-          children: [
-            if (isSelected)
-              Icon(Icons.check_circle, color: Colors.green, size: 20)
-            else
-              const SizedBox(width: 20),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? Colors.green : Colors.black87,
+        return PopupMenuItem<String?>(
+          value: status,
+          child: Row(
+            children: [
+              if (isSelected)
+                const Icon(Icons.check_circle, color: Colors.green, size: 20)
+              else
+                const SizedBox(width: 20),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? Colors.green : Colors.black87,
+                ),
               ),
-            ),
-          ],
-        ),
-      );
-    }).toList(),
-  );
+            ],
+          ),
+        );
+      }).toList(),
+    );
 
-  if (selected != null || (_statuses.isNotEmpty && selected == null)) {
-    _onStatusSelected(selected);
+    if (selected != null || (_statuses.isNotEmpty && selected == null)) {
+      _onStatusSelected(selected);
+    }
   }
-}
 
   void _showImagePickerBottomSheet() {
     showModalBottomSheet(

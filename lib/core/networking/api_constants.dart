@@ -7,5 +7,13 @@ class ApiConstants {
   static const String getTechnicalSupportData = 'Problem/GetTechnicalSupportData/{Id}';
   static const String getAllTechSupport = 'Problem/GetAllTechSupport'; 
   static const String getProblemStatus = 'Problem/GetProblemStatus';
+
   static const String changeProblemStatus = 'Problem/ChangeProblemStatus';
+  static const String getUnderTransaction = 'Problem/GetUnderTransaction';
+
+  static const String getAllEngineers = 'Problem/GetAllEng'; 
+
+  static const String autoCompleteCustomer = 'Customer/AutoCompleteCustomer';
+  
+  static const String createProblem = 'Problem/CreateProblem'; 
 }

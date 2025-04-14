@@ -47,5 +47,19 @@ class DioFactory {
         responseHeader: true,
       ),
     );
+
+    dio!.interceptors.add(
+  InterceptorsWrapper(
+    onResponse: (response, handler) {
+      print('Response received: ${response.statusCode} - ${response.data}');
+      return handler.next(response);
+    },
+    onError: (DioException e, handler) {
+      print('DioError: ${e.message}, Response: ${e.response?.data}');
+      return handler.next(e);
+    },
+  ),
+);
   }
 }
+ 

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_model.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_req.dart';
+import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_response.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
@@ -35,13 +36,15 @@ abstract class ApiService {
     @Query("problem") int? problem,
     @Query("isSearch") bool? isSearch,
     @Query("pageNumber") int pageNumber = 1,
-    @Query("pageSize") int pageSize = 10,
+    @Query("pageSize") int pageSize = 20,
   });
-
 
   @GET(ApiConstants.getProblemStatus)
   Future<List<ProblemStatusModel>> getProblemStatus();
-
+//   @GET(ApiConstants.getUnderTransaction)
+// Future<List<UnderTransactionModel>> getUnderTransaction({
+//   @Query("CustomerSupportId") required String customerSupportId,
+// });
 
   @POST(ApiConstants.changeProblemStatus)
   Future<void> changeProblemStatus({
@@ -53,4 +56,14 @@ abstract class ApiService {
     @Query("Solvid") bool? solvid,
     @Query("CustomerId") required String customerId,
   });
+
+  @GET(ApiConstants.getAllEngineers)
+  Future<List<EngineerModel>> getAllEngineers();
+
+  @GET(ApiConstants.autoCompleteCustomer)
+  Future<List<CustomerModel>> autoCompleteCustomer(
+      @Query("query") String query);
+
+  @POST(ApiConstants.createProblem)
+  Future<void> createProblem(@Body() FormData formData);
 }

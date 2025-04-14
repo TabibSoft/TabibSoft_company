@@ -1,12 +1,11 @@
-// lib/features/technical_support/presentation/widget/problem_status_dialog.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/add_customer_cubit.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/add_customer_state.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 
 class ProblemStatusDialog extends StatefulWidget {
   final ProblemModel issue;
@@ -123,15 +122,15 @@ class _ProblemStatusDialogState extends State<ProblemStatusDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('تم تحديث الحالة بنجاح')),
       );
-      Navigator.pop(context); // إغلاق الديالوج بعد النجاح
+      Navigator.pop(context);
     } else if (state.status == CustomerStatus.failure) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(state.errorMessage ?? 'فشل في تحديث الحالة')),
       );
-      Navigator.pop(context); // إغلاق الديالوج حتى في حالة الفشل
+      Navigator.pop(context);
     } else {
       print('Unexpected state after update: ${state.status}');
-      Navigator.pop(context); // إغلاق الديالوج في حالة غير متوقعة
+      Navigator.pop(context);
     }
   }
 

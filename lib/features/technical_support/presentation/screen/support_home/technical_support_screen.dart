@@ -1,16 +1,12 @@
-// lib/features/technical_support/presentation/screens/technical_support_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
 import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/add_customer_cubit.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/widget/add_customer_bottom_sheet.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/widget/add_problem_dialog.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/add_problem_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/widget/customer_list_widget.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/widget/image_picker_sheet.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/widget/search_bar_widget.dart';
 
 class TechnicalSupportScreen extends StatefulWidget {
@@ -21,18 +17,11 @@ class TechnicalSupportScreen extends StatefulWidget {
 }
 
 class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
-  final TextEditingController _field1Controller = TextEditingController();
-  final TextEditingController _field2Controller = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
 
   String _searchQuery = '';
   String? _selectedStatus;
   static const Color primaryColor = Color(0xFF56C7F1);
-
-  final List<String> imageUrls = [
-    'assets/images/pngs/tabibLogo.png',
-  ];
-  final List<String> _selectedImageUrls = [];
 
   List<String?> _statuses = [];
   final GlobalKey _statusKey = GlobalKey();
@@ -126,53 +115,10 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
     }
   }
 
-  void _showImagePickerBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => ImagePickerBottomSheet(
-        imageUrls: imageUrls,
-        selectedImageUrls: _selectedImageUrls,
-      ),
-    );
-  }
-
-  void _showAddCustomerBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => const AddCustomerBottomSheet(),
-    );
-  }
-
-  void _showAddProblemDialog() {
-    _selectedImageUrls.clear();
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AddProblemDialog(
-        field1Controller: _field1Controller,
-        field2Controller: _field2Controller,
-        selectedImageUrls: _selectedImageUrls,
-        onSave: () {
-          if (_field1Controller.text.isNotEmpty ||
-              _field2Controller.text.isNotEmpty ||
-              _selectedImageUrls.isNotEmpty) {
-            _field1Controller.clear();
-            _field2Controller.clear();
-            _selectedImageUrls.clear();
-            Navigator.of(context).pop();
-          }
-        },
-        onShowImagePicker: _showImagePickerBottomSheet,
-        primaryColor: primaryColor,
-      ),
+ 
+  void _navigateToAddProblemScreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AddProblemScreen()),
     );
   }
 
@@ -203,16 +149,14 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                     child: Row(
                       children: [
                         GestureDetector(
-                          onTap: _showAddCustomerBottomSheet,
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const AddProblemScreen()),
+                          ),
                           child: Image.asset('assets/images/pngs/plus.png',
                               width: 30, height: 30),
                         ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {},
-                          child: Image.asset('assets/images/pngs/filter.png',
-                              width: 30, height: 30),
-                        ),
+                     
                       ],
                     ),
                   ),
@@ -320,8 +264,6 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
   @override
   void dispose() {
     _searchController.dispose();
-    _field1Controller.dispose();
-    _field2Controller.dispose();
     super.dispose();
   }
 }

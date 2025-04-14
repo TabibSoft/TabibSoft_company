@@ -8,6 +8,7 @@ part of 'add_customer_model.dart';
 
 CustomerModel _$CustomerModelFromJson(Map<String, dynamic> json) =>
     CustomerModel(
+      id: json['id'] as String?,
       name: json['name'] as String?,
       phone: json['phone'] as String?,
       email: json['email'] as String?,
@@ -18,6 +19,7 @@ CustomerModel _$CustomerModelFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$CustomerModelToJson(CustomerModel instance) =>
     <String, dynamic>{
+      'id': instance.id,
       'name': instance.name,
       'phone': instance.phone,
       'email': instance.email,

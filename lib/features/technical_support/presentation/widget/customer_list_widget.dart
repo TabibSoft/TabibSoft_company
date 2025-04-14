@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/add_customer_cubit.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/add_customer_state.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/widget/problem_status_dialog.dart';
 
 class CustomerListWidget extends StatelessWidget {
@@ -31,7 +31,6 @@ class CustomerListWidget extends StatelessWidget {
   String? _getStatusIcon(String? status) {
     if (status == null) return null;
 
-    // طباعة القيمة الفعلية للتحقق منها
     debugPrint('Problem Status: $status');
 
     final normalized = status.replaceAll(' ', '').toLowerCase();

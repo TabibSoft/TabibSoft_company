@@ -4,6 +4,7 @@ part 'add_customer_model.g.dart';
 
 @JsonSerializable()
 class CustomerModel {
+  final String? id;
   final String? name;
   final String? phone;
   final String? email;
@@ -12,6 +13,7 @@ class CustomerModel {
   final String? model;
 
   CustomerModel({
+    this.id,
     this.name,
     this.phone,
     this.email,

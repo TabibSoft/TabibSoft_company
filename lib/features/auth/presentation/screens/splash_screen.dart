@@ -11,18 +11,14 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  /// التحقق من حالة تسجيل الدخول عن طريق قراءة التوكن من SharedPreferences
   void checkLoginStatus() {
     String token = CacheHelper.getString(key: 'loginToken');
     if (token.isNotEmpty) {
-      // إذا كان التوكن موجود ينتقل المستخدم إلى الصفحة الرئيسية
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
-    } else {
-      // إن لم يكن موجود ينتقل المستخدم إلى شاشة تسجيل الدخول
-      Navigator.pushReplacement(
+    } else {      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
@@ -32,7 +28,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // تأخير لمدة 5 ثوانٍ ثم التحقق من حالة تسجيل الدخول
     Timer(const Duration(seconds: 5), checkLoginStatus);
   }
 

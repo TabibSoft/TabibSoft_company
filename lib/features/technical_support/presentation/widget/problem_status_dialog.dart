@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
@@ -73,66 +74,117 @@ class _ProblemStatusDialogState extends State<ProblemStatusDialog> {
     }
   }
 
-  Future<void> _updateProblemStatus() async {
-    if (_selectedStatus == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى اختيار حالة المشكلة')),
-      );
-      return;
-    }
+  // Future<void> _updateProblemStatus() async {
+  //   if (_selectedStatus == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('يرجى اختيار حالة المشكلة')),
+  //     );
+  //     return;
+  //   }
 
-    if (_detailsController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى إدخال تفاصيل الحل')),
-      );
-      return;
-    }
+  //   if (_detailsController.text.trim().isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('يرجى إدخال تفاصيل الحل')),
+  //     );
+  //     return;
+  //   }
 
-    setState(() {
-      _isLoading = true;
-    });
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
 
-    String? engineerId = widget.issue.enginnerName;
-    bool isValidUuid = engineerId != null &&
-        RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
-            .hasMatch(engineerId);
+  //   String? engineerId = widget.issue.enginnerName;
+  //   bool isValidUuid = engineerId != null &&
+  //       RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+  //           .hasMatch(engineerId);
 
-    print(
-        'Before calling updateProblemStatus: engineerId=$engineerId, isValidUuid=$isValidUuid');
+  //   print(
+  //       'Before calling updateProblemStatus: engineerId=$engineerId, isValidUuid=$isValidUuid');
 
-    await context.read<CustomerCubit>().updateProblemStatus(
-          customerSupportId: widget.issue.id,
-          note: _detailsController.text,
-          engineerId: isValidUuid ? engineerId : null,
-          problemStatusId: _selectedStatus!.id,
-          problemTitle: widget.issue.problemAddress,
-          solvid: _selectedStatus!.name == 'تم الحل',
-          customerId: widget.issue.customerId,
-        );
+  //   await context.read<CustomerCubit>().updateProblemStatus(
+  //         customerSupportId: widget.issue.id,
+  //         note: _detailsController.text,
+  //         engineerId: isValidUuid ? engineerId : null,
+  //         problemStatusId: _selectedStatus!.id,
+  //         problemTitle: widget.issue.problemAddress,
+  //         solvid: _selectedStatus!.name == 'تم الحل',
+  //         customerId: widget.issue.customerId,
+  //       );
 
-    setState(() {
-      _isLoading = false;
-    });
+  //   setState(() {
+  //     _isLoading = false;
+  //   });
 
-    final state = context.read<CustomerCubit>().state;
-    print(
-        'After updateProblemStatus: state.status=${state.status}, errorMessage=${state.errorMessage}');
+  //   final state = context.read<CustomerCubit>().state;
+  //   print(
+  //       'After updateProblemStatus: state.status=${state.status}, errorMessage=${state.errorMessage}');
 
-    if (state.status == CustomerStatus.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم تحديث الحالة بنجاح')),
-      );
-      Navigator.pop(context);
-    } else if (state.status == CustomerStatus.failure) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.errorMessage ?? 'فشل في تحديث الحالة')),
-      );
-      Navigator.pop(context);
-    } else {
-      print('Unexpected state after update: ${state.status}');
-      Navigator.pop(context);
-    }
+  //   if (state.status == CustomerStatus.success) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('تم تحديث الحالة بنجاح')),
+  //     );
+  //     Navigator.pop(context);
+  //   } else if (state.status == CustomerStatus.failure) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text(state.errorMessage ?? 'فشل في تحديث الحالة')),
+  //     );
+  //     Navigator.pop(context);
+  //   } else {
+  //     print('Unexpected state after update: ${state.status}');
+  //     Navigator.pop(context);
+  //   }
+  // }
+
+
+Future<void> _updateProblemStatus() async {
+  if (_selectedStatus == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('يرجى اختيار حالة المشكلة')),
+    );
+    return;
   }
+
+  if (_detailsController.text.trim().isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('يرجى إدخال تفاصيل الحل')),
+    );
+    return;
+  }
+
+  setState(() {
+    _isLoading = true;
+  });
+
+  await context.read<CustomerCubit>().createUnderTransaction(
+        customerSupportId: widget.issue.id,
+        customerId: widget.issue.customerId,
+        note: _detailsController.text,
+        problemStatusId: _selectedStatus!.id,
+      );
+
+  setState(() {
+    _isLoading = false;
+  });
+
+  final state = context.read<CustomerCubit>().state;
+  if (state.status == CustomerStatus.success) {
+    Fluttertoast.showToast(
+      msg: 'تم إنشاء المعاملة بنجاح',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.TOP,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+    );
+    Navigator.pop(context);
+  } else if (state.status == CustomerStatus.failure) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(state.errorMessage ?? 'فشل في إنشاء المعاملة')),
+    );
+    Navigator.pop(context);
+  } else {
+    Navigator.pop(context);
+  }
+}
 
   @override
   Widget build(BuildContext context) {

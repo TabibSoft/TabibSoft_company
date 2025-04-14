@@ -7,6 +7,7 @@ import 'package:tabib_soft_company/features/technical_support/data/model/custome
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_response.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/tech_support_response.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/create_under_transaction.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 
 class CustomerRepository {
@@ -76,30 +77,39 @@ class CustomerRepository {
     }
   }
 
-  Future<ApiResult<void>> changeProblemStatus({
-    required String customerSupportId,
-    String? note,
-    String? engineerId,
-    required int problemStatusId,
-    String? problemTitle,
-    bool? solvid,
-    required String customerId,
-  }) async {
-    try {
-      await _apiService.changeProblemStatus(
-        customerSupportId: customerSupportId,
-        note: note,
-        engineerId: engineerId,
-        problemStatusId: problemStatusId,
-        problemTitle: problemTitle,
-        solvid: solvid,
-        customerId: customerId,
-      );
-      return ApiResult.success(null);
-    } on DioException catch (e) {
-      return ApiResult.failure(ServerFailure.fromDioError(e));
-    }
+  // Future<ApiResult<void>> changeProblemStatus({
+  //   required String customerSupportId,
+  //   String? note,
+  //   String? engineerId,
+  //   required int problemStatusId,
+  //   String? problemTitle,
+  //   bool? solvid,
+  //   required String customerId,
+  // }) async {
+  //   try {
+  //     await _apiService.changeProblemStatus(
+  //       customerSupportId: customerSupportId,
+  //       note: note,
+  //       engineerId: engineerId,
+  //       problemStatusId: problemStatusId,
+  //       problemTitle: problemTitle,
+  //       solvid: solvid,
+  //       customerId: customerId,
+  //     );
+  //     return ApiResult.success(null);
+  //   } on DioException catch (e) {
+  //     return ApiResult.failure(ServerFailure.fromDioError(e));
+  //   }
+  // }
+
+Future<ApiResult<void>> createUnderTransaction(CreateUnderTransaction dto) async {
+  try {
+    await _apiService.createUnderTransaction(dto);
+    return ApiResult.success(null);
+  } on DioException catch (e) {
+    return ApiResult.failure(ServerFailure.fromDioError(e));
   }
+}
 
   Future<ApiResult<List<CustomerModel>>> autoCompleteCustomer(String query) async {
     try {
@@ -109,6 +119,7 @@ class CustomerRepository {
       return ApiResult.failure(ServerFailure.fromDioError(e));
     }
   }
+  
 
 Future<ApiResult<void>> createProblem({
   required String customerId,

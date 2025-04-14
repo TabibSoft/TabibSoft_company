@@ -7,6 +7,7 @@ import 'package:tabib_soft_company/features/technical_support/data/model/custome
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_response.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/tech_support_response.dart'; // إضافة الاستيراد
+import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/create_under_transaction.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 import 'api_constants.dart';
 
@@ -56,6 +57,9 @@ abstract class ApiService {
     @Query("Solvid") bool? solvid,
     @Query("CustomerId") required String customerId,
   });
+
+  @POST(ApiConstants.createUnderTransaction)
+Future<void> createUnderTransaction(@Body() CreateUnderTransaction dto);
 
   @GET(ApiConstants.getAllEngineers)
   Future<List<EngineerModel>> getAllEngineers();

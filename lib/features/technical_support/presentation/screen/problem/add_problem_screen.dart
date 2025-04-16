@@ -166,7 +166,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
       suffixIcon: GestureDetector(
         onTap: onIconTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.only(right: 15.0, left: 19),
           child: Image.asset(
             iconAsset,
             width: 24,
@@ -195,7 +195,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
       hintText: 'رقم التواصل',
       hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
       suffixIcon: Padding(
-        padding: const EdgeInsets.only(right: 15.0, left: 10),
+        padding: const EdgeInsets.only(right: 15.0, left: 19),
         child:
             Image.asset('assets/images/pngs/phone.png', width: 24, height: 24),
       ),
@@ -376,16 +376,48 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                             const SizedBox(height: 16),
 
                             // Problem type dropdown...
-                            TextFormField(
-                              controller: _problemTypeController,
-                              textAlign: TextAlign.center,
-                              decoration: _buildDropdownDecoration(
-                                hint: 'نوع المشكلة',
-                                iconAsset: 'assets/images/pngs/drop_down.png',
-                                onIconTap: () {
-                                  setState(() => _isTypeDropdownVisible =
-                                      !_isTypeDropdownVisible);
-                                },
+                            // Problem type dropdown
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _isTypeDropdownVisible =
+                                    !_isTypeDropdownVisible);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                      color: primaryColor.withOpacity(0.5),
+                                      width: 1.5),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 14, horizontal: 20),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _problemTypeController.text.isEmpty
+                                            ? 'نوع المشكلة'
+                                            : _problemTypeController.text,
+                                        style: TextStyle(
+                                          color: _problemTypeController
+                                                  .text.isEmpty
+                                              ? Colors.grey
+                                              : Colors.black,
+                                          fontSize: 16,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    Image.asset(
+                                      'assets/images/pngs/drop_down.png',
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                             if (_isTypeDropdownVisible)
@@ -393,7 +425,8 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                 margin: const EdgeInsets.only(top: 8),
                                 constraints:
                                     const BoxConstraints(maxHeight: 300),
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.only(
+                                    right: 15.0, left: 15),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(15),
@@ -443,17 +476,48 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Engineer dropdown...
-                            TextFormField(
-                              controller: _directionController,
-                              textAlign: TextAlign.center,
-                              decoration: _buildDropdownDecoration(
-                                hint: 'توجيه إلي',
-                                iconAsset: 'assets/images/pngs/drop_down.png',
-                                onIconTap: () {
-                                  setState(() => _isDirectionDropdownVisible =
-                                      !_isDirectionDropdownVisible);
-                                },
+                            // Engineer dropdown
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _isDirectionDropdownVisible =
+                                    !_isDirectionDropdownVisible);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                      color: primaryColor.withOpacity(0.5),
+                                      width: 1.5),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 14, horizontal: 20),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _directionController.text.isEmpty
+                                            ? 'توجيه إلي'
+                                            : _directionController.text,
+                                        style: TextStyle(
+                                          color:
+                                              _directionController.text.isEmpty
+                                                  ? Colors.grey
+                                                  : Colors.black,
+                                          fontSize: 16,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    Image.asset(
+                                      'assets/images/pngs/drop_down.png',
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                             if (_isDirectionDropdownVisible)
@@ -461,7 +525,8 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                 margin: const EdgeInsets.only(top: 8),
                                 constraints:
                                     const BoxConstraints(maxHeight: 300),
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.only(
+                                    right: 15.0, left: 15),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(15),

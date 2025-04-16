@@ -36,17 +36,15 @@ class HomeScreen extends StatelessWidget {
                 height: 480,
               ),
             ),
-            // المحتوى الرئيسي مع البطاقات
             Positioned.fill(
               top: 0,
               child: Stack(
                 children: [
-                  // خلفية رمادية
                   Positioned(
                     top: size.height * 0.35,
                     left: size.width * 0.05,
                     right: size.width * 0.05,
-                    bottom: navBarHeight + 20,
+                    bottom: navBarHeight - 59.5,
                     child: Container(
                       decoration: BoxDecoration(
                         color: const Color.fromARGB(255, 95, 93, 93)
@@ -59,7 +57,6 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // أربع أزرار رئيسية
                   Positioned(
                     top: size.height * 0.4,
                     left: size.width * 0.1,
@@ -165,7 +162,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
 class HomeButton extends StatelessWidget {
   final String iconPath;
   final String label;

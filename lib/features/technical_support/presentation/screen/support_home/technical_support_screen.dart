@@ -6,6 +6,8 @@ import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart
 import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/add_problem_screen.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/screen/technical_support_nav_bar/calendar_screen.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/screen/technical_support_nav_bar/notification_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/widget/customer_list_widget.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/widget/search_bar_widget.dart';
 
@@ -60,10 +62,15 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
   }
 
   void _onStatusSelected(String? status) {
-    setState(() => _selectedStatus = status);
+    setState(() {
+      _selectedStatus = status;
+    });
     context.read<CustomerCubit>().emit(
           context.read<CustomerCubit>().state.copyWith(selectedStatus: status),
         );
+    // إعادة تعيين التصفح وتحميل البيانات من جديد إذا تغيرت الحالة
+    context.read<CustomerCubit>().resetPagination();
+    context.read<CustomerCubit>().fetchTechSupportIssues();
   }
 
   void _showStatusMenu() async {
@@ -115,7 +122,6 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
     }
   }
 
- 
   void _navigateToAddProblemScreen() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const AddProblemScreen()),
@@ -156,7 +162,6 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                           child: Image.asset('assets/images/pngs/plus.png',
                               width: 30, height: 30),
                         ),
-                     
                       ],
                     ),
                   ),
@@ -185,8 +190,12 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                           children: [
                             SearchBarWidget(
                               controller: _searchController,
-                              onChanged: (v) =>
-                                  setState(() => _searchQuery = v),
+                              onChanged: (v) {
+                                setState(() => _searchQuery = v);
+                                // إذا كنت تريد إعادة تحميل البيانات من الخادم بناءً على البحث
+                                // context.read<CustomerCubit>().resetPagination();
+                                // context.read<CustomerCubit>().fetchTechSupportIssues();
+                              },
                             ),
                             const SizedBox(height: 12),
                             Expanded(
@@ -243,13 +252,21 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
         bottomNavigationBar: CustomNavBar(
           items: [
             GestureDetector(
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationScreen()),
+                );
+              },
               child: Image.asset('assets/images/pngs/push_notification.png',
                   width: 35, height: 35),
             ),
             const SizedBox(),
             GestureDetector(
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CalendarScreen()),
+                );
+              },
               child: Image.asset('assets/images/pngs/calendar.png',
                   width: 35, height: 35),
             ),

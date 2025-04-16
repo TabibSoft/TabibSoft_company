@@ -8,7 +8,7 @@ import 'package:tabib_soft_company/features/technical_support/presentation/cubit
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/widget/problem_status_dialog.dart';
 
-class CustomerListWidget extends StatelessWidget {
+class CustomerListWidget extends StatefulWidget {
   final String searchQuery;
   final String? selectedStatus;
 
@@ -18,7 +18,32 @@ class CustomerListWidget extends StatelessWidget {
     this.selectedStatus,
   });
 
+  @override
+  _CustomerListWidgetState createState() => _CustomerListWidgetState();
+}
+
+class _CustomerListWidgetState extends State<CustomerListWidget> {
+  final ScrollController _scrollController = ScrollController();
   static const Color primaryColor = Color(0xFF56C7F1);
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      context.read<CustomerCubit>().fetchTechSupportIssues();
+    }
+  }
 
   void _showProblemDialog(BuildContext context, ProblemModel issue) {
     showDialog(
@@ -57,7 +82,8 @@ class CustomerListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<CustomerCubit, CustomerState>(
       builder: (context, state) {
-        if (state.status == CustomerStatus.loading) {
+        if (state.status == CustomerStatus.loading &&
+            state.techSupportIssues.isEmpty) {
           return Skeletonizer(
             enabled: true,
             child: ListView.builder(
@@ -75,19 +101,20 @@ class CustomerListWidget extends StatelessWidget {
               ),
             ),
           );
-        } else if (state.status == CustomerStatus.success) {
+        } else if (state.status == CustomerStatus.success ||
+            state.techSupportIssues.isNotEmpty) {
           var issues = state.techSupportIssues;
 
-          if (searchQuery.isNotEmpty) {
-            final q = searchQuery.toLowerCase();
+          if (widget.searchQuery.isNotEmpty) {
+            final q = widget.searchQuery.toLowerCase();
             issues = issues.where((i) {
               return (i.customerName?.toLowerCase().contains(q) ?? false) ||
                   (i.problemAddress?.toLowerCase().contains(q) ?? false);
             }).toList();
           }
 
-          if (selectedStatus != null) {
-            final statusFilter = selectedStatus!.trim().toLowerCase();
+          if (widget.selectedStatus != null) {
+            final statusFilter = widget.selectedStatus!.trim().toLowerCase();
             issues = issues
                 .where(
                     (i) => i.problemtype?.trim().toLowerCase() == statusFilter)
@@ -99,14 +126,23 @@ class CustomerListWidget extends StatelessWidget {
           }
 
           return ListView.builder(
-            itemCount: issues.length,
+            controller: _scrollController,
+            itemCount: issues.length +
+                (state.status == CustomerStatus.loading ? 1 : 0),
             itemBuilder: (_, idx) {
+              if (idx == issues.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(
+                      child: CircularProgressIndicator(color: primaryColor)),
+                );
+              }
               final issue = issues[idx];
               return GestureDetector(
                 onTap: () => _showProblemDialog(context, issue),
                 child: FractionallySizedBox(
                   widthFactor: 0.95,
-                  child: _buildIssueCard(issue),
+                  child: _buildIssueCard(issue, state),
                 ),
               );
             },
@@ -120,12 +156,20 @@ class CustomerListWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildIssueCard(ProblemModel issue) {
+  Widget _buildIssueCard(ProblemModel issue, CustomerState state) {
     final iconPath = _getStatusIcon(issue.problemtype);
+
+    // تحديد إذا كانت كارد المشكلة المضافة حديثًا ولم يمر 5 دقائق
+    final isNewlyAdded = state.newlyAddedIssue != null &&
+        issue.customerId == state.newlyAddedIssue!.customerId &&
+        issue.problemDate == state.newlyAddedIssue!.problemDate &&
+        state.newlyAddedIssueTime != null &&
+        DateTime.now().difference(state.newlyAddedIssueTime!).inMinutes < 2;
 
     return Card(
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 8),
+      color: isNewlyAdded ? Colors.red.shade100 : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),

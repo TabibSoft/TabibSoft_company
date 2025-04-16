@@ -4,8 +4,8 @@ import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart
 import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
 import 'package:tabib_soft_company/features/home/presentation/screens/nav_bar/settings.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/screens/programmers_screen.dart';
+import 'package:tabib_soft_company/features/sales/presentation/screens/sales_home_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_screen.dart';
-import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -102,7 +102,13 @@ class HomeScreen extends StatelessWidget {
                           context,
                           'assets/images/pngs/sales.png',
                           'مبيعات',
-                          () {},
+                          () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SalesHomeScreen(),
+                                ));
+                          },
                         ),
                       ],
                     ),
@@ -162,6 +168,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
 class HomeButton extends StatelessWidget {
   final String iconPath;
   final String label;

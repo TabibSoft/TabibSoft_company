@@ -3,6 +3,8 @@ import 'package:retrofit/retrofit.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_model.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_req.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
+import 'package:tabib_soft_company/features/sales/data/model/paginated_sales_model.dart';
+import 'package:tabib_soft_company/features/sales/data/model/sales_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_response.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
@@ -70,4 +72,10 @@ Future<void> createUnderTransaction(@Body() CreateUnderTransaction dto);
 
   @POST(ApiConstants.createProblem)
   Future<void> createProblem(@Body() FormData formData);
-}
+
+@GET(ApiConstants.getAllMeasurements)
+Future<PaginatedSales> getAllMeasurements({
+  @Query("page") int page = 1,
+  @Query("pageSize") int pageSize = 10,
+  @Query("statusId") String? statusId,
+});}

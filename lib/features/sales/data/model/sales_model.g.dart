@@ -15,6 +15,9 @@ SalesModel _$SalesModelFromJson(Map<String, dynamic> json) => SalesModel(
       proudctName: json['proudctName'] as String,
       productId: json['productId'] as String,
       note: json['note'] as String?,
+      adress: json['adress'] as String?,
+      offerName: json['offerName'] as String?,
+      total: (json['total'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$SalesModelToJson(SalesModel instance) =>
@@ -27,4 +30,7 @@ Map<String, dynamic> _$SalesModelToJson(SalesModel instance) =>
       'proudctName': instance.proudctName,
       'productId': instance.productId,
       'note': instance.note,
+      'adress': instance.adress,
+      'offerName': instance.offerName,
+      'total': instance.total,
     };

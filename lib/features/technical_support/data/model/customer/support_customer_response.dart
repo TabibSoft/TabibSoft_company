@@ -1,7 +1,6 @@
-// lib/features/customer/data/models/add_customer_response.dart
 import 'package:json_annotation/json_annotation.dart';
 
-part 'add_customer_response.g.dart';
+part 'support_customer_response.g.dart';
 
 @JsonSerializable()
 class AddCustomerResponse {

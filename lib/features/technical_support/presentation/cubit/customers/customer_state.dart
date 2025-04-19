@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 
@@ -70,3 +70,4 @@ class CustomerState extends Equatable {
         newlyAddedIssueTime,
       ];
 }
+

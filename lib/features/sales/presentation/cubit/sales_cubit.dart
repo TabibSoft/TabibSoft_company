@@ -7,19 +7,21 @@ class SalesCubit extends Cubit<SalesState> {
 
   SalesCubit(this._salesRepository) : super(const SalesState.initial());
 
- Future<void> fetchMeasurements({
-  int page = 1,
-  int pageSize = 10,
-  String? statusId,
-}) async {
-  emit(const SalesState.loading());
-  final result = await _salesRepository.getAllMeasurements(
-    page: page,
-    pageSize: pageSize,
-    statusId: statusId,
-  );
-  result.fold(
-    (failure) => emit(SalesState.error(failure)),
-    (paginatedMeasurements) => emit(SalesState.loaded(paginatedMeasurements.items)),
-  );
-}}
+  Future<void> fetchMeasurements({
+    int page = 1,
+    int pageSize = 10,
+    String? statusId,
+  }) async {
+    emit(const SalesState.loading());
+    final result = await _salesRepository.getAllMeasurements(
+      page: page,
+      pageSize: pageSize,
+      statusId: statusId,
+    );
+    result.fold(
+      (failure) => emit(SalesState.error(failure)),
+      (paginatedMeasurements) =>
+          emit(SalesState.loaded(paginatedMeasurements.items)),
+    );
+  }
+}

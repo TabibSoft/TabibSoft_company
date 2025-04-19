@@ -3,8 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:tabib_soft_company/core/networking/api_error_handler.dart';
 import 'package:tabib_soft_company/core/networking/api_result.dart';
 import 'package:tabib_soft_company/core/networking/api_service.dart';
-import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_model.dart';
-import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_response.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_response.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/create_under_transaction.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
@@ -14,15 +14,15 @@ class CustomerRepository {
 
   CustomerRepository(this._apiService);
 
-  Future<ApiResult<AddCustomerResponse>> addCustomer(
-      CustomerModel customer) async {
-    try {
-      final response = await _apiService.addCustomer(customer);
-      return ApiResult.success(response);
-    } on DioException catch (e) {
-      return ApiResult.failure(ServerFailure.fromDioError(e));
-    }
-  }
+  // Future<ApiResult<AddCustomerResponse>> addCustomer(
+  //     CustomerModel customer) async {
+  //   try {
+  //     final response = await _apiService.addCustomer(customer);
+  //     return ApiResult.success(response);
+  //   } on DioException catch (e) {
+  //     return ApiResult.failure(ServerFailure.fromDioError(e));
+  //   }
+  // }
 
   Future<ApiResult<List<CustomerModel>>> getAllCustomers() async {
     try {

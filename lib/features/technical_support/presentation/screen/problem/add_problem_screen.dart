@@ -6,7 +6,7 @@ import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart
 import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
-import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';

@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:tabib_soft_company/core/networking/api_error_handler.dart';
-import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/create_under_transaction.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
@@ -34,22 +34,22 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
   }
 
-  Future<void> addCustomer(CustomerModel customer) async {
-    emit(state.copyWith(status: CustomerStatus.loading));
-    final result = await _customerRepository.addCustomer(customer);
-    result.when(
-      success: (response) {
-        emit(state.copyWith(
-          status: CustomerStatus.success,
-          customers: [...state.customers, customer],
-        ));
-      },
-      failure: (error) => emit(state.copyWith(
-        status: CustomerStatus.failure,
-        errorMessage: error.errMessages,
-      )),
-    );
-  }
+  // Future<void> addCustomer(CustomerModel customer) async {
+  //   emit(state.copyWith(status: CustomerStatus.loading));
+  //   final result = await _customerRepository.addCustomer(customer);
+  //   result.when(
+  //     success: (response) {
+  //       emit(state.copyWith(
+  //         status: CustomerStatus.success,
+  //         customers: [...state.customers, customer],
+  //       ));
+  //     },
+  //     failure: (error) => emit(state.copyWith(
+  //       status: CustomerStatus.failure,
+  //       errorMessage: error.errMessages,
+  //     )),
+  //   );
+  // }
 
   Future<void> fetchTechnicalSupportData(int customerId) async {
     emit(state.copyWith(status: CustomerStatus.loading));

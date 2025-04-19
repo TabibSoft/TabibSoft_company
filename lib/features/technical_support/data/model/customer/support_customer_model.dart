@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'add_customer_model.g.dart';
+part 'support_customer_model.g.dart';
 
 @JsonSerializable()
 class CustomerModel {

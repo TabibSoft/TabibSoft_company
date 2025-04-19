@@ -39,3 +39,4 @@ class SalesState {
   @override
   String toString() => 'SalesState(status: $status, measurements: $measurements, failure: $failure)';
 }
+

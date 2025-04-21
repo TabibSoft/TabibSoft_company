@@ -1,4 +1,3 @@
-import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -68,15 +67,15 @@ class AppStyle {
 
   static InputBorder borderDone() {
     return OutlineInputBorder(
-      borderSide: const BorderSide(color: AppColor.secondaryColor),
-      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide.none,
+      borderRadius: BorderRadius.circular(22),
     );
   }
 
   static InputBorder borderFocuse() {
     return OutlineInputBorder(
-      borderSide: const BorderSide(color: AppColor.secondaryColor),
-      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide.none,
+      borderRadius: BorderRadius.circular(22),
     );
   }
 
@@ -85,7 +84,7 @@ class AppStyle {
       borderSide: BorderSide(
         color: Theme.of(context).colorScheme.error,
       ),
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(22),
     );
   }
 }

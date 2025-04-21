@@ -7,6 +7,9 @@ import 'app_initi.dart';
 import 'core/navigation/app_router.dart';
 import 'core/utils/route_observer.dart';
 
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.dumpErrorToConsole(details);
@@ -14,7 +17,7 @@ void main() async {
   };
   runZonedGuarded(
     () async {
-      await initializeApp(); // تهيئة التطبيق بما في ذلك CacheHelper
+      await initializeApp(); 
 
       runApp(
         MyApp(

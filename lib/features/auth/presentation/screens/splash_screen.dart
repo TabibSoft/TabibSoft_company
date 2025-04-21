@@ -1,8 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
-import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
-import 'package:tabib_soft_company/features/home/presentation/screens/home_screen.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tabib_soft_company/core/export.dart';
+import 'package:tabib_soft_company/core/helpers/extensions.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,29 +10,19 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  /// التحقق من حالة تسجيل الدخول عن طريق قراءة التوكن من SharedPreferences
   void checkLoginStatus() {
     String token = CacheHelper.getString(key: 'loginToken');
     if (token.isNotEmpty) {
-      // إذا كان التوكن موجود ينتقل المستخدم إلى الصفحة الرئيسية
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+      context.pushReplacementNamed(homeScreen);
     } else {
-      // إن لم يكن موجود ينتقل المستخدم إلى شاشة تسجيل الدخول
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      context.pushReplacementNamed(loginScreen);
     }
   }
 
   @override
   void initState() {
     super.initState();
-    // تأخير لمدة 5 ثوانٍ ثم التحقق من حالة تسجيل الدخول
-    Timer(const Duration(seconds: 5), checkLoginStatus);
+    Future.delayed(const Duration(seconds: 5), checkLoginStatus);
   }
 
   @override
@@ -63,8 +52,8 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: Opacity(
                   opacity: 0.5,
                   child: Container(
-                    width: 500,
-                    height: 380,
+                    width: 500.w,
+                    height: 380.h,
                     decoration: const BoxDecoration(
                       color: Color(0xFF1BBCFC),
                       shape: BoxShape.circle,
@@ -81,8 +70,8 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: SizedBox(
-                      width: 150,
-                      height: 150,
+                      width: 200.w,
+                      height: 200.h,
                       child: Image.asset(
                         'assets/images/pngs/tabibLogo.png',
                         fit: BoxFit.cover,
@@ -91,15 +80,13 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ),
                 const Spacer(),
-                const Text(
+                Text(
                   'All Rights Reserved © TabibSoft 2025',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.blueAccent,
+                  style: AppStyle.font13_400Weight.copyWith(
+                    color: AppColor.borderContainerColor,
                   ),
                 ),
-                const SizedBox(height: 30),
+                SizedBox(height: 30.h),
               ],
             ),
           ],

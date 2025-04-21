@@ -65,10 +65,10 @@ class Validator {
 
   static String? passwordValidator(String? value) {
     if (value!.isEmpty) {
-      return 'Please enter a password';
+      return 'يرجى إدخال كلمة المرور';
     }
     if (value.length < 6) {
-      return 'Password must be at least 6 characters long';
+      return 'يرجى إدخال كلمة مرور صحيحة من 6 أحرف';
     }
     return null;
   }
@@ -104,9 +104,7 @@ class Validator {
         r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
     final RegExp regExp = RegExp(pattern);
     if (value!.isEmpty) {
-      return "Please enter an email";
-    } else if (!regExp.hasMatch(value)) {
-      return 'Please enter a valid email';
+      return "يرجى إدخال البريد الإلكتروني";
     } else {
       return null;
     }

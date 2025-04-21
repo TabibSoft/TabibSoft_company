@@ -1,7 +1,6 @@
-// lib/core/networking/dio_factory.dart
 import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
+import 'package:tabib_soft_company/core/export.dart';
 
 class DioFactory {
   DioFactory._();
@@ -24,28 +23,27 @@ class DioFactory {
   }
 
   static void addDioInterceptor() {
-    dio?.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          // جلب الـ Token من CacheHelper
-          final token = CacheHelper.getString(key: 'loginToken');
-          if (token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          return handler.next(options);
-        },
-        onError: (DioException e, handler) {
-          // يمكنك إضافة معالجة للأخطاء هنا إذا لزم الأمر
-          return handler.next(e);
-        },
-      ),
-    );
-    dio?.interceptors.add(
+    dio?.interceptors.addAll([
       PrettyDioLogger(
         requestBody: true,
         requestHeader: true,
         responseHeader: true,
       ),
-    );
+      CookieInterceptor(),
+    ]);
+  }
+}
+
+class CookieInterceptor extends Interceptor {
+  @override
+  void onRequest(
+      RequestOptions options, RequestInterceptorHandler handler) async {
+    final String token = CacheHelper.getString(key: 'loginToken');
+
+    if (token != '') {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
+
+    super.onRequest(options, handler);
   }
 }

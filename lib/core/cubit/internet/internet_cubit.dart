@@ -6,8 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class InternetCubit extends Cubit<InternetState> {
   InternetCubit() : super(InternetInitial());
 
-  static InternetCubit get(context) => BlocProvider.of(context);
-
   late StreamSubscription<List<ConnectivityResult>> streamSubscription;
 
   void checkConnectivity() async {

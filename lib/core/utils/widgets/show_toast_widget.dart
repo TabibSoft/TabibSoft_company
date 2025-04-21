@@ -32,3 +32,4 @@ Color chooseToastColor(ToastedStates states) {
       return Colors.blue;
   }
 }
+

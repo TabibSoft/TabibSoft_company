@@ -57,7 +57,6 @@ class _InstalizationScreenState extends State<InstalizationScreen> {
       child: Scaffold(
         body: Stack(
           children: [
-            // Custom curved app bar
             const Positioned(
               top: 0,
               left: 0,
@@ -65,13 +64,6 @@ class _InstalizationScreenState extends State<InstalizationScreen> {
               child: CustomAppBar(
                 title: 'الإعدادات',
                 height: 332,
-                // leading: IconButton(
-                //   icon: ImageIcon(
-                //     AssetImage('assets/images/pngs/back.png'),
-                //     size: 30,
-                //   ),
-                //   onPressed: null,
-                // ),
               ),
             ),
             // Replace leading's onPressed

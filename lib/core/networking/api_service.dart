@@ -1,22 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
-import 'package:tabib_soft_company/core/networking/api_result.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_response.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_request.dart';
-import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_model.dart';
-import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_response.dart';
-import 'package:tabib_soft_company/features/auth/data/models/login_model.dart';
-import 'package:tabib_soft_company/features/auth/data/models/login_req.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/details/payment_method_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/details/sales_details_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/paginated_sales_model.dart';
-import 'package:tabib_soft_company/features/sales/data/model/sales_model.dart';
-import 'package:tabib_soft_company/features/sales/data/model/details/add_requirement_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/add_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/product_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
-import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_response.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/tech_support_response.dart'; // إضافة الاستيراد
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/create_under_transaction.dart';

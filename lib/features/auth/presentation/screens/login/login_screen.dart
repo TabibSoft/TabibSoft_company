@@ -11,6 +11,7 @@ import 'package:tabib_soft_company/core/utils/widgets/custom_loading_page_widget
 import 'package:tabib_soft_company/core/utils/widgets/custom_text_form_field.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_cubit.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_state.dart';
+import 'package:tabib_soft_company/features/home/presentation/screens/home_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -76,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
             );
             print('Token saved: ${state.data!.token}');
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const TechnicalSupportScreen()),
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
             );
           } else if (state.status == LoginStatus.failure) {
             Navigator.pop(context);
@@ -226,4 +227,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-  }
+}

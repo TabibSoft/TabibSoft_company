@@ -1,0 +1,1 @@
+/Users/mac/Flutter projects/TabibSoft_company/build/app/intermediates/cxx/Debug/5426104o/obj/arm64-v8a

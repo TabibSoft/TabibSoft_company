@@ -125,10 +125,6 @@ class _DefaultTextFormFieldState extends State<CustomTextFormField> {
                 : '',
             fillColor: widget.bgColor,
             hintText: widget.hint,
-            hintStyle: AppStyle.font15_500Weight.copyWith(
-              color: AppColor.hintColor,
-              fontWeight: FontWeight.w400,
-            ),
             suffixIcon: widget.suffixIcon,
             prefixIcon: widget.prefixIcon != null && widget.prefixIcon == true
                 ? Row(

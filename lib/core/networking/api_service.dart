@@ -1,5 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
+import 'package:tabib_soft_company/core/networking/api_result.dart';
+import 'package:tabib_soft_company/features/auth/data/models/login_response.dart';
+import 'package:tabib_soft_company/features/auth/data/models/login_request.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/add_customer_response.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_model.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_req.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
@@ -26,7 +31,9 @@ abstract class ApiService {
   factory ApiService(Dio dio, {String baseUrl}) = _ApiService;
 
   @POST(ApiConstants.login)
-  Future<LoginModel> login(@Body() LoginRequest request);
+  Future<LoginResponse> login(
+    @Body() LoginRequest request,
+  );
 
   @POST(ApiConstants.addCustomer)
   Future addCustomer(@Body() AddCustomerModel customer);

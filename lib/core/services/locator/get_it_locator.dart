@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:tabib_soft_company/core/export.dart';
 import 'package:get_it/get_it.dart';
+import 'package:tabib_soft_company/core/export.dart';
 import 'package:tabib_soft_company/features/auth/data/repos/login_repo.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/data/repo/engineer_repo.dart';
@@ -29,12 +29,11 @@ class ServicesLocator {
 
     // LoginRepository
     locator.registerLazySingleton<LoginReposetory>(
-      () => LoginReposetory(locator<Dio>()),
+      () => LoginReposetory(locator()),
     );
 
     // LoginCubit
-    locator.registerFactory<LoginCubit>(
-      () => LoginCubit(locator<LoginReposetory>()),
+    locator.registerFactory<LoginCubit>(() => LoginCubit(locator<LoginReposetory>()),
     );
 
     // CustomerRepository

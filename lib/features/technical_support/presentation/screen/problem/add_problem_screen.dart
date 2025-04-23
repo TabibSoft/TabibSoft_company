@@ -4,11 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
+import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
-import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
-import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/add_customer_screen.dart';
@@ -41,7 +41,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
   void initState() {
     super.initState();
     context.read<CustomerCubit>().fetchCustomers();
-    context.read<CustomerCubit>().fetchProblemStatus();
+    context.read<CustomerCubit>().fetchProblemCategories();
     context.read<EngineerCubit>().fetchEngineers();
     _clientNameController.addListener(_onClientNameChanged);
   }
@@ -96,7 +96,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
       return;
     }
 
-    // التحقق من صحة الصور
     bool hasValidImages = true;
     for (var image in _selectedImages) {
       if (!image.existsSync() || image.lengthSync() == 0) {
@@ -114,14 +113,14 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
     final customerState = context.read<CustomerCubit>().state;
     final engineerState = context.read<EngineerCubit>().state;
 
-    final selectedStatus = customerState.problemStatusList.firstWhere(
-      (s) => s.name == _problemTypeController.text,
-      orElse: () => ProblemStatusModel(id: 0, name: ''),
+    final selectedCategory = customerState.problemCategories.firstWhere(
+      (c) => c.name == _problemTypeController.text,
+      orElse: () => ProblemCategoryModel(id: '', name: ''),
     );
 
-    if (selectedStatus.id == 0) {
+    if (selectedCategory.id.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('حالة المشكلة غير صالحة')),
+        const SnackBar(content: Text('فئة المشكلة غير صالحة')),
       );
       return;
     }
@@ -138,10 +137,21 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
       return;
     }
 
+    // Convert selectedCategory.id (String) to int for problemStatusId
+    int? problemStatusId;
+    try {
+      problemStatusId = int.parse(selectedCategory.id);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('معرف فئة المشكلة غير صالح')),
+      );
+      return;
+    }
+
     context.read<CustomerCubit>().createProblem(
           customerId: _selectedCustomer!.id!,
           dateTime: DateTime.now(),
-          problemStatusId: selectedStatus.id,
+          problemStatusId: problemStatusId, // Use parsed problemStatusId
           note: _detailsController.text.isNotEmpty
               ? _detailsController.text
               : null,
@@ -241,7 +251,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                 _isClientDropdownVisible = false;
                 _isTypeDropdownVisible = false;
                 _isDirectionDropdownVisible = false;
-                _selectedImages.clear(); // إعادة تعيين الصور
+                _selectedImages.clear();
               });
               Navigator.of(context).pop();
             } else if (state.status == CustomerStatus.failure) {
@@ -304,7 +314,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Client dropdown...
                             BlocBuilder<CustomerCubit, CustomerState>(
                               builder: (context, state) {
                                 if (state.status == CustomerStatus.success) {
@@ -374,9 +383,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                               },
                             ),
                             const SizedBox(height: 16),
-
-                            // Problem type dropdown...
-                            // Problem type dropdown
                             GestureDetector(
                               onTap: () {
                                 setState(() => _isTypeDropdownVisible =
@@ -441,18 +447,18 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                       return const Center(
                                           child: CircularProgressIndicator());
                                     } else if (state
-                                        .problemStatusList.isNotEmpty) {
+                                        .problemCategories.isNotEmpty) {
                                       return ListView(
                                         shrinkWrap: true,
                                         physics: const ClampingScrollPhysics(),
-                                        children: state.problemStatusList
-                                            .map((status) {
+                                        children: state.problemCategories
+                                            .map((category) {
                                           return ListTile(
-                                            title: Text(status.name),
+                                            title: Text(category.name),
                                             onTap: () {
                                               setState(() {
                                                 _problemTypeController.text =
-                                                    status.name;
+                                                    category.name;
                                                 _isTypeDropdownVisible = false;
                                               });
                                             },
@@ -460,14 +466,12 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                         }).toList(),
                                       );
                                     } else {
-                                      return const Text('لا توجد حالات متاحة');
+                                      return const Text('لا توجد فئات متاحة');
                                     }
                                   },
                                 ),
                               ),
                             const SizedBox(height: 16),
-
-                            // Phone
                             TextFormField(
                               controller: _phoneNumberController,
                               textAlign: TextAlign.center,
@@ -475,8 +479,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                               decoration: _buildPhoneDecoration(),
                             ),
                             const SizedBox(height: 16),
-
-                            // Engineer dropdown
                             GestureDetector(
                               onTap: () {
                                 setState(() => _isDirectionDropdownVisible =
@@ -567,8 +569,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                 ),
                               ),
                             const SizedBox(height: 16),
-
-                            // Details
                             TextFormField(
                               controller: _detailsController,
                               textAlign: TextAlign.center,
@@ -595,8 +595,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                     vertical: 14, horizontal: 20),
                               ),
                             ),
-
-                            // Display selected images
                             if (_selectedImages.isNotEmpty) ...[
                               const SizedBox(height: 16),
                               Wrap(
@@ -631,8 +629,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                 }).toList(),
                               ),
                             ],
-
-                            // Upload picture button
                             const SizedBox(height: 16),
                             GestureDetector(
                               onTap: () {
@@ -657,8 +653,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                 height: 100,
                               ),
                             ),
-
-                            // Save button
                             const SizedBox(height: 24),
                             SizedBox(
                               width: double.infinity,

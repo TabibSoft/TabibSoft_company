@@ -30,6 +30,7 @@ ProblemModel _$ProblemModelFromJson(Map<String, dynamic> json) => ProblemModel(
       status: json['status'] as String?,
       statusColor: json['statusColor'] as String?,
       statusIsArchieve: json['statusIsArchieve'] as bool?,
+      problemDetails: json['problemDetails'] as String?,
     );
 
 Map<String, dynamic> _$ProblemModelToJson(ProblemModel instance) =>
@@ -57,4 +58,5 @@ Map<String, dynamic> _$ProblemModelToJson(ProblemModel instance) =>
       'status': instance.status,
       'statusColor': instance.statusColor,
       'statusIsArchieve': instance.statusIsArchieve,
+      'problemDetails': instance.problemDetails,
     };

@@ -7,7 +7,7 @@ import 'package:tabib_soft_company/features/sales/data/model/details/payment_met
 import 'package:tabib_soft_company/features/sales/data/model/details/sales_details_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/paginated_sales_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/sales_model.dart';
-import 'package:tabib_soft_company/features/sales/presentation/cubit/details/add_requirement_model.dart';
+import 'package:tabib_soft_company/features/sales/data/model/details/add_requirement_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/add_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/product_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
@@ -15,6 +15,7 @@ import 'package:tabib_soft_company/features/technical_support/data/model/custome
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/tech_support_response.dart'; // إضافة الاستيراد
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/create_under_transaction.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 import 'api_constants.dart';
 
@@ -56,6 +57,12 @@ abstract class ApiService {
 // Future<List<UnderTransactionModel>> getUnderTransaction({
 //   @Query("CustomerSupportId") required String customerSupportId,
 // });
+
+@GET(ApiConstants.getAllProblemCategories)
+Future<List<ProblemCategoryModel>> getAllProblemCategories();
+
+// @GET(ApiConstants.getAllSitiuation)
+//   Future<List<ProblemStatusModel>> getAllSitiuation();
 
   @POST(ApiConstants.changeProblemStatus)
   Future<void> changeProblemStatus({

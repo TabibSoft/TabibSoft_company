@@ -7,6 +7,7 @@ import 'package:tabib_soft_company/features/technical_support/data/model/custome
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_response.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/create_under_transaction.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 
 class CustomerRepository {
@@ -122,6 +123,17 @@ class CustomerRepository {
       return ApiResult.failure(ServerFailure.fromDioError(e));
     }
   }
+
+
+  Future<ApiResult<List<ProblemCategoryModel>>> getAllProblemCategories() async {
+    try {
+      final response = await _apiService.getAllProblemCategories();
+      return ApiResult.success(response);
+    } on DioException catch (e) {
+      return ApiResult.failure(ServerFailure.fromDioError(e));
+    }
+  }
+
 
   Future<ApiResult<void>> createProblem({
     required String customerId,

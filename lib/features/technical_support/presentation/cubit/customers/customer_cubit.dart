@@ -134,7 +134,8 @@ class CustomerCubit extends Cubit<CustomerState> {
     required String note,
     required int problemStatusId,
   }) async {
-    print('Starting createUnderTransaction: customerSupportId=$customerSupportId, customerId=$customerId, note=$note');
+    print(
+        'Starting createUnderTransaction: customerSupportId=$customerSupportId, customerId=$customerId, note=$note');
     emit(state.copyWith(status: CustomerStatus.loading));
     final dto = CreateUnderTransaction(
       customerSupportId: customerSupportId,
@@ -171,6 +172,23 @@ class CustomerCubit extends Cubit<CustomerState> {
         emit(state.copyWith(
             status: CustomerStatus.failure, errorMessage: error.errMessages));
       },
+    );
+  }
+
+  Future<void> fetchProblemCategories() async {
+    emit(state.copyWith(status: CustomerStatus.loading));
+    final result = await _customerRepository.getAllProblemCategories();
+    result.when(
+      success: (categories) {
+        emit(state.copyWith(
+          status: CustomerStatus.success,
+          problemCategories: categories,
+        ));
+      },
+      failure: (error) => emit(state.copyWith(
+        status: CustomerStatus.failure,
+        errorMessage: error.errMessages,
+      )),
     );
   }
 

@@ -14,6 +14,10 @@ class ApiConstants {
 
   static const String getAllTechSupport = 'Problem/GetAllTechSupport';
 
+  static const String getAllProblemCategories = 'Problem/GetAllProblemCategory';
+
+//   static const String getAllSitiuation = 'Problem/GetAllSitiuation'; // Fetch situation/filter data
+
   static const String getProblemStatus = 'Problem/GetProblemStatus';
 
   static const String changeProblemStatus = 'Problem/ChangeProblemStatus';
@@ -36,7 +40,7 @@ class ApiConstants {
 
   static const String getDealDetailById =
       'Sales/GetDealDetailById'; // إضافة جديدة
-  
+
   static const String addRequirement = 'Sales/AddRequirement'; // إضافة جديدة
 
   static const String getAllOffers = 'Sales/GetAllOffers'; // إضافة جديدة

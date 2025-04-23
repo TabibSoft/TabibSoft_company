@@ -68,7 +68,6 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
     context.read<CustomerCubit>().emit(
           context.read<CustomerCubit>().state.copyWith(selectedStatus: status),
         );
-    // إعادة تعيين التصفح وتحميل البيانات من جديد إذا تغيرت الحالة
     context.read<CustomerCubit>().resetPagination();
     context.read<CustomerCubit>().fetchTechSupportIssues();
   }
@@ -192,9 +191,6 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                               controller: _searchController,
                               onChanged: (v) {
                                 setState(() => _searchQuery = v);
-                                // إذا كنت تريد إعادة تحميل البيانات من الخادم بناءً على البحث
-                                // context.read<CustomerCubit>().resetPagination();
-                                // context.read<CustomerCubit>().fetchTechSupportIssues();
                               },
                             ),
                             const SizedBox(height: 12),

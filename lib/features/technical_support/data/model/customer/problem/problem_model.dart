@@ -27,6 +27,8 @@ class ProblemModel {
   final String? status;
   final String? statusColor;
   final bool? statusIsArchieve;
+  final String ?problemDetails;
+
 
   ProblemModel({
     required this.id,
@@ -52,8 +54,10 @@ class ProblemModel {
     this.status,
     this.statusColor,
     this.statusIsArchieve,
+    this.problemDetails,
   });
 
   factory ProblemModel.fromJson(Map<String, dynamic> json) => _$ProblemModelFromJson(json);
   Map<String, dynamic> toJson() => _$ProblemModelToJson(this);
 }
+

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 
 enum CustomerStatus { initial, loading, success, failure }
@@ -14,8 +15,11 @@ class CustomerState extends Equatable {
   final String? errorMessage;
   final bool isProblemAdded;
   final String? selectedStatus;
-  final ProblemModel? newlyAddedIssue; // حقل جديد للمشكلة المضافة
-  final DateTime? newlyAddedIssueTime; // حقل جديد لوقت الإضافة
+  final ProblemModel? newlyAddedIssue; 
+  final DateTime? newlyAddedIssueTime; 
+  final List<ProblemStatusModel> sitiuationList;
+  final List<ProblemCategoryModel> problemCategories;
+
 
   const CustomerState({
     this.status = CustomerStatus.initial,
@@ -28,6 +32,8 @@ class CustomerState extends Equatable {
     this.selectedStatus,
     this.newlyAddedIssue,
     this.newlyAddedIssueTime,
+    this.sitiuationList = const [],
+    this.problemCategories = const [],
   });
 
   CustomerState copyWith({
@@ -41,6 +47,8 @@ class CustomerState extends Equatable {
     String? selectedStatus,
     ProblemModel? newlyAddedIssue,
     DateTime? newlyAddedIssueTime,
+     List<ProblemStatusModel>? sitiuationList,
+    List<ProblemCategoryModel>? problemCategories,
   }) {
     return CustomerState(
       status: status ?? this.status,
@@ -53,6 +61,8 @@ class CustomerState extends Equatable {
       selectedStatus: selectedStatus ?? this.selectedStatus,
       newlyAddedIssue: newlyAddedIssue ?? this.newlyAddedIssue,
       newlyAddedIssueTime: newlyAddedIssueTime ?? this.newlyAddedIssueTime,
+      sitiuationList: sitiuationList ?? this.sitiuationList,
+      problemCategories: problemCategories ?? this.problemCategories,
     );
   }
 

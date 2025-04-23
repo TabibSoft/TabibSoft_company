@@ -109,7 +109,7 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
             final q = widget.searchQuery.toLowerCase();
             issues = issues.where((i) {
               return (i.customerName?.toLowerCase().contains(q) ?? false) ||
-                  (i.problemAddress?.toLowerCase().contains(q) ?? false);
+                  (i.problemDetails?.toLowerCase().contains(q) ?? false);
             }).toList();
           }
 
@@ -159,7 +159,6 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
   Widget _buildIssueCard(ProblemModel issue, CustomerState state) {
     final iconPath = _getStatusIcon(issue.problemtype);
 
-    // تحديد إذا كانت كارد المشكلة المضافة حديثًا ولم يمر 5 دقائق
     final isNewlyAdded = state.newlyAddedIssue != null &&
         issue.customerId == state.newlyAddedIssue!.customerId &&
         issue.problemDate == state.newlyAddedIssue!.problemDate &&
@@ -298,3 +297,4 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
     );
   }
 }
+

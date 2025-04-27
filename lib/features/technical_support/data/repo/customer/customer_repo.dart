@@ -135,59 +135,60 @@ class CustomerRepository {
   }
 
 
-  Future<ApiResult<void>> createProblem({
-    required String customerId,
-    required DateTime dateTime,
-    required int problemStatusId,
-    String? note,
-    String? engineerId,
-    String? details,
-    String? problemAddress,
-    String? phone,
-    List<File>? images,
-  }) async {
-    try {
-      final formData = FormData();
-      formData.fields.addAll([
-        MapEntry('CustomerId', customerId),
-        MapEntry('DateTime', dateTime.toIso8601String()),
-        MapEntry('ProblemStatusId', problemStatusId.toString()),
-        if (note != null) MapEntry('Note', note),
-        if (engineerId != null) MapEntry('EngineerId', engineerId),
-        if (details != null) MapEntry('Details', details),
-        if (problemAddress != null) MapEntry('ProblemAddress', problemAddress),
-        if (phone != null) MapEntry('Phone', phone),
-      ]);
+Future<ApiResult<void>> createProblem({
+  required String customerId,
+  required DateTime dateTime,
+  required int problemStatusId,
+  required String problemCategoryId,
+  String? note,
+  String? engineerId,
+  String? details,
+  String? problemAddress,
+  String? phone,
+  List<File>? images,
+}) async {
+  try {
+    final formData = FormData();
+    formData.fields.addAll([
+      MapEntry('CustomerId', customerId),
+      MapEntry('DateTime', dateTime.toIso8601String()),
+      MapEntry('ProblemStatusId', problemStatusId.toString()),
+      MapEntry('ProblemCategoryId', problemCategoryId),
+      if (note != null) MapEntry('Note', note),
+      if (engineerId != null) MapEntry('EngineerId', engineerId),
+      if (details != null) MapEntry('Details', details),
+      if (problemAddress != null) MapEntry('ProblemAddress', problemAddress),
+      if (phone != null) MapEntry('Phone', phone),
+    ]);
 
-      if (images != null && images.isNotEmpty) {
-        for (var i = 0; i < images.length; i++) {
-          if (images[i].existsSync() && images[i].lengthSync() > 0) {
-            print(
-                'Adding image: ${images[i].path}, size: ${images[i].lengthSync()} bytes');
-            formData.files.add(
-              MapEntry(
-                'Images',
-                await MultipartFile.fromFile(
-                  images[i].path,
-                  filename: 'image_$i.jpg',
-                ),
+    if (images != null && images.isNotEmpty) {
+      for (var i = 0; i < images.length; i++) {
+        if (images[i].existsSync() && images[i].lengthSync() > 0) {
+          print('Adding image: ${images[i].path}, size: ${images[i].lengthSync()} bytes');
+          formData.files.add(
+            MapEntry(
+              'Images',
+              await MultipartFile.fromFile(
+                images[i].path,
+                filename: 'image_$i.jpg',
               ),
-            );
-          } else {
-            print('Invalid image file at index $i: ${images[i].path}');
-          }
+            ),
+          );
+        } else {
+          print('Invalid image file at index $i: ${images[i].path}');
         }
       }
-
-      await _apiService.createProblem(formData);
-      return const ApiResult.success(null);
-    } on DioException catch (e) {
-      print(
-          'DioException in createProblem: ${e.message}, Response: ${e.response?.data}');
-      return ApiResult.failure(ServerFailure.fromDioError(e));
-    } catch (e) {
-      print('Unexpected error in createProblem: $e');
-      return ApiResult.failure(ServerFailure('Unexpected error: $e'));
     }
+
+    await _apiService.createProblem(formData);
+    return const ApiResult.success(null);
+  } on DioException catch (e) {
+    print('DioException in createProblem: ${e.message}');
+    print('Response data: ${e.response?.data}');
+    print('Response status: ${e.response?.statusCode}');
+    return ApiResult.failure(ServerFailure.fromDioError(e));
+  } catch (e) {
+    print('Unexpected error in createProblem: $e');
+    return ApiResult.failure(ServerFailure('Unexpected error: $e'));
   }
-}
+}}

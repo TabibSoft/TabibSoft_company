@@ -1,5 +1,8 @@
+// sales_home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:tabib_soft_company/core/networking/api_service.dart';
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
@@ -92,31 +95,33 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
                 ),
                 child: BlocBuilder<SalesCubit, SalesState>(
                   builder: (context, state) {
-                    switch (state.status) {
-                      case SalesStatus.loading:
-                        return const Center(child: CircularProgressIndicator());
-                      case SalesStatus.loaded:
-                        final filteredMeasurements = selectedPeriod == 'الكل '
-                            ? state.measurements!
-                            : state.measurements!
-                                .where((m) => m.statusName == selectedPeriod)
-                                .toList();
-                        return ListView.builder(
-                          itemCount: filteredMeasurements.length,
-                          itemBuilder: (context, index) {
-                            final measurement = filteredMeasurements[index];
-                            return EngineerCard(
-                              measurement: measurement,
-                              apiService: _apiService,
-                            );
-                          },
-                        );
-                      case SalesStatus.error:
-                        return Center(child: Text(state.failure!.errMessages));
-                      case SalesStatus.initial:
-                      default:
-                        return const Center(child: Text('No data'));
+                    if (state.status == SalesStatus.loading) {
+                      // Skeleton loader instead of CircularProgressIndicator
+                      return ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: 3,
+                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        itemBuilder: (_, __) => _SkeletonCard(),
+                      );
+                    } else if (state.status == SalesStatus.loaded) {
+                      final filtered = selectedPeriod == 'الكل '
+                          ? state.measurements!
+                          : state.measurements!
+                              .where((m) => m.statusName == selectedPeriod)
+                              .toList();
+                      return ListView.builder(
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          return EngineerCard(
+                            measurement: filtered[index],
+                            apiService: _apiService,
+                          );
+                        },
+                      );
+                    } else if (state.status == SalesStatus.error) {
+                      return Center(child: Text(state.failure!.errMessages));
                     }
+                    return const Center(child: Text('No data'));
                   },
                 ),
               ),
@@ -144,11 +149,7 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
 
   Widget _buildPeriodButton(String period) {
     return ElevatedButton(
-      onPressed: () {
-        setState(() {
-          selectedPeriod = period;
-        });
-      },
+      onPressed: () => setState(() => selectedPeriod = period),
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.all(
           selectedPeriod == period ? const Color(0xFF178CBB) : Colors.grey,
@@ -165,28 +166,73 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
   }
 }
 
+class _SkeletonCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+      child: Container(
+        height: 242,
+        margin: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(height: 20, width: 150, color: Colors.grey.shade300),
+            const SizedBox(height: 8),
+            Container(height: 16, width: 100, color: Colors.grey.shade300),
+            const SizedBox(height: 8),
+            Container(height: 16, width: 120, color: Colors.grey.shade300),
+            const SizedBox(height: 8),
+            Container(height: 16, width: 80, color: Colors.grey.shade300),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                    height: 36,
+                    width: 80,
+                    decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(18))),
+                const SizedBox(width: 20),
+                Container(
+                    height: 36,
+                    width: 80,
+                    decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(18))),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class EngineerCard extends StatelessWidget {
   final SalesModel measurement;
   final ApiService apiService;
 
-  const EngineerCard({
-    super.key,
-    required this.measurement,
-    required this.apiService,
-  });
+  const EngineerCard(
+      {super.key, required this.measurement, required this.apiService});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (context) => AddRequirementPopup(
-            measurementId: measurement.id,
-            apiService: apiService,
-          ),
-        );
-      },
+      onTap: () => showDialog(
+        context: context,
+        builder: (context) => AddRequirementPopup(
+          measurementId: measurement.id,
+          apiService: apiService,
+        ),
+      ),
       child: Container(
         width: MediaQuery.of(context).size.width * 0.85,
         height: 242,
@@ -206,21 +252,17 @@ class EngineerCard extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     const TextSpan(
-                      text: 'اسم العميل: ',
-                      style: TextStyle(
-                        color: Color(0xff178CBB),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                        text: 'اسم العميل: ',
+                        style: TextStyle(
+                            color: Color(0xff178CBB),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700)),
                     TextSpan(
-                      text: measurement.customerName,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                        text: measurement.customerName,
+                        style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700)),
                   ],
                 ),
               ),
@@ -230,20 +272,15 @@ class EngineerCard extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     const TextSpan(
-                      text: 'رقم التواصل: ',
-                      style: TextStyle(
-                        color: Color(0xff178CBB),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                        text: 'رقم التواصل: ',
+                        style: TextStyle(
+                            color: Color(0xff178CBB),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700)),
                     TextSpan(
-                      text: measurement.customerTelephone,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                      ),
-                    ),
+                        text: measurement.customerTelephone,
+                        style:
+                            const TextStyle(color: Colors.black, fontSize: 16)),
                   ],
                 ),
               ),
@@ -253,20 +290,15 @@ class EngineerCard extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     const TextSpan(
-                      text: 'النشاط: ',
-                      style: TextStyle(
-                        color: Color(0xff178CBB),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                        text: 'النشاط: ',
+                        style: TextStyle(
+                            color: Color(0xff178CBB),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700)),
                     TextSpan(
-                      text: measurement.proudctName,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                      ),
-                    ),
+                        text: measurement.proudctName,
+                        style:
+                            const TextStyle(color: Colors.black, fontSize: 16)),
                   ],
                 ),
               ),
@@ -276,20 +308,15 @@ class EngineerCard extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     const TextSpan(
-                      text: 'الحالة: ',
-                      style: TextStyle(
-                        color: Color(0xff178CBB),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                        text: 'الحالة: ',
+                        style: TextStyle(
+                            color: Color(0xff178CBB),
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700)),
                     TextSpan(
-                      text: measurement.statusName,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                      ),
-                    ),
+                        text: measurement.statusName,
+                        style:
+                            const TextStyle(color: Colors.black, fontSize: 16)),
                   ],
                 ),
               ),
@@ -298,48 +325,32 @@ class EngineerCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
+                    onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => SalesDetailScreen(
-                            measurement: measurement,
-                            apiService: apiService,
-                          ),
-                        ),
-                      );
-                    },
+                            builder: (_) => SalesDetailScreen(
+                                measurement: measurement,
+                                apiService: apiService))),
                     style: ButtonStyle(
-                      backgroundColor:
-                          WidgetStateProperty.all(const Color(0xFF178CBB)),
-                      shape: WidgetStateProperty.all(const StadiumBorder()),
-                    ),
-                    child: const Text(
-                      'تفاصيل',
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
+                        backgroundColor:
+                            WidgetStateProperty.all(const Color(0xFF178CBB)),
+                        shape: WidgetStateProperty.all(const StadiumBorder())),
+                    child: const Text('تفاصيل',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w500)),
                   ),
                   const SizedBox(width: 20),
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
+                    onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => const InstalizationScreen(
-                           
-                          ),
-                        ));
-                      
-                    },
+                            builder: (_) => InstalizationScreen(
+                                measurementId: measurement.id))),
                     style: ButtonStyle(
-                      backgroundColor:
-                          WidgetStateProperty.all(const Color(0xFF178CBB)),
-                      shape: WidgetStateProperty.all(const StadiumBorder()),
-                    ),
-                    child: const Text(
-                      'تسطيب',
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
+                        backgroundColor:
+                            WidgetStateProperty.all(const Color(0xFF178CBB)),
+                        shape: WidgetStateProperty.all(const StadiumBorder())),
+                    child: const Text('تسطيب',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w500)),
                   ),
                 ],
               ),

@@ -81,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 const Spacer(),
                 Text(
-                  'All Rights Reserved © TabibSoft 2025',
+                  'All Rights Reserved © AhmedElshora 2025',
                   style: AppStyle.font13_400Weight.copyWith(
                     color: AppColor.borderContainerColor,
                   ),

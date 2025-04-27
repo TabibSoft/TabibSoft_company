@@ -1,3 +1,5 @@
+// lib/features/auth/presentation/screens/login/login_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,7 +14,6 @@ import 'package:tabib_soft_company/core/utils/widgets/custom_text_form_field.dar
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_cubit.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_state.dart';
 import 'package:tabib_soft_company/features/home/presentation/screens/home_screen.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,9 +42,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    super.dispose();
     _emailController.dispose();
     _passController.dispose();
+    super.dispose();
   }
 
   @override
@@ -71,10 +72,17 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           }
           if (state.status == LoginStatus.success) {
+            // حفظ التوكن
             await CacheHelper.saveData(
               key: 'loginToken',
               value: state.data!.token,
             );
+            // حفظ اسم المستخدم للإظهار لاحقاً
+            await CacheHelper.saveData(
+              key: 'userName',
+              value: _emailController.text,
+            );
+
             print('Token saved: ${state.data!.token}');
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -190,9 +198,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ElevatedButton(
                               onPressed: () {
                                 FocusManager.instance.primaryFocus?.unfocus();
-                                print('Token: $token');
                                 if (loginFormKey.currentState!.validate()) {
-                                  context.read<LoginCubit>().login(dKey: token);
+                                  context
+                                      .read<LoginCubit>()
+                                      .login(dKey: token);
                                 }
                               },
                               style: ElevatedButton.styleFrom(

@@ -315,7 +315,7 @@ class _ApiService implements ApiService {
     required String customerSupportId,
     String? note,
     String? engineerId,
-    required int problemStatusId,
+    required String problemStatusId,
     String? problemTitle,
     bool? solvid,
     required String customerId,
@@ -641,6 +641,32 @@ class _ApiService implements ApiService {
         .compose(
           _dio.options,
           'Sales/AddRequirement',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    await _dio.fetch<void>(_options);
+  }
+
+  @override
+  Future<void> makeMeasurementDone(Map<String, dynamic> body) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(body);
+    final _options = _setStreamType<void>(Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          'Sales/MakeMeasurementDone',
           queryParameters: queryParameters,
           data: _data,
         )

@@ -5,6 +5,7 @@ import 'package:tabib_soft_company/features/auth/data/models/login_request.dart'
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/details/payment_method_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/details/sales_details_model.dart';
+import 'package:tabib_soft_company/features/sales/data/model/measurement_done/measurement_done_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/paginated_sales_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/add_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/product_model.dart';
@@ -57,8 +58,8 @@ abstract class ApiService {
 //   @Query("CustomerSupportId") required String customerSupportId,
 // });
 
-@GET(ApiConstants.getAllProblemCategories)
-Future<List<ProblemCategoryModel>> getAllProblemCategories();
+  @GET(ApiConstants.getAllProblemCategories)
+  Future<List<ProblemCategoryModel>> getAllProblemCategories();
 
 // @GET(ApiConstants.getAllSitiuation)
 //   Future<List<ProblemStatusModel>> getAllSitiuation();
@@ -68,7 +69,7 @@ Future<List<ProblemCategoryModel>> getAllProblemCategories();
     @Query("CustomerSupportId") required String customerSupportId,
     @Query("Note") String? note,
     @Query("EnginnerId") String? engineerId,
-    @Query("ProblemstausId") required int problemStatusId,
+    @Query("ProblemstausId") required String problemStatusId,
     @Query("Problemtitle") String? problemTitle,
     @Query("Solvid") bool? solvid,
     @Query("CustomerId") required String customerId,
@@ -114,4 +115,7 @@ Future<List<ProblemCategoryModel>> getAllProblemCategories();
     @Body() Map<String, dynamic> data,
     @Part() List<MultipartFile>? imageFiles,
   );
+
+  @POST(ApiConstants.makeMeasurementDone)
+  Future<void> makeMeasurementDone(@Body() Map<String, dynamic> body);
 }

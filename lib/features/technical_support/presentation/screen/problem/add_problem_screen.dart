@@ -9,8 +9,8 @@ import 'package:tabib_soft_company/features/programmers/presentation/cubit/engin
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/add_customer_screen.dart';
 
 class AddProblemScreen extends StatefulWidget {
@@ -137,21 +137,41 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
       return;
     }
 
-    // Convert selectedCategory.id (String) to int for problemStatusId
-    int? problemStatusId;
-    try {
-      problemStatusId = int.parse(selectedCategory.id);
-    } catch (e) {
+    // التحقق من صحة المعرفات باستخدام تعبير منتظم لصيغة UUID
+    if (!RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+        .hasMatch(_selectedCustomer!.id!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('معرف العميل غير صالح')),
+      );
+      return;
+    }
+    if (!RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+        .hasMatch(selectedCategory.id)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('معرف فئة المشكلة غير صالح')),
       );
       return;
     }
+    if (selectedEngineer.id.isNotEmpty &&
+        !RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+            .hasMatch(selectedEngineer.id)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('معرف المهندس غير صالح')),
+      );
+      return;
+    }
+
+    // تعيين problemStatusId إلى قيمة افتراضية (1 = "جديد")
+    const int problemStatusId = 1;
 
     context.read<CustomerCubit>().createProblem(
           customerId: _selectedCustomer!.id!,
           dateTime: DateTime.now(),
-          problemStatusId: problemStatusId, // Use parsed problemStatusId
+          problemStatusId: problemStatusId,
+          problemCategoryId:
+              selectedCategory.id, // تمرير معرف الفئة كسلسلة نصية
           note: _detailsController.text.isNotEmpty
               ? _detailsController.text
               : null,
@@ -257,8 +277,11 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
             } else if (state.status == CustomerStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                    content:
-                        Text(state.errorMessage ?? 'فشل في إضافة المشكلة')),
+                  content: Text(
+                    state.errorMessage ??
+                        'فشل في إضافة المشكلة. يرجى التحقق من البيانات وحاول مجددًا.',
+                  ),
+                ),
               );
             }
           },
@@ -722,7 +745,7 @@ class ImagePickerBottomSheet extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.photo_library),
+            leading: const Icon(Icons.photo),
             title: const Text('المعرض'),
             onTap: () async {
               final picker = ImagePicker();

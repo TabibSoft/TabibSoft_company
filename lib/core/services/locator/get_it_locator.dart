@@ -6,8 +6,10 @@ import 'package:tabib_soft_company/features/auth/presentation/cubits/login_cubit
 import 'package:tabib_soft_company/features/programmers/data/repo/engineer_repo.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
 import 'package:tabib_soft_company/features/sales/data/repo/details/sales_details_repo.dart';
+import 'package:tabib_soft_company/features/sales/data/repo/installation/installation_repository.dart';
 import 'package:tabib_soft_company/features/sales/data/repo/sales_repo.dart';
 import 'package:tabib_soft_company/features/sales/presentation/cubit/details/sales_details_cubit.dart';
+import 'package:tabib_soft_company/features/sales/presentation/cubit/inistallation/installation_cubit.dart';
 import 'package:tabib_soft_company/features/sales/presentation/cubit/sales_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/data/repo/add_customer/add_customer_repo.dart';
 import 'package:tabib_soft_company/features/technical_support/data/repo/add_customer/product_repo.dart';
@@ -33,7 +35,8 @@ class ServicesLocator {
     );
 
     // LoginCubit
-    locator.registerFactory<LoginCubit>(() => LoginCubit(locator<LoginReposetory>()),
+    locator.registerFactory<LoginCubit>(
+      () => LoginCubit(locator<LoginReposetory>()),
     );
 
     // CustomerRepository
@@ -74,6 +77,16 @@ class ServicesLocator {
       () => SalesDetailsRepository(locator<ApiService>()),
     );
 
+      // InstallationRepository
+    locator.registerLazySingleton<InstallationRepository>(
+      () => InstallationRepository(locator<ApiService>()),
+    );
+
+    // InstallationCubit
+    locator.registerFactory<InstallationCubit>(
+      () => InstallationCubit(locator<InstallationRepository>()),
+    );
+
     // Add Customer
     locator.registerLazySingleton<AddCustomerRepository>(
       () => AddCustomerRepository(locator<ApiService>()),
@@ -89,6 +102,8 @@ class ServicesLocator {
     locator.registerFactory<ProductCubit>(
       () => ProductCubit(locator<ProductRepository>()),
     );
+
+   
   }
 
   static IntroAppCubit get introAppCubit => locator<IntroAppCubit>();
@@ -99,4 +114,5 @@ class ServicesLocator {
   static SalesDetailCubit get salesDetailCubit => locator<SalesDetailCubit>();
   static AddCustomerCubit get addCustomerCubit => locator<AddCustomerCubit>();
   static ProductCubit get productCubit => locator<ProductCubit>();
+  static InstallationCubit get installationCubit => locator<InstallationCubit>();
 }

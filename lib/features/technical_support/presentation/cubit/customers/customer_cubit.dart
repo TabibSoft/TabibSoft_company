@@ -192,72 +192,72 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
   }
 
-  Future<void> createProblem({
-    required String customerId,
-    required DateTime dateTime,
-    required int problemStatusId,
-    String? note,
-    String? engineerId,
-    String? details,
-    String? phone,
-    List<File>? images,
-  }) async {
-    print('createProblem called with customerId: $customerId');
-    emit(state.copyWith(status: CustomerStatus.loading, isProblemAdded: false));
-    final result = await _customerRepository.createProblem(
-      customerId: customerId,
-      dateTime: dateTime,
-      problemStatusId: problemStatusId,
-      note: note,
-      engineerId: engineerId,
-      details: details,
-      phone: phone,
-      images: images,
-    );
-    result.when(
-      success: (_) {
-        print('createProblem succeeded');
-        // إنشاء نموذج مشكلة مؤقت مع معرف مؤقت
-        final tempId = DateTime.now().millisecondsSinceEpoch.toString();
-        final newIssue = ProblemModel(
-          id: tempId,
-          customerId: customerId,
-          customerName: state.customers
-              .firstWhere(
-                (c) => c.id == customerId,
-                orElse: () => CustomerModel(id: customerId, name: 'غير معروف'),
-              )
-              .name,
-          problemAddress: details ?? note,
-          problemDate: dateTime.toIso8601String(),
-          problemtype: state.problemStatusList
-              .firstWhere(
-                (s) => s.id == problemStatusId,
-                orElse: () => ProblemStatusModel(id: 0, name: 'غير معروف'),
-              )
-              .name,
-          phone: phone,
-          image: images?.isNotEmpty == true ? images!.first.path : null,
-        );
-        emit(state.copyWith(
-          status: CustomerStatus.success,
-          isProblemAdded: true,
-          newlyAddedIssue: newIssue,
-          newlyAddedIssueTime: DateTime.now(),
-          techSupportIssues: [newIssue, ...state.techSupportIssues],
-        ));
-      },
-      failure: (error) {
-        print('createProblem failed: ${error.errMessages}');
-        emit(state.copyWith(
-          status: CustomerStatus.failure,
-          errorMessage: error.errMessages,
-          isProblemAdded: false,
-        ));
-      },
-    );
-  }
-
+Future<void> createProblem({
+  required String customerId,
+  required DateTime dateTime,
+  required int problemStatusId,
+  required String problemCategoryId, // إضافة هذا المعامل
+  String? note,
+  String? engineerId,
+  String? details,
+  String? phone,
+  List<File>? images,
+}) async {
+  print('createProblem called with customerId: $customerId');
+  emit(state.copyWith(status: CustomerStatus.loading, isProblemAdded: false));
+  final result = await _customerRepository.createProblem(
+    customerId: customerId,
+    dateTime: dateTime,
+    problemStatusId: problemStatusId,
+    problemCategoryId: problemCategoryId, // تمرير هذا الحقل
+    note: note,
+    engineerId: engineerId,
+    details: details,
+    phone: phone,
+    images: images,
+  );
+  result.when(
+    success: (_) {
+      print('createProblem succeeded');
+      final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+      final newIssue = ProblemModel(
+        id: tempId,
+        customerId: customerId,
+        customerName: state.customers
+            .firstWhere(
+              (c) => c.id == customerId,
+              orElse: () => CustomerModel(id: customerId, name: 'غير معروف'),
+            )
+            .name,
+        problemAddress: details ?? note,
+        problemDate: dateTime.toIso8601String(),
+        problemtype: state.problemStatusList
+            .firstWhere(
+              (s) => s.id == problemStatusId,
+              orElse: () => ProblemStatusModel(id: 0, name: 'غير معروف'),
+            )
+            .name,
+        phone: phone,
+        image: images?.isNotEmpty == true ? images!.first.path : null,
+      );
+      emit(state.copyWith(
+        status: CustomerStatus.success,
+        isProblemAdded: true,
+        newlyAddedIssue: newIssue,
+        newlyAddedIssueTime: DateTime.now(),
+        techSupportIssues: [newIssue, ...state.techSupportIssues],
+      ));
+    },
+    failure: (error) {
+      print('createProblem failed: ${error.errMessages}');
+      emit(state.copyWith(
+        status: CustomerStatus.failure,
+        errorMessage: error.errMessages,
+        isProblemAdded: false,
+      ));
+    },
+  );
+}
   void resetPagination() {
     _currentPage = 1;
     _hasMoreData = true;

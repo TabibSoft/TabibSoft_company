@@ -1,3 +1,5 @@
+// lib/features/home/presentation/screens/nav_bar/settings.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
@@ -62,7 +64,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: ElevatedButton.styleFrom(
               elevation: 5,
               backgroundColor: Colors.redAccent,
-              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
               ),
@@ -78,7 +81,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     if (confirm == true) {
+      // إزالة التوكن واسم المستخدم
       await CacheHelper.removeData(key: 'loginToken');
+      await CacheHelper.removeData(key: 'userName');
+
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
         (route) => false,
@@ -119,7 +125,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               bottom: 0,
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 95, 93, 93).withOpacity(0.3),
+                  color:
+                      const Color.fromARGB(255, 95, 93, 93).withOpacity(0.3),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: const Color(0xFF56C7F1), width: 3),
                 ),

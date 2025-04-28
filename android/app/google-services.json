@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "405478207570",
-    "project_id": "tabib_soft_company-f2ce2",
-    "storage_bucket": "tabib_soft_company-f2ce2.appspot.com"
+    "project_number": "237069110709",
+    "project_id": "tabibsoftcrm",
+    "storage_bucket": "tabibsoftcrm.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:405478207570:android:c8758d7cac1b8453c2af8b",
+        "mobilesdk_app_id": "1:237069110709:android:e0839afbab8b3a2b785dfc",
         "android_client_info": {
           "package_name": "com.tabibsoft.tabib_soft_company"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBYm7atk5QMnKPDUJ86l_HFkiUse0upy9k"
+          "current_key": "AIzaSyCB4cWKIEqNzo9vcwNsJpALB1JJRA8iigY"
         }
       ],
       "services": {

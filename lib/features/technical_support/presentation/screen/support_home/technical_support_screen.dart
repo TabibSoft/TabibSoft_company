@@ -4,12 +4,7 @@ import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
 import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/add_problem_screen.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/screen/technical_support_nav_bar/calendar_screen.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/screen/technical_support_nav_bar/notification_screen.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/widget/customer_list_widget.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/widget/search_bar_widget.dart';
+import 'package:tabib_soft_company/features/technical_support/export.dart';
 
 class TechnicalSupportScreen extends StatefulWidget {
   const TechnicalSupportScreen({super.key});

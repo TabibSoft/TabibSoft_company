@@ -90,7 +90,7 @@ class _InstalizationScreenState extends State<InstalizationScreen> {
                 left: 0,
                 right: 0,
                 child: CustomAppBar(
-                  title: 'الإعدادات',
+                  title: 'التسطيب',
                   height: 332,
                   leading: IconButton(
                     icon: Image.asset(
@@ -218,6 +218,8 @@ class _InstalizationScreenState extends State<InstalizationScreen> {
                               ),
                               icon: const Icon(Icons.arrow_drop_down,
                                   color: Colors.grey),
+                              menuMaxHeight: 220.h, // Set max height to half
+
                               items: items
                                   .map((eng) => DropdownMenuItem(
                                         value: eng,

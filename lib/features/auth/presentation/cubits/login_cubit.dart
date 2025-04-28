@@ -18,10 +18,10 @@ class LoginCubit extends Cubit<LoginState> {
     emit(state.copyWith(status: LoginStatus.loading));
 
     final result = await _repo.login(
-        email: emailController.text,
-        password: passController.text,
-        dKey: 'dKey' // TODO: Add dKey,
-        );
+      email: emailController.text,
+      password: passController.text,
+      dKey: 'dKey',
+    );
 
     result.when(
       success: (data) {

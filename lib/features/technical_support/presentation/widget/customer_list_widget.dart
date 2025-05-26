@@ -57,11 +57,10 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
     if (status == null) return null;
 
     debugPrint('Problem Status: $status');
-
     final normalized = status.replaceAll(' ', '').toLowerCase();
     debugPrint('Normalized Status: $normalized');
 
-    if (normalized.contains('تمالحل') || normalized.contains('تمالحل')) {
+    if (normalized.contains('تمالحل')) {
       return 'assets/images/pngs/good_pincode.png';
     } else if (normalized.contains('جديد')) {
       return 'assets/images/pngs/new.png';
@@ -69,8 +68,7 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
         normalized.contains('جارىالمتابعه') ||
         normalized.contains('جاريمتابعه') ||
         normalized.contains('جارىمتابعه') ||
-        normalized.contains('جارى المتابعة') ||
-        normalized.contains('جارى المتابعه')) {
+        normalized.contains('جارىالمتابعة')) {
       return 'assets/images/pngs/move_up_row.png';
     } else if (normalized.contains('مؤجل') || normalized.contains('مؤجله')) {
       return 'assets/images/pngs/event_declined.png';
@@ -82,8 +80,8 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
   Widget build(BuildContext context) {
     return BlocBuilder<CustomerCubit, CustomerState>(
       builder: (context, state) {
-        if (state.status == CustomerStatus.loading &&
-            state.techSupportIssues.isEmpty) {
+        // عرض Skeletonizer فوراً عندما تكون الحالة loading
+        if (state.status == CustomerStatus.loading) {
           return Skeletonizer(
             enabled: true,
             child: ListView.builder(
@@ -105,6 +103,7 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
             state.techSupportIssues.isNotEmpty) {
           var issues = state.techSupportIssues;
 
+          // تطبيق البحث
           if (widget.searchQuery.isNotEmpty) {
             final q = widget.searchQuery.toLowerCase();
             issues = issues.where((i) {
@@ -113,11 +112,12 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
             }).toList();
           }
 
+          // تطبيق الفلتر حسب الحالة
           if (widget.selectedStatus != null) {
             final statusFilter = widget.selectedStatus!.trim().toLowerCase();
             issues = issues
-                .where(
-                    (i) => i.problemtype?.trim().toLowerCase() == statusFilter)
+                .where((i) =>
+                    i.problemtype?.trim().toLowerCase() == statusFilter)
                 .toList();
           }
 
@@ -127,16 +127,8 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
 
           return ListView.builder(
             controller: _scrollController,
-            itemCount: issues.length +
-                (state.status == CustomerStatus.loading ? 1 : 0),
+            itemCount: issues.length,
             itemBuilder: (_, idx) {
-              if (idx == issues.length) {
-                return const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(
-                      child: CircularProgressIndicator(color: primaryColor)),
-                );
-              }
               final issue = issues[idx];
               return GestureDetector(
                 onTap: () => _showProblemDialog(context, issue),
@@ -296,5 +288,4 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
       ),
     );
   }
-}
-
+} 

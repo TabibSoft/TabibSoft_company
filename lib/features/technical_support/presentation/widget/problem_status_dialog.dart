@@ -8,6 +8,7 @@ import 'package:tabib_soft_company/features/technical_support/data/model/problem
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 
+
 class ProblemStatusDialog extends StatefulWidget {
   final ProblemModel issue;
 
@@ -15,6 +16,8 @@ class ProblemStatusDialog extends StatefulWidget {
     super.key,
     required this.issue,
   });
+
+  
 
   @override
   _ProblemStatusDialogState createState() => _ProblemStatusDialogState();
@@ -100,12 +103,26 @@ class _ProblemStatusDialogState extends State<ProblemStatusDialog> {
           problemStatusId: _selectedStatus!.id,
         );
 
-    setState(() {
-      _isLoading = false;
-    });
-
     final state = context.read<CustomerCubit>().state;
     if (state.status == CustomerStatus.success) {
+      // تحديث الحالة مباشرة في قائمة techSupportIssues
+      final updatedIssues = state.techSupportIssues.map((issue) {
+        if (issue.id == widget.issue.id) {
+          return issue.copyWith(
+            problemtype: _selectedStatus!.name,
+            problemStatusId: _selectedStatus!.id,
+            details: _detailsController.text,
+            image: _selectedImage?.path ?? issue.image,
+          );
+        }
+        return issue;
+      }).toList();
+
+      context.read<CustomerCubit>().emit(state.copyWith(
+            techSupportIssues: updatedIssues,
+            status: CustomerStatus.success,
+          ));
+
       Fluttertoast.showToast(
         msg: 'تم إنشاء المعاملة بنجاح',
         toastLength: Toast.LENGTH_SHORT,
@@ -122,6 +139,10 @@ class _ProblemStatusDialogState extends State<ProblemStatusDialog> {
     } else {
       Navigator.pop(context);
     }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -155,7 +176,7 @@ class _ProblemStatusDialogState extends State<ProblemStatusDialog> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    widget.issue.problemDetails ?? 'غير متوفر',
+                    widget.issue.problemDetails ?? '',
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 12),

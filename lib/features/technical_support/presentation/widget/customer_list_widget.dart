@@ -116,8 +116,8 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
           if (widget.selectedStatus != null) {
             final statusFilter = widget.selectedStatus!.trim().toLowerCase();
             issues = issues
-                .where((i) =>
-                    i.problemtype?.trim().toLowerCase() == statusFilter)
+                .where(
+                    (i) => i.problemtype?.trim().toLowerCase() == statusFilter)
                 .toList();
           }
 
@@ -206,7 +206,7 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
                         ),
                       ),
                       TextSpan(
-                        text: issue.problemAddress ?? 'غير متوفر',
+                        text: issue.problemDetails ?? 'غير متوفر',
                         style: const TextStyle(
                           color: Colors.black,
                           fontSize: 16,
@@ -262,6 +262,30 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
                     ],
                   ),
                 ),
+                if (issue.details != null && issue.details!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'تفاصيل الحل: ',
+                          style: TextStyle(
+                            color: Color(0xff178CBB),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextSpan(
+                          text: issue.details ?? 'غير متوفر',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 if (issue.image != null && issue.image!.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Image.file(
@@ -288,4 +312,4 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
       ),
     );
   }
-} 
+}

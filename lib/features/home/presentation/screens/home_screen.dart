@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
 import 'package:tabib_soft_company/features/home/presentation/screens/nav_bar/settings.dart';
+import 'package:tabib_soft_company/features/management/presentation/screens/management_screen.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/screens/programmers_screen.dart';
 import 'package:tabib_soft_company/features/sales/presentation/screens/sales_home_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_screen.dart';
+import 'dart:math';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -16,23 +19,64 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     const navBarHeight = 60.0;
-    // جلب اسم المستخدم من SharedPreferences (في حالة تم تخزينه)
     final userName = CacheHelper.getString(key: 'userName');
+    final userRoles = CacheHelper.getString(key: 'userRoles').isNotEmpty
+        ? CacheHelper.getString(key: 'userRoles').split(',')
+        : [];
+
+    String appBarTitle;
+    if (userRoles.contains('ADMIN') || userRoles.contains('MANAGEMENT')) {
+      appBarTitle =
+          'المدير مدير بردو ${userName.isNotEmpty ? userName : 'المستخدم'}';
+    } else if (userRoles.contains('SALSE')) {
+      appBarTitle =
+          'الفرخه اللي مش بتبيض بتتعمل شاورما يا ${userName.isNotEmpty ? userName : 'المستخدم'}';
+    } else if (userRoles.contains('PROGRAMMERS')) {
+      appBarTitle =
+          'قهوتك وولع الدنيا يا${userName.isNotEmpty ? userName : 'المستخدم'}';
+    } else if (userRoles.contains('SUPPORT')) {
+      appBarTitle = 'وحش الدعم  ${userName.isNotEmpty ? userName : 'المستخدم'}';
+    } else {
+      appBarTitle =
+          'شوف شغلك يا ${userName.isNotEmpty ? userName : 'المستخدم'}';
+    }
+
+    final jokes = [
+      'ليه المبرمج مش بيخاف؟ لأنه متعود على الكراش 💥',
+      'الدعم الفني دايمًا بيحلها... حتى لو بالكلام بس 😎',
+      'لو التطبيق وقع؟ قوله قوم اشتغل زي الناس 👀',
+      'المبيعات؟ دول بيبيعوا الهوا في قزايز 🧃',
+      'الإدارة قررت... تاخد بريك ☕',
+      'المبرمج بيصحى من النوم يفتح Git 😴',
+      'الدعم الفني: "جربت تقفل وتفتح تاني؟" 🔄',
+      'لو الدنيا لخبطة، اعمل Clean Project 🧹',
+      'لو مش لاقي Bug، يبقى هو مستخبي 🐞',
+      'فيه زر بيعمل كل حاجة... بس محدش عارف هو فين 🤷‍♂️',
+      'المبيعات: “وقعنا العميل... في حب المنتج” 💘',
+      'ليه المبرمج دايمًا هادي؟ عشان متعود على الإنهيارات 😅',
+      'الدعم بيحلها بالحب ❤️',
+      'المبرمج لما يسمع كلمة "Deadline" بيعرق 😰',
+      'عايز تعيش مرتاح؟ خليك بعيد عن الكود 💻',
+      'المدير قالك روح بدري؟ أكيد في حاجة غلط 😨',
+    ];
+    final randomJoke = (jokes..shuffle()).first;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showFloatingJoke(context, randomJoke);
+    });
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         body: Stack(
           children: [
-            // AppBar مع عرض اسم المستخدم
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: CustomAppBar(
                 logoAsset: 'assets/images/pngs/tabibLogo.png',
-                title:
-                    'شوف شغلك يا ${userName.isNotEmpty ? userName : 'المستخدم'}',
+                title: appBarTitle,
                 height: 480,
               ),
             ),
@@ -69,7 +113,16 @@ class HomeScreen extends StatelessWidget {
                           context,
                           'assets/images/pngs/manager.png',
                           'الإدارة',
-                          () {},
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ManagementScreen(),
+                              ),
+                            );
+                          },
+                          userRoles.contains('MANAGEMENT') ||
+                              userRoles.contains('ADMIN'),
                         ),
                         _buildHomeButton(
                           context,
@@ -83,6 +136,8 @@ class HomeScreen extends StatelessWidget {
                               ),
                             );
                           },
+                          userRoles.contains('PROGRAMMERS') ||
+                              userRoles.contains('ADMIN'),
                         ),
                         _buildHomeButton(
                           context,
@@ -97,6 +152,8 @@ class HomeScreen extends StatelessWidget {
                               ),
                             );
                           },
+                          userRoles.contains('SUPPORT') ||
+                              userRoles.contains('ADMIN'),
                         ),
                         _buildHomeButton(
                           context,
@@ -104,11 +161,14 @@ class HomeScreen extends StatelessWidget {
                           'مبيعات',
                           () {
                             Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SalesHomeScreen(),
-                                ));
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SalesHomeScreen(),
+                              ),
+                            );
                           },
+                          userRoles.contains('SALSE') ||
+                              userRoles.contains('ADMIN'),
                         ),
                       ],
                     ),
@@ -118,7 +178,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-        // شريط تنقل سفلي
         bottomNavigationBar: CustomNavBar(
           items: [
             GestureDetector(
@@ -156,6 +215,7 @@ class HomeScreen extends StatelessWidget {
     String iconPath,
     String label,
     VoidCallback onTap,
+    bool enabled,
   ) {
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.08,
@@ -164,15 +224,107 @@ class HomeScreen extends StatelessWidget {
         iconPath: iconPath,
         label: label,
         onTap: onTap,
+        enabled: enabled,
       ),
     );
+  }
+
+  void _showFloatingJoke(BuildContext context, String joke) {
+    final overlay = Overlay.of(context);
+    final screenSize = MediaQuery.of(context).size;
+    final entry = OverlayEntry(
+      builder: (context) {
+        return _FloatingJokeBubble(joke: joke);
+      },
+    );
+
+    overlay.insert(entry);
+
+    Future.delayed(const Duration(seconds: 5), () {
+      entry.remove();
+    });
+  }
+}
+
+class _FloatingJokeBubble extends StatefulWidget {
+  final String joke;
+
+  const _FloatingJokeBubble({required this.joke});
+
+  @override
+  State<_FloatingJokeBubble> createState() => _FloatingJokeBubbleState();
+}
+
+class _FloatingJokeBubbleState extends State<_FloatingJokeBubble>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _offsetAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+        duration: const Duration(milliseconds: 500), vsync: this);
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(1.5, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _controller.forward();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: MediaQuery.of(context).size.height * 0.1,
+      right: 0,
+      child: SlideTransition(
+        position: _offsetAnimation,
+        child: Material(
+          elevation: 8,
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.amber[100],
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                )
+              ],
+            ),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.7,
+            ),
+            child: Text(
+              widget.joke,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+              textDirection: TextDirection.rtl,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
 
 class HomeButton extends StatelessWidget {
   final String iconPath;
   final String label;
-  final bool active;
+  final bool enabled;
   final VoidCallback onTap;
 
   const HomeButton({
@@ -180,7 +332,7 @@ class HomeButton extends StatelessWidget {
     required this.iconPath,
     required this.label,
     required this.onTap,
-    this.active = false,
+    this.enabled = true,
   });
 
   static const Color primaryColor = HomeScreen.primaryColor;
@@ -189,11 +341,11 @@ class HomeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return InkWell(
-      onTap: onTap,
+      onTap: enabled ? onTap : () => _showToast(context),
       borderRadius: BorderRadius.circular(30),
       child: Container(
         decoration: BoxDecoration(
-          color: active ? primaryColor.withOpacity(0.2) : Colors.white,
+          color: enabled ? Colors.white : Colors.grey[300],
           border: Border.all(color: primaryColor, width: 1),
           borderRadius: BorderRadius.circular(30),
         ),
@@ -205,6 +357,7 @@ class HomeButton extends StatelessWidget {
               iconPath,
               width: size.width * 0.1,
               height: size.width * 0.1,
+              color: enabled ? null : Colors.grey,
             ),
             SizedBox(width: size.width * 0.04),
             Expanded(
@@ -212,7 +365,7 @@ class HomeButton extends StatelessWidget {
                 label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: active ? primaryColor : Colors.grey[800],
+                  color: enabled ? Colors.grey[800] : Colors.grey,
                   fontSize: size.width * 0.06,
                   fontWeight: FontWeight.w600,
                 ),
@@ -221,6 +374,24 @@ class HomeButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showToast(BuildContext context) {
+    final responses = [
+      'إنت بتعمل إيه هنا؟ 😅',
+      'لو ضغطت تاني هنبلغ الإدارة 😂',
+      'ده مش ليك يا نجم 🤭',
+      'حاول في مكان تاني يا بطل 🕵️‍♂️',
+    ];
+    final random = Random().nextInt(responses.length);
+    Fluttertoast.showToast(
+      msg: responses[random],
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.TOP,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
     );
   }
 }

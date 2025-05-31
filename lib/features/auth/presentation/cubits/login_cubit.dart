@@ -1,7 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
+import 'package:tabib_soft_company/features/auth/data/models/login_response.dart';
 import 'package:tabib_soft_company/features/auth/data/repos/login_repo.dart';
-
 import 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginState> {
@@ -20,11 +21,23 @@ class LoginCubit extends Cubit<LoginState> {
     final result = await _repo.login(
       email: emailController.text,
       password: passController.text,
-      dKey: 'dKey',
+      dKey: dKey,
     );
 
     result.when(
-      success: (data) {
+      success: (data) async {
+        await CacheHelper.saveData(
+          key: 'loginToken',
+          value: data.token,
+        );
+        await CacheHelper.saveData(
+          key: 'userName',
+          value: data.user.userName,
+        );
+        await CacheHelper.saveData(
+          key: 'userRoles',
+          value: data.user.roles.join(','),
+        );
         emit(
           state.copyWith(
             status: LoginStatus.success,

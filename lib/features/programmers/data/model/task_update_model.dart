@@ -1,11 +1,10 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart';
 
-part 'task_details_model.g.dart';
+part 'task_update_model.g.dart';
 
 @JsonSerializable()
-class TaskDetailsModel {
+class TaskUpdateModel {
   final String id;
   final String? image;
   final DateTime startDate;
@@ -17,15 +16,14 @@ class TaskDetailsModel {
   final List<String> engineerIds;
   final String? customerSupportId;
   final String customerId;
-  final String? detailes;
+  final String detailes;
   @JsonKey(name: 'customizationReports')
   final List<Report> reports;
-  final List<EngineerModel> engineers;
   final String sitiouationStatusesId;
   final String sitiouationId;
   final String? file;
 
-  TaskDetailsModel({
+  TaskUpdateModel({
     required this.id,
     this.image,
     required this.startDate,
@@ -37,15 +35,23 @@ class TaskDetailsModel {
     required this.engineerIds,
     this.customerSupportId,
     required this.customerId,
-     this.detailes,
+    required this.detailes,
     required this.reports,
-    required this.engineers,
     required this.sitiouationStatusesId,
     required this.sitiouationId,
     this.file,
   });
 
-  factory TaskDetailsModel.fromJson(Map<String, dynamic> json) =>
-      _$TaskDetailsModelFromJson(json);
-  Map<String, dynamic> toJson() => _$TaskDetailsModelToJson(this);
+  factory TaskUpdateModel.fromJson(Map<String, dynamic> json) => _$TaskUpdateModelFromJson(json);
+  Map<String, dynamic> toJson() => _$TaskUpdateModelToJson(this);
+}
+
+@JsonSerializable()
+class ReportDoneModel {
+  final String id;
+
+  ReportDoneModel({required this.id});
+
+  factory ReportDoneModel.fromJson(Map<String, dynamic> json) => _$ReportDoneModelFromJson(json);
+  Map<String, dynamic> toJson() => _$ReportDoneModelToJson(this);
 }

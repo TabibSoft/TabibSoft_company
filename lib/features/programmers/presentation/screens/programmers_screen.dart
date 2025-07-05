@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tabib_soft_company/core/networking/api_service.dart';
+import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart';
+import 'package:tabib_soft_company/features/programmers/data/model/task_update_model.dart';
+import 'package:tabib_soft_company/features/programmers/data/repo/report_repository.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/report_cubit.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/report_state.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_state.dart';
+
+// خريطة لربط الحالات بمعرفات الأقسام
+const statusToSectionId = {
+  'مؤجل': '0cf06194-17b8-4245-9594-08dcd09a6b67', // TASKS
+  'قيد العمل': '0d18c812-b508-4306-9595-08dcd09a6b67', // PROGRESS
+  'تم': '006bab2f-2709-4bcd-9597-08dcd09a6b67', // FINISH
+};
 
 class ProgrammersScreen extends StatefulWidget {
   const ProgrammersScreen({super.key});
@@ -115,8 +128,7 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                                       decoration: const BoxDecoration(
                                         color: Color(0xff178CBB),
                                         borderRadius: BorderRadius.horizontal(
-                                          left: Radius.circular(20),
-                                        ),
+                                            left: Radius.circular(20)),
                                       ),
                                     ),
                                   ),
@@ -183,7 +195,7 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                                             children: [
                                               ElevatedButton(
                                                 onPressed: () {
-                                                  // TODO: تنفيذ زر عميل
+                                                  // TODO: تنفيذ زر العميل
                                                 },
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor:
@@ -200,16 +212,14 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                                                       fontWeight:
                                                           FontWeight.w600),
                                                 ),
-                                                child: const Text(
-                                                  'عميل',
-                                                  style: TextStyle(
-                                                      color: Colors.white),
-                                                ),
+                                                child: const Text('عميل',
+                                                    style: TextStyle(
+                                                        color: Colors.white)),
                                               ),
                                               const SizedBox(width: 16),
                                               ElevatedButton(
                                                 onPressed: () {
-                                                  // TODO: تنفيذ زر تعديل
+                                                  // TODO: تنفيذ زر التعديل
                                                 },
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor:
@@ -226,11 +236,9 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                                                       fontWeight:
                                                           FontWeight.w600),
                                                 ),
-                                                child: const Text(
-                                                  'تعديل',
-                                                  style: TextStyle(
-                                                      color: Colors.white),
-                                                ),
+                                                child: const Text('تعديل',
+                                                    style: TextStyle(
+                                                        color: Colors.white)),
                                               ),
                                             ],
                                           ),
@@ -268,257 +276,259 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
     context.read<TaskCubit>().fetchTaskById(taskId);
     showDialog(
       context: ctx,
-      builder: (_) => BlocBuilder<TaskCubit, TaskState>(
-        builder: (context, state) {
-          if (state.status == TaskStatus.loading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state.status == TaskStatus.success &&
-              state.selectedTask != null) {
-            final task = state.selectedTask!;
-            // تعيين قيمة افتراضية للحالة إذا لم تكن موجودة في القائمة
-            const statusOptions = ['مؤجل', 'قيد العمل', 'تم'];
-            String? status = statusOptions.contains(task.sitiouationStatusesId)
-                ? task.sitiouationStatusesId
-                : 'تم'; // القيمة الافتراضية
-            final TextEditingController detailsCtrl =
-                TextEditingController(text: task.detailes);
-            final reports = task.reports;
-            final checked = List<bool>.filled(reports.length, false);
-            for (int i = 0; i < reports.length; i++) {
-              checked[i] = reports[i].finished;
-            }
-            int currentTab = 0;
+      builder: (_) => MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: context.read<TaskCubit>()),
+          BlocProvider(
+            create: (context) => ReportCubit(
+              ReportRepository(ServicesLocator.locator<ApiService>()),
+            ),
+          ),
+        ],
+        child: BlocBuilder<TaskCubit, TaskState>(
+          builder: (context, state) {
+            if (state.status == TaskStatus.loading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state.status == TaskStatus.success &&
+                state.selectedTask != null) {
+              final task = state.selectedTask!;
+              const statusOptions = ['مؤجل', 'قيد العمل', 'تم'];
+              String? status =
+                  statusOptions.contains(task.sitiouationStatusesId)
+                      ? task.sitiouationStatusesId
+                      : 'تم';
+              final TextEditingController detailsCtrl =
+                  TextEditingController(text: task.detailes);
+              final reports = task.reports;
+              final checked = List<bool>.filled(reports.length, false);
+              for (int i = 0; i < reports.length; i++) {
+                checked[i] = reports[i].finished;
+              }
+              int currentTab = 0;
 
-            return StatefulBuilder(builder: (context, setState) {
-              final progress = reports.isEmpty
-                  ? 0.0
-                  : checked.where((c) => c).length / reports.length;
-              return Dialog(
-                insetPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 600,
-                    maxWidth: 650,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              const Text('الحالة:',
-                                  style: TextStyle(fontSize: 16)),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  value: status,
-                                  items: statusOptions
-                                      .map((s) => DropdownMenuItem(
-                                            value: s,
-                                            child: Text(s),
-                                          ))
-                                      .toList(),
-                                  onChanged: (v) => setState(() => status = v),
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
+              return StatefulBuilder(builder: (context, setState) {
+                final progress = reports.isEmpty
+                    ? 0.0
+                    : checked.where((c) => c).length / reports.length;
+                return Dialog(
+                  insetPadding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                  child: ConstrainedBox(
+                    constraints:
+                        const BoxConstraints(minWidth: 600, maxWidth: 650),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                const Text('الحالة:',
+                                    style: TextStyle(fontSize: 16)),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: status,
+                                    items: statusOptions
+                                        .map((s) => DropdownMenuItem(
+                                            value: s, child: Text(s)))
+                                        .toList(),
+                                    onChanged: (v) =>
+                                        setState(() => status = v),
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 16),
                                     ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 16),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          TextField(
-                            controller: detailsCtrl,
-                            maxLines: 5,
-                            decoration: InputDecoration(
-                              hintText: 'أدخل التفاصيل...',
-                              hintStyle: const TextStyle(color: Colors.grey),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.all(16),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                            const SizedBox(height: 20),
+                            TextField(
+                              controller: detailsCtrl,
+                              maxLines: 5,
+                              decoration: InputDecoration(
+                                hintText: 'أدخل التفاصيل...',
+                                hintStyle: const TextStyle(color: Colors.grey),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                                contentPadding: const EdgeInsets.all(16),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('حالة الإنجاز:',
+                                        style: TextStyle(fontSize: 16)),
+                                    Text(
+                                      '${(progress * 100).toStringAsFixed(0)}%',
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    minHeight: 12,
+                                    backgroundColor: Colors.grey[300],
+                                    valueColor: const AlwaysStoppedAnimation(
+                                        Color(0xff178CBB)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: const Color(0xff178CBB), width: 2),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                children: List.generate(reports.length, (i) {
+                                  return CheckboxListTile(
+                                    value: checked[i],
+                                    onChanged: (v) =>
+                                        setState(() => checked[i] = v!),
+                                    title: Text(reports[i].name,
+                                        style: const TextStyle(fontSize: 16)),
+                                    subtitle: reports[i].notes != null
+                                        ? Text(reports[i].notes!,
+                                            style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey))
+                                        : null,
+                                    controlAffinity:
+                                        ListTileControlAffinity.trailing,
+                                    contentPadding: EdgeInsets.zero,
+                                  );
+                                }),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Container(
+                              decoration: BoxDecoration(
+                                  border: Border(
+                                      bottom: BorderSide(
+                                          color: Colors.grey.shade300))),
+                              // Removed the tab row as requested.
+                            ),
+                            const SizedBox(height: 24),
+                            BlocListener<ReportCubit, ReportState>(
+                              listener: (context, reportState) {
+                                if (reportState.status ==
+                                    ReportStatus.success) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content:
+                                            Text('تم حفظ التغييرات بنجاح')),
+                                  );
+                                  Navigator.of(context).pop();
+                                  context
+                                      .read<TaskCubit>()
+                                      .fetchTaskById(taskId); // تحديث المهمة
+                                } else if (reportState.status ==
+                                    ReportStatus.failure) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'خطأ: ${reportState.errorMessage}')),
+                                  );
+                                }
+                              },
+                              child: Row(
                                 children: [
-                                  const Text('حالة الإنجاز:',
-                                      style: TextStyle(fontSize: 16)),
-                                  Text(
-                                    '${(progress * 100).toStringAsFixed(0)}%',
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        final updatedReports = task.reports
+                                            .asMap()
+                                            .entries
+                                            .map((e) {
+                                          final index = e.key;
+                                          final report = e.value;
+                                          return Report(
+                                            id: report.id,
+                                            name: report.name,
+                                            notes: report.notes,
+                                            finished: checked[index],
+                                            time: report.time,
+                                          );
+                                        }).toList();
+                                        final newSitiouationId =
+                                            statusToSectionId[status!] ??
+                                                task.sitiouationId;
+                                        final updatedTask = TaskUpdateModel(
+                                          id: task.id,
+                                          image: task.image,
+                                          startDate: task.startDate,
+                                          deadLine: task.deadLine,
+                                          engRate: task.engRate,
+                                          testing: task.testing,
+                                          applaied: task.applaied,
+                                          enginnerTesterId:
+                                              task.enginnerTesterId,
+                                          engineerIds: task.engineerIds,
+                                          customerSupportId:
+                                              task.customerSupportId,
+                                          customerId: task.customerId,
+                                          detailes: detailsCtrl.text,
+                                          reports: updatedReports,
+                                          sitiouationStatusesId: task
+                                              .sitiouationStatusesId, // الاحتفاظ بالقيمة الأصلية
+                                          sitiouationId: newSitiouationId,
+                                          file: task.file,
+                                        );
+                                        context
+                                            .read<ReportCubit>()
+                                            .updateTask(updatedTask);
+                                      },
+                                      icon: const Icon(Icons.save, size: 20),
+                                      label: const Text('حفظ التغييرات',
+                                          style: TextStyle(fontSize: 16)),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xff178CBB),
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30)),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: LinearProgressIndicator(
-                                  value: progress,
-                                  minHeight: 12,
-                                  backgroundColor: Colors.grey[300],
-                                  valueColor: const AlwaysStoppedAnimation(
-                                      Color(0xff178CBB)),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                  color: const Color(0xff178CBB), width: 2),
-                              borderRadius: BorderRadius.circular(16),
                             ),
-                            child: Column(
-                              children: List.generate(reports.length, (i) {
-                                return CheckboxListTile(
-                                  value: checked[i],
-                                  onChanged: (v) =>
-                                      setState(() => checked[i] = v!),
-                                  title: Text(
-                                    reports[i].name,
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  subtitle: reports[i].notes != null
-                                      ? Text(
-                                          reports[i].notes!,
-                                          style: const TextStyle(
-                                              fontSize: 14, color: Colors.grey),
-                                        )
-                                      : null,
-                                  controlAffinity:
-                                      ListTileControlAffinity.trailing,
-                                  contentPadding: EdgeInsets.zero,
-                                );
-                              }),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Container(
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(color: Colors.grey.shade300),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                'الإجراءات',
-                                'الملاحظات',
-                                'الوقت',
-                                'الاسم'
-                              ].asMap().entries.map((e) {
-                                final idx = e.key;
-                                final label = e.value;
-                                final selected = idx == currentTab;
-                                return Expanded(
-                                  child: InkWell(
-                                    onTap: () =>
-                                        setState(() => currentTab = idx),
-                                    child: Container(
-                                      alignment: Alignment.center,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      decoration: BoxDecoration(
-                                        border: Border(
-                                          bottom: BorderSide(
-                                            color: selected
-                                                ? const Color(0xff178CBB)
-                                                : Colors.transparent,
-                                            width: 3,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        label,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: selected
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
-                                          color: selected
-                                              ? const Color(0xff178CBB)
-                                              : Colors.grey.shade600,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    // TODO: إضافة تقرير
-                                  },
-                                  icon: const Icon(Icons.folder, size: 20),
-                                  label: const Text('إضافة تقرير',
-                                      style: TextStyle(fontSize: 16)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xff178CBB),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(30)),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    // TODO: حفظ التغييرات
-                                    Navigator.of(context).pop();
-                                  },
-                                  icon: const Icon(Icons.save, size: 20),
-                                  label: const Text('حفظ التغييرات',
-                                      style: TextStyle(fontSize: 16)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xff178CBB),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(30)),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            });
-          } else {
-            return const Center(child: Text('فشل في جلب التفاصيل'));
-          }
-        },
+                );
+              });
+            } else {
+              return const Center(child: Text('فشل في جلب التفاصيل'));
+            }
+          },
+        ),
       ),
     );
   }

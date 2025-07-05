@@ -48,7 +48,7 @@ Map<String, dynamic> _$CustomizationToJson(Customization instance) =>
 Report _$ReportFromJson(Map<String, dynamic> json) => Report(
       id: json['id'] as String,
       name: json['name'] as String,
-      notes: json['notes'] as String? ?? '',
+      notes: json['note'] as String? ?? '',
       finished: json['finshed'] as bool,
       time: (json['time'] as num).toInt(),
     );
@@ -56,7 +56,7 @@ Report _$ReportFromJson(Map<String, dynamic> json) => Report(
 Map<String, dynamic> _$ReportToJson(Report instance) => <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
-      'notes': instance.notes,
+      'note': instance.notes,
       'finshed': instance.finished,
       'time': instance.time,
     };

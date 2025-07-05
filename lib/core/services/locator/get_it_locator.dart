@@ -4,8 +4,10 @@ import 'package:tabib_soft_company/core/export.dart';
 import 'package:tabib_soft_company/features/auth/data/repos/login_repo.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/data/repo/engineer_repo.dart';
+import 'package:tabib_soft_company/features/programmers/data/repo/report_repository.dart';
 import 'package:tabib_soft_company/features/programmers/data/repo/task_repository.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/report_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_cubit.dart';
 import 'package:tabib_soft_company/features/sales/data/repo/details/sales_details_repo.dart';
 import 'package:tabib_soft_company/features/sales/data/repo/installation/installation_repository.dart';
@@ -71,6 +73,16 @@ class ServicesLocator {
       () => TaskCubit(locator<TaskRepository>()),
     );
 
+    // ReportRepository
+    locator.registerLazySingleton<ReportRepository>(
+      () => ReportRepository(locator<ApiService>()),
+    );
+
+    // ReportCubit
+    locator.registerFactory<ReportCubit>(
+      () => ReportCubit(locator<ReportRepository>()),
+    );
+
     // Sales
     locator.registerFactory<SalesCubit>(
       () => SalesCubit(locator<SalesRepository>()),
@@ -121,6 +133,7 @@ class ServicesLocator {
   static CustomerCubit get customerCubit => locator<CustomerCubit>();
   static EngineerCubit get engineerCubit => locator<EngineerCubit>();
   static TaskCubit get taskCubit => locator<TaskCubit>();
+  static ReportCubit get reportCubit => locator<ReportCubit>();
   static SalesCubit get salesCubit => locator<SalesCubit>();
   static SalesDetailCubit get salesDetailCubit => locator<SalesDetailCubit>();
   static AddCustomerCubit get addCustomerCubit => locator<AddCustomerCubit>();

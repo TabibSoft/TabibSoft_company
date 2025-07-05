@@ -5,6 +5,7 @@ import 'package:tabib_soft_company/features/auth/data/models/login_request.dart'
 import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/task_details_model.dart';
+import 'package:tabib_soft_company/features/programmers/data/model/task_update_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/details/payment_method_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/details/sales_details_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/measurement_done/measurement_done_model.dart';
@@ -124,5 +125,12 @@ abstract class ApiService {
   @GET(ApiConstants.getAllProgrammerTasks)
   Future<List<CustomizationTaskModel>> getAllProgrammerTasks();
 
- @GET("Programer/GetById")
-  Future<TaskDetailsModel> getProgrammerTaskById(@Query("id") String id);}
+  @GET(ApiConstants.getProgrammerTaskById)
+  Future<TaskDetailsModel> getProgrammerTaskById(@Query("id") String id);
+
+  @POST(ApiConstants.makeReportDone)
+  Future<void> makeReportDone(@Query("Id") String reportId);
+
+  @POST(ApiConstants.updateTask)
+  Future<void> updateTask(@Body() TaskUpdateModel task);
+}

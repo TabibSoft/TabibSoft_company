@@ -4,6 +4,7 @@ import 'package:tabib_soft_company/core/cubit/internet/internet_cubit.dart';
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/report_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_cubit.dart';
 import 'package:tabib_soft_company/features/sales/presentation/cubit/details/sales_details_cubit.dart';
 import 'package:tabib_soft_company/features/sales/presentation/cubit/inistallation/installation_cubit.dart';
@@ -26,6 +27,9 @@ Widget buildAppWithProviders({required Widget child}) {
       ),
       BlocProvider<TaskCubit>(
         create: (_) => ServicesLocator.locator<TaskCubit>(),
+      ),
+      BlocProvider<ReportCubit>(
+        create: (_) => ServicesLocator.locator<ReportCubit>(),
       ),
       BlocProvider<SalesCubit>(
         create: (_) => ServicesLocator.locator<SalesCubit>(),

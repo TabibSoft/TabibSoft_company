@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
-import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
-import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
-import 'package:tabib_soft_company/features/programmers/presentation/widgets/programmers_details_screen.dart';
+import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_cubit.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_state.dart';
 
-// الصفحة الرئيسية
 class ProgrammersScreen extends StatefulWidget {
   const ProgrammersScreen({super.key});
 
@@ -18,26 +17,18 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<EngineerCubit>().fetchEngineers();
+    context.read<TaskCubit>().fetchTasks();
   }
-
-  // بيانات اختبارية مؤقتة
-  final List<Map<String, String>> testData = [
-    {"programType": "عيادة أطفال", "modification": "إضافة صور للمرضى"},
-    {"programType": "عيادة باطنة", "modification": "تحديث بيانات المرضى"},
-    {"programType": "عيادة أسنان", "modification": "إضافة مواعيد الحجز"},
-    {"programType": "عيادة عيون", "modification": "تحسين واجهة المستخدم"},
-  ];
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         body: Stack(
           children: [
-            /// الـ AppBar في أعلى الصفحة
             Positioned(
               top: 0,
               left: 0,
@@ -55,114 +46,210 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                 ),
               ),
             ),
-
-            /// المربع الشفاف المُتواجد مسبقًا
             Positioned(
-              top: size.height * 0.23,
+              top: 250 - 40,
+              right: size.width * 0.3,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  // TODO: تنفيذ إضافة مشكلة جديدة
+                },
+                icon: const Icon(Icons.add, size: 20),
+                label: const Text('إضافة مشكلة',
+                    style: TextStyle(fontSize: 16, color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                  backgroundColor: const Color(0xff178CBB),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: size.height * 0.33,
               left: size.width * 0.05,
               right: size.width * 0.05,
               bottom: 0,
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 95, 93, 93).withOpacity(0.3),
+                  color: Colors.black.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: const Color(0xFF56C7F1), width: 3),
                 ),
               ),
             ),
-
-            /// الحاوية الجديدة مع ListView.builder لتكرار الكروت
             Positioned(
-              top: size.height * 0.23 + 16,
+              top: size.height * 0.35 + 16,
               left: size.width * 0.05 + 16,
               right: size.width * 0.05 + 16,
               bottom: 16,
-              child: ListView.builder(
-                physics: const BouncingScrollPhysics(),
-                itemCount: testData.length,
-                itemBuilder: (context, index) {
-                  final item = testData[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => programmersDetails(
-                              programType: item["programType"]!,
+              child: BlocBuilder<TaskCubit, TaskState>(
+                builder: (context, state) {
+                  if (state.status == TaskStatus.loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state.status == TaskStatus.success) {
+                    final customizations = state.tasks
+                        .expand((task) => task.customization)
+                        .toList();
+                    return ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: customizations.length,
+                      itemBuilder: (context, index) {
+                        final customization = customizations[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: GestureDetector(
+                            onTap: () =>
+                                _showDetailsPopup(context, customization.id),
+                            child: SizedBox(
+                              height: 220,
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    left: 0,
+                                    top: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      width: 50,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xff178CBB),
+                                        borderRadius: BorderRadius.horizontal(
+                                          left: Radius.circular(20),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned.fill(
+                                    child: Container(
+                                      margin: const EdgeInsets.only(left: 12),
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(
+                                            color: const Color(0xff178CBB),
+                                            width: 2),
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.1),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                const TextSpan(
+                                                  text: 'اسم المشروع: ',
+                                                  style: TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xff178CBB),
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text:
+                                                      customization.projectName,
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.black,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            customization.engName.isEmpty
+                                                ? 'غير محدد'
+                                                : customization.engName,
+                                            style: const TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.grey),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          const Spacer(),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  // TODO: تنفيذ زر عميل
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      const Color(0xff178CBB),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            30),
+                                                  ),
+                                                  minimumSize:
+                                                      const Size(100, 48),
+                                                  textStyle: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.w600),
+                                                ),
+                                                child: const Text(
+                                                  'عميل',
+                                                  style: TextStyle(
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 16),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  // TODO: تنفيذ زر تعديل
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      const Color(0xff178CBB),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            30),
+                                                  ),
+                                                  minimumSize:
+                                                      const Size(100, 48),
+                                                  textStyle: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.w600),
+                                                ),
+                                                child: const Text(
+                                                  'تعديل',
+                                                  style: TextStyle(
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
                       },
-                      child: Container(
-                        width: 334,
-                        height: 146,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(
-                            color: const Color(0xFF178CBB),
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              RichText(
-                                text: TextSpan(
-                                  children: [
-                                    const TextSpan(
-                                      text: 'نوع البرنامج: ',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xff178CBB),
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: item["programType"],
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color.fromARGB(255, 0, 0, 0),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              RichText(
-                                text: TextSpan(
-                                  children: [
-                                    const TextSpan(
-                                      text: 'التعديل: ',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xff178CBB),
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: item["modification"],
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
+                    );
+                  } else if (state.status == TaskStatus.failure) {
+                    return Center(child: Text('خطأ: ${state.errorMessage}'));
+                  }
+                  return const SizedBox.shrink();
                 },
               ),
             ),
@@ -176,6 +263,263 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
       ),
     );
   }
-}
 
-// صفحة التفاصيل
+  void _showDetailsPopup(BuildContext ctx, String taskId) {
+    context.read<TaskCubit>().fetchTaskById(taskId);
+    showDialog(
+      context: ctx,
+      builder: (_) => BlocBuilder<TaskCubit, TaskState>(
+        builder: (context, state) {
+          if (state.status == TaskStatus.loading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state.status == TaskStatus.success &&
+              state.selectedTask != null) {
+            final task = state.selectedTask!;
+            // تعيين قيمة افتراضية للحالة إذا لم تكن موجودة في القائمة
+            const statusOptions = ['مؤجل', 'قيد العمل', 'تم'];
+            String? status = statusOptions.contains(task.sitiouationStatusesId)
+                ? task.sitiouationStatusesId
+                : 'تم'; // القيمة الافتراضية
+            final TextEditingController detailsCtrl =
+                TextEditingController(text: task.detailes);
+            final reports = task.reports;
+            final checked = List<bool>.filled(reports.length, false);
+            for (int i = 0; i < reports.length; i++) {
+              checked[i] = reports[i].finished;
+            }
+            int currentTab = 0;
+
+            return StatefulBuilder(builder: (context, setState) {
+              final progress = reports.isEmpty
+                  ? 0.0
+                  : checked.where((c) => c).length / reports.length;
+              return Dialog(
+                insetPadding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 600,
+                    maxWidth: 650,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('الحالة:',
+                                  style: TextStyle(fontSize: 16)),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: status,
+                                  items: statusOptions
+                                      .map((s) => DropdownMenuItem(
+                                            value: s,
+                                            child: Text(s),
+                                          ))
+                                      .toList(),
+                                  onChanged: (v) => setState(() => status = v),
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 16),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          TextField(
+                            controller: detailsCtrl,
+                            maxLines: 5,
+                            decoration: InputDecoration(
+                              hintText: 'أدخل التفاصيل...',
+                              hintStyle: const TextStyle(color: Colors.grey),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.all(16),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('حالة الإنجاز:',
+                                      style: TextStyle(fontSize: 16)),
+                                  Text(
+                                    '${(progress * 100).toStringAsFixed(0)}%',
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: LinearProgressIndicator(
+                                  value: progress,
+                                  minHeight: 12,
+                                  backgroundColor: Colors.grey[300],
+                                  valueColor: const AlwaysStoppedAnimation(
+                                      Color(0xff178CBB)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: const Color(0xff178CBB), width: 2),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              children: List.generate(reports.length, (i) {
+                                return CheckboxListTile(
+                                  value: checked[i],
+                                  onChanged: (v) =>
+                                      setState(() => checked[i] = v!),
+                                  title: Text(
+                                    reports[i].name,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                  subtitle: reports[i].notes != null
+                                      ? Text(
+                                          reports[i].notes!,
+                                          style: const TextStyle(
+                                              fontSize: 14, color: Colors.grey),
+                                        )
+                                      : null,
+                                  controlAffinity:
+                                      ListTileControlAffinity.trailing,
+                                  contentPadding: EdgeInsets.zero,
+                                );
+                              }),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(color: Colors.grey.shade300),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                'الإجراءات',
+                                'الملاحظات',
+                                'الوقت',
+                                'الاسم'
+                              ].asMap().entries.map((e) {
+                                final idx = e.key;
+                                final label = e.value;
+                                final selected = idx == currentTab;
+                                return Expanded(
+                                  child: InkWell(
+                                    onTap: () =>
+                                        setState(() => currentTab = idx),
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: selected
+                                                ? const Color(0xff178CBB)
+                                                : Colors.transparent,
+                                            width: 3,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        label,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: selected
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                          color: selected
+                                              ? const Color(0xff178CBB)
+                                              : Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    // TODO: إضافة تقرير
+                                  },
+                                  icon: const Icon(Icons.folder, size: 20),
+                                  label: const Text('إضافة تقرير',
+                                      style: TextStyle(fontSize: 16)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xff178CBB),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(30)),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    // TODO: حفظ التغييرات
+                                    Navigator.of(context).pop();
+                                  },
+                                  icon: const Icon(Icons.save, size: 20),
+                                  label: const Text('حفظ التغييرات',
+                                      style: TextStyle(fontSize: 16)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xff178CBB),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(30)),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            });
+          } else {
+            return const Center(child: Text('فشل في جلب التفاصيل'));
+          }
+        },
+      ),
+    );
+  }
+}

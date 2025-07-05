@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_response.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_request.dart';
+import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
+import 'package:tabib_soft_company/features/programmers/data/model/task_details_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/details/payment_method_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/details/sales_details_model.dart';
 import 'package:tabib_soft_company/features/sales/data/model/measurement_done/measurement_done_model.dart';
@@ -118,4 +120,9 @@ abstract class ApiService {
 
   @POST(ApiConstants.makeMeasurementDone)
   Future<void> makeMeasurementDone(@Body() Map<String, dynamic> body);
-}
+
+  @GET(ApiConstants.getAllProgrammerTasks)
+  Future<List<CustomizationTaskModel>> getAllProgrammerTasks();
+
+ @GET("Programer/GetById")
+  Future<TaskDetailsModel> getProgrammerTaskById(@Query("id") String id);}

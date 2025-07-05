@@ -54,4 +54,7 @@ class ApiConstants {
 
   static const String makeMeasurementDone =
       'Sales/MakeMeasurementDone'; // إضافة جديدة
+
+  static const String getAllProgrammerTasks = 'Programer/GetAll'; 
+  static const String getProgrammerTaskById = 'Programer/GetById';
 }

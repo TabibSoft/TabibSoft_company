@@ -4,7 +4,9 @@ import 'package:tabib_soft_company/core/export.dart';
 import 'package:tabib_soft_company/features/auth/data/repos/login_repo.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/data/repo/engineer_repo.dart';
+import 'package:tabib_soft_company/features/programmers/data/repo/task_repository.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_cubit.dart';
 import 'package:tabib_soft_company/features/sales/data/repo/details/sales_details_repo.dart';
 import 'package:tabib_soft_company/features/sales/data/repo/installation/installation_repository.dart';
 import 'package:tabib_soft_company/features/sales/data/repo/sales_repo.dart';
@@ -58,8 +60,18 @@ class ServicesLocator {
     locator.registerFactory<EngineerCubit>(
       () => EngineerCubit(locator<EngineerRepository>()),
     );
-    //Sales
 
+    // TaskRepository
+    locator.registerLazySingleton<TaskRepository>(
+      () => TaskRepository(locator<ApiService>()),
+    );
+
+    // TaskCubit
+    locator.registerFactory<TaskCubit>(
+      () => TaskCubit(locator<TaskRepository>()),
+    );
+
+    // Sales
     locator.registerFactory<SalesCubit>(
       () => SalesCubit(locator<SalesRepository>()),
     );
@@ -68,7 +80,7 @@ class ServicesLocator {
       () => SalesRepository(locator<ApiService>()),
     );
 
-// SalesDetailCubit
+    // SalesDetailCubit
     locator.registerFactory<SalesDetailCubit>(
       () => SalesDetailCubit(locator<SalesDetailsRepository>()),
     );
@@ -77,7 +89,7 @@ class ServicesLocator {
       () => SalesDetailsRepository(locator<ApiService>()),
     );
 
-      // InstallationRepository
+    // InstallationRepository
     locator.registerLazySingleton<InstallationRepository>(
       () => InstallationRepository(locator<ApiService>()),
     );
@@ -95,21 +107,20 @@ class ServicesLocator {
       () => AddCustomerCubit(locator<AddCustomerRepository>()),
     );
 
-// Product
+    // Product
     locator.registerLazySingleton<ProductRepository>(
       () => ProductRepository(locator<ApiService>()),
     );
     locator.registerFactory<ProductCubit>(
       () => ProductCubit(locator<ProductRepository>()),
     );
-
-   
   }
 
   static IntroAppCubit get introAppCubit => locator<IntroAppCubit>();
   static LoginCubit get loginCubit => locator<LoginCubit>();
   static CustomerCubit get customerCubit => locator<CustomerCubit>();
   static EngineerCubit get engineerCubit => locator<EngineerCubit>();
+  static TaskCubit get taskCubit => locator<TaskCubit>();
   static SalesCubit get salesCubit => locator<SalesCubit>();
   static SalesDetailCubit get salesDetailCubit => locator<SalesDetailCubit>();
   static AddCustomerCubit get addCustomerCubit => locator<AddCustomerCubit>();

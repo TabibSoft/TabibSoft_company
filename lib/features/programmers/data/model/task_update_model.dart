@@ -22,6 +22,7 @@ class TaskUpdateModel {
   final String sitiouationStatusesId;
   final String sitiouationId;
   final String? file;
+  final String? model; // حقل model مضاف
 
   TaskUpdateModel({
     required this.id,
@@ -40,13 +41,12 @@ class TaskUpdateModel {
     required this.sitiouationStatusesId,
     required this.sitiouationId,
     this.file,
+    this.model,
   });
 
   factory TaskUpdateModel.fromJson(Map<String, dynamic> json) => _$TaskUpdateModelFromJson(json);
   Map<String, dynamic> toJson() => _$TaskUpdateModelToJson(this);
-}
-
-@JsonSerializable()
+}@JsonSerializable()
 class ReportDoneModel {
   final String id;
 

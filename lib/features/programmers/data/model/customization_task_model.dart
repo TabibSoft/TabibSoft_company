@@ -45,7 +45,8 @@ class Customization {
 
 @JsonSerializable()
 class Report {
-  final String id;
+  @JsonKey(includeIfNull: false) // استبعاد id إذا كان null
+  final String? id;
   final String name;
   @JsonKey(name: 'note', defaultValue: '')
   final String? notes;
@@ -54,7 +55,7 @@ class Report {
   final int time;
 
   Report({
-    required this.id,
+    this.id,
     required this.name,
     this.notes,
     required this.finished,

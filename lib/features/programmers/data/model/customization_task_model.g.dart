@@ -46,20 +46,29 @@ Map<String, dynamic> _$CustomizationToJson(Customization instance) =>
     };
 
 Report _$ReportFromJson(Map<String, dynamic> json) => Report(
-      id: json['id'] as String,
+      id: json['id'] as String?,
       name: json['name'] as String,
       notes: json['note'] as String? ?? '',
       finished: json['finshed'] as bool,
       time: (json['time'] as num).toInt(),
     );
 
-Map<String, dynamic> _$ReportToJson(Report instance) => <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'note': instance.notes,
-      'finshed': instance.finished,
-      'time': instance.time,
-    };
+Map<String, dynamic> _$ReportToJson(Report instance) {
+  final val = <String, dynamic>{};
+
+  void writeNotNull(String key, dynamic value) {
+    if (value != null) {
+      val[key] = value;
+    }
+  }
+
+  writeNotNull('id', instance.id);
+  val['name'] = instance.name;
+  val['note'] = instance.notes;
+  val['finshed'] = instance.finished;
+  val['time'] = instance.time;
+  return val;
+}
 
 SituationStatus _$SituationStatusFromJson(Map<String, dynamic> json) =>
     SituationStatus(

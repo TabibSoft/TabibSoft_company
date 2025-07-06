@@ -28,6 +28,7 @@ TaskUpdateModel _$TaskUpdateModelFromJson(Map<String, dynamic> json) =>
       sitiouationStatusesId: json['sitiouationStatusesId'] as String,
       sitiouationId: json['sitiouationId'] as String,
       file: json['file'] as String?,
+      model: json['model'] as String?,
     );
 
 Map<String, dynamic> _$TaskUpdateModelToJson(TaskUpdateModel instance) =>
@@ -48,6 +49,7 @@ Map<String, dynamic> _$TaskUpdateModelToJson(TaskUpdateModel instance) =>
       'sitiouationStatusesId': instance.sitiouationStatusesId,
       'sitiouationId': instance.sitiouationId,
       'file': instance.file,
+      'model': instance.model,
     };
 
 ReportDoneModel _$ReportDoneModelFromJson(Map<String, dynamic> json) =>

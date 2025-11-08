@@ -14,7 +14,7 @@ class _ApiService implements ApiService {
     this.baseUrl,
     this.errorLogger,
   }) {
-    baseUrl ??= 'http://tabibsoft.ddns.net:7260/api/';
+    baseUrl ??= 'https://tabibsoft.ddns.net:7260/api/';
   }
 
   final Dio _dio;

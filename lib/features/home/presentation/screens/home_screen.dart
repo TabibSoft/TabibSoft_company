@@ -85,7 +85,7 @@ class HomeScreen extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned(
-                    top: size.height * 0.35,
+                    top: size.height * 0.38,
                     left: size.width * 0.05,
                     right: size.width * 0.05,
                     bottom: navBarHeight - 59.5,

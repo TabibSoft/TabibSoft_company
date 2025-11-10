@@ -1,323 +1,301 @@
+// lib/features/home/presentation/screens/home_screen.dart
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
-import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
-import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
-import 'package:tabib_soft_company/features/home/presentation/screens/nav_bar/settings.dart';
 import 'package:tabib_soft_company/features/management/presentation/screens/management_screen.dart';
+import 'package:tabib_soft_company/features/modirator/presentation/screens/mediator_screen.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/screens/programmers_screen.dart';
 import 'package:tabib_soft_company/features/sales/presentation/screens/sales_home_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_screen.dart';
-import 'dart:math';
+import 'package:tabib_soft_company/features/home/presentation/screens/nav_bar/settings.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-  static const Color primaryColor = Color(0xFF56C7F1);
-  static const Color secondaryColor = Color(0xFF75D6A9);
+
+  static const Color primaryColor =
+      Color(0xFF0F5FA8); // لون أزرق عميق يشبه الصورة
+  static const Color accentColor = Color(0xFF19A7CE); // أزرق فاتح / سماوي
+  static const Color lightBg = Color(0xFFF4F9FC); // خلفية خفيفة
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    const navBarHeight = 60.0;
     final userName = CacheHelper.getString(key: 'userName');
-    final userRoles = CacheHelper.getString(key: 'userRoles').isNotEmpty
-        ? CacheHelper.getString(key: 'userRoles').split(',')
-        : [];
+    final rawRoles = CacheHelper.getString(key: 'userRoles');
+    final userRoles = (rawRoles.isNotEmpty) ? rawRoles.split(',') : <String>[];
 
-    String appBarTitle;
+    // Title logic (مبسط)
+    String title;
     if (userRoles.contains('ADMIN') || userRoles.contains('MANAGEMENT')) {
-      appBarTitle =
-          'المدير مدير بردو ${userName.isNotEmpty ? userName : 'المستخدم'}';
+      title = ' أهلا بالإدارة  ${userName.isNotEmpty ? userName : 'المستخدم'}';
     } else if (userRoles.contains('SALSE')) {
-      appBarTitle =
-          'الفرخه اللي مش بتبيض بتتعمل شاورما يا ${userName.isNotEmpty ? userName : 'المستخدم'}';
+      title = 'أهلاً السيلز اللعيب ${userName.isNotEmpty ? userName : ''}';
     } else if (userRoles.contains('PROGRAMMERS')) {
-      appBarTitle =
-          'قهوتك وولع الدنيا يا${userName.isNotEmpty ? userName : 'المستخدم'}';
+      title = 'ملك الكودينج ${userName.isNotEmpty ? userName : ''}';
     } else if (userRoles.contains('SUPPORT')) {
-      appBarTitle = 'وحش الدعم  ${userName.isNotEmpty ? userName : 'المستخدم'}';
+      title = 'وحش الدعم  ${userName.isNotEmpty ? userName : ''}';
     } else {
-      appBarTitle =
-          'شوف شغلك يا ${userName.isNotEmpty ? userName : 'المستخدم'}';
+      title = 'أهلاً ${userName.isNotEmpty ? userName : 'المستخدم'}';
     }
 
-    final jokes = [
-      "اجمد كدا مفيش مهندس بيعيط 😎",
-      'الtester لما بيغرق بيقول Bug Bug Bug 🐛',
-      'ليه المبرمج مش بيخاف؟ لأنه متعود على الكراش 💥',
-      'الدعم الفني دايمًا بيحلها... حتى لو بالكلام بس 😎',
-      'لو التطبيق وقع؟ قوله قوم اشتغل هيبقا زي الفل  👀',
-      'المبيعات؟ دول بيبيعوا الهوا في قزايز 🧃',
-      'المبرمج بيصحى من النوم يفتح Git 😴',
-      'لو الدنيا لخبطة، اعمل Clean Project 🧹',
-      'المبيعات من شطارتهم باعونا 😡',
-      'لو مش لاقي Bug، يبقى هو مستخبي 🐞',
-      'فيه زر بيعمل كل حاجة... بس محدش عارف هو فين 🤷‍♂️',
-      'المبيعات: “وقعنا العميل... في حب المنتج” 💘',
-      'الدعم بيحلها بالحب ❤️',
-      'المبرمج لما يسمع كلمة "Deadline" بيعرق 😰',
-      'عايز تعيش مرتاح؟ خليك بعيد عن الكود 💻',
-      'المدير قالك روح بدري؟ أكيد في حاجة غلط 😨',
-    ];
-    final randomJoke = (jokes..shuffle()).first;
+    // final jokes = [
+    //   "اجمد كدا مفيش مهندس بيعيط 😎",
+    //   'الtester لما بيغرق بيقول Bug Bug Bug 🐛',
+    //   'ليه المبرمج مش بيخاف؟ لأنه متعود على الكراش 💥',
+    //   'الدعم الفني دايمًا بيحلها... حتى لو بالكلام بس 😎',
+    // ];
+    // final randomJoke = (jokes..shuffle()).first;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showFloatingJoke(context, randomJoke);
-    });
+    // إظهار فقاعة نكتة عائمة بعد البناء
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   _showFloatingJoke(context, randomJoke);
+    // });
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        body: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: CustomAppBar(
-                logoAsset: 'assets/images/pngs/tabibLogo.png',
-                title: appBarTitle,
-                height: 480,
-              ),
-            ),
-            Positioned.fill(
-              top: 0,
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: size.height * 0.38,
-                    left: size.width * 0.05,
-                    right: size.width * 0.05,
-                    bottom: navBarHeight - 59.5,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 95, 93, 93)
-                            .withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: primaryColor,
-                          width: 3.0,
-                        ),
-                      ),
+        backgroundColor: lightBg,
+        // لا AppBar ولا BottomNavigationBar كما طلبت
+        body: SafeArea(
+          child: Stack(
+            children: [
+              // الخلفية العلوية المنحنية (مثل التصميم)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: size.height * 0.36,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFEFF9FF), Color(0xFFDFF6FB)],
                     ),
+                    // يمكن إضافة شكل منحني باستخدام borderRadius
                   ),
-                  Positioned(
-                    top: size.height * 0.4,
-                    left: size.width * 0.1,
-                    right: size.width * 0.1,
-                    bottom: navBarHeight + 40,
+                  child: Center(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildHomeButton(
-                          context,
-                          'assets/images/pngs/manager.png',
-                          'الإدارة',
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ManagementScreen(),
-                              ),
-                            );
-                          },
-                          userRoles.contains('MANAGEMENT') ||
-                              userRoles.contains('ADMIN'),
+                        const SizedBox(height: 8),
+                        // Greeting text
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: size.width * 0.05,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
                         ),
-                        _buildHomeButton(
-                          context,
-                          'assets/images/pngs/developers.png',
-                          'المبرمجين',
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ProgrammersScreen(),
-                              ),
-                            );
-                          },
-                          userRoles.contains('PROGRAMMERS') ||
-                              userRoles.contains('ADMIN'),
+                        const SizedBox(height: 12),
+                        // Logo
+                        Image.asset(
+                          'assets/images/pngs/TS Logo Final 1.png',
+                          width: size.width * 0.67,
+                          fit: BoxFit.contain,
                         ),
-                        _buildHomeButton(
-                          context,
-                          'assets/images/pngs/technical_support.png',
-                          'الدعم الفني',
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const TechnicalSupportScreen(),
-                              ),
-                            );
-                          },
-                          userRoles.contains('SUPPORT') ||
-                              userRoles.contains('ADMIN'),
-                        ),
-                        _buildHomeButton(
-                          context,
-                          'assets/images/pngs/sales.png',
-                          'مبيعات',
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SalesHomeScreen(),
-                              ),
-                            );
-                          },
-                          userRoles.contains('SALSE') ||
-                              userRoles.contains('ADMIN'),
-                        ),
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: CustomNavBar(
-          items: [
-            GestureDetector(
-              onTap: () {},
-              child: Image.asset(
-                'assets/images/pngs/list.png',
-                width: 33,
-                height: 33,
-              ),
-            ),
-            const Spacer(),
-            GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SettingsScreen(),
                 ),
               ),
-              child: Image.asset(
-                'assets/images/pngs/settings.png',
-                width: 33,
-                height: 33,
+
+              // زر الإعدادات في أعلى اليسار (كما طلبت)
+              Positioned(
+                top: 12,
+                left: 12,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        )
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/images/pngs/settings.png',
+                      width: 26,
+                      height: 26,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ],
-          alignment: MainAxisAlignment.spaceBetween,
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildHomeButton(
-    BuildContext context,
-    String iconPath,
-    String label,
-    VoidCallback onTap,
-    bool enabled,
-  ) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.08,
-      width: MediaQuery.of(context).size.width * 0.60,
-      child: HomeButton(
-        iconPath: iconPath,
-        label: label,
-        onTap: onTap,
-        enabled: enabled,
-      ),
-    );
-  }
-
-  void _showFloatingJoke(BuildContext context, String joke) {
-    final overlay = Overlay.of(context);
-    final screenSize = MediaQuery.of(context).size;
-    final entry = OverlayEntry(
-      builder: (context) {
-        return _FloatingJokeBubble(joke: joke);
-      },
-    );
-
-    overlay.insert(entry);
-
-    Future.delayed(const Duration(seconds: 5), () {
-      entry.remove();
-    });
-  }
-}
-
-class _FloatingJokeBubble extends StatefulWidget {
-  final String joke;
-
-  const _FloatingJokeBubble({required this.joke});
-
-  @override
-  State<_FloatingJokeBubble> createState() => _FloatingJokeBubbleState();
-}
-
-class _FloatingJokeBubbleState extends State<_FloatingJokeBubble>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<Offset> _offsetAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-        duration: const Duration(milliseconds: 500), vsync: this);
-    _offsetAnimation = Tween<Offset>(
-      begin: const Offset(1.5, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
-    _controller.forward();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: MediaQuery.of(context).size.height * 0.1,
-      right: 0,
-      child: SlideTransition(
-        position: _offsetAnimation,
-        child: Material(
-          elevation: 8,
-          color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: Colors.amber[100],
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 10,
-                )
-              ],
-            ),
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.7,
-            ),
-            child: Text(
-              widget.joke,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-                fontWeight: FontWeight.w600,
+              // المحتوى الرئيسي: شبكه الأزرار
+              Positioned(
+                top: size.height * 0.30,
+                left: 16,
+                right: 16,
+                bottom: 20,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // شبكة 2x3
+                      Expanded(
+                        child: GridView.count(
+                          physics: const BouncingScrollPhysics(),
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                          childAspectRatio: 1.03,
+                          children: [
+                            _buildFeatureTile(
+                              context: context,
+                              iconPath: 'assets/images/pngs/manager.png',
+                              label: 'الإدارة',
+                              enabled: userRoles.contains('MANAGEMENT') ||
+                                  userRoles.contains('ADMIN'),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ManagementScreen(),
+                                ),
+                              ),
+                              primaryColor: accentColor,
+                            ),
+                            _buildFeatureTile(
+                              context: context,
+                              iconPath: 'assets/images/pngs/sales.png',
+                              label: 'المبيعات',
+                              enabled: userRoles.contains('SALSE') ||
+                                  userRoles.contains('ADMIN'),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SalesHomeScreen(),
+                                ),
+                              ),
+                              primaryColor: primaryColor,
+                            ),
+                            _buildFeatureTile(
+                              context: context,
+                              iconPath: 'assets/images/pngs/developers.png',
+                              label: 'المبرمجين',
+                              enabled: userRoles.contains('PROGRAMMERS') ||
+                                  userRoles.contains('ADMIN'),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ProgrammersScreen(),
+                                ),
+                              ),
+                              primaryColor: primaryColor,
+                            ),
+                            _buildFeatureTile(
+                              context: context,
+                              iconPath:
+                                  'assets/images/pngs/technical_support.png',
+                              label: 'الدعم الفني',
+                              enabled: userRoles.contains('SUPPORT') ||
+                                  userRoles.contains('ADMIN'),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const TechnicalSupportScreen(),
+                                ),
+                              ),
+                              primaryColor: accentColor,
+                            ),
+                            _buildFeatureTile(
+                              context: context,
+                              iconPath:
+                                  'assets/images/pngs/icons8-find-user-40 1.png',
+                              label: 'الوسيط',
+                              enabled: true,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const MediatorScreen()),
+                              ),
+                              primaryColor: accentColor,
+                            ),
+                            _buildFeatureTile(
+                              context: context,
+                              iconPath:
+                                  'assets/images/pngs/icons8-scroll-up-40 1.png',
+                              label: 'المتابعة',
+                              enabled: true,
+                              onTap: () {
+                                // action for follow up
+                              },
+                              primaryColor: primaryColor,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // optional small hint / copyright
+                      // Text(
+                      //   'TabibSoft',
+                      //   style: TextStyle(
+                      //     color: Colors.grey[500],
+                      //     fontWeight: FontWeight.bold,
+                      //   ),
+                      // ),
+                      // const SizedBox(height: 6),
+                    ],
+                  ),
+                ),
               ),
-              textDirection: TextDirection.rtl,
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  // Tile builder helper
+  Widget _buildFeatureTile({
+    required BuildContext context,
+    required String iconPath,
+    required String label,
+    required VoidCallback onTap,
+    required bool enabled,
+    required Color primaryColor,
+  }) {
+    final size = MediaQuery.of(context).size;
+    return HomeButton(
+      iconPath: iconPath,
+      label: label,
+      onTap: onTap,
+      enabled: enabled,
+      primaryColor: primaryColor,
+    );
   }
 }
 
@@ -326,6 +304,7 @@ class HomeButton extends StatelessWidget {
   final String label;
   final bool enabled;
   final VoidCallback onTap;
+  final Color primaryColor;
 
   const HomeButton({
     super.key,
@@ -333,42 +312,58 @@ class HomeButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.enabled = true,
+    this.primaryColor = HomeScreen.primaryColor,
   });
-
-  static const Color primaryColor = HomeScreen.primaryColor;
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+
     return InkWell(
       onTap: enabled ? onTap : () => _showToast(context),
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
+        padding:
+            EdgeInsets.symmetric(vertical: size.width * 0.04, horizontal: 12),
         decoration: BoxDecoration(
-          color: enabled ? Colors.white : Colors.grey[300],
-          border: Border.all(color: primaryColor, width: 1),
-          borderRadius: BorderRadius.circular(30),
+          color:
+              enabled ? primaryColor.withOpacity(0.12) : Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color:
+                enabled ? primaryColor.withOpacity(0.18) : Colors.grey.shade300,
+            width: 1.6,
+          ),
         ),
-        padding: EdgeInsets.symmetric(horizontal: size.width * 0.02),
-        child: Row(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              iconPath,
-              width: size.width * 0.1,
-              height: size.width * 0.1,
-              color: enabled ? null : Colors.grey,
+            // أيقونة
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: enabled
+                    ? primaryColor.withOpacity(0.14)
+                    : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Image.asset(
+                iconPath,
+                width: size.width * 0.12,
+                height: size.width * 0.12,
+                // <-- show original colors when enabled; gray tint when disabled
+                color: enabled ? null : Colors.grey,
+                fit: BoxFit.contain,
+              ),
             ),
-            SizedBox(width: size.width * 0.04),
-            Expanded(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: enabled ? Colors.grey[800] : Colors.grey,
-                  fontSize: size.width * 0.06,
-                  fontWeight: FontWeight.w600,
-                ),
+            SizedBox(height: size.height * 0.015),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: enabled ? primaryColor.darken(0.1) : Colors.grey,
+                fontSize: size.width * 0.048,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -392,6 +387,20 @@ class HomeButton extends StatelessWidget {
       backgroundColor: Colors.red,
       textColor: Colors.white,
       fontSize: 16.0,
+    );
+  }
+}
+
+// Extension to darken a color slightly
+extension ColorBrightness on Color {
+  Color darken([double amount = .1]) {
+    assert(amount >= 0 && amount <= 1);
+    final h = this;
+    return Color.fromARGB(
+      h.alpha,
+      (h.red * (1 - amount)).round(),
+      (h.green * (1 - amount)).round(),
+      (h.blue * (1 - amount)).round(),
     );
   }
 }

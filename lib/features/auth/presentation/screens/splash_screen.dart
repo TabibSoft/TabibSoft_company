@@ -5,6 +5,7 @@ import 'package:tabib_soft_company/core/helpers/extensions.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -28,68 +29,81 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      body: Container(
+      body: SizedBox(
         width: size.width,
         height: size.height,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topRight,
-            colors: [
-              Color(0xFF88C8F3),
-              Color(0xFF90F398),
-            ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(24.r),
+            bottomRight: Radius.circular(24.r),
           ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: -70,
-              left: -200,
-              child: Transform.rotate(
-                angle: 65.44 * (3.141592653589793 / 180),
-                child: Opacity(
-                  opacity: 0.5,
-                  child: Container(
-                    width: 500.w,
-                    height: 380.h,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF1BBCFC),
-                      shape: BoxShape.circle,
-                    ),
+          child: Stack(
+            children: [
+              // خلفية بتدرج لوني أزرق مثل الكود المحفوظ
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xff104D9D),
+                      Color(0xFF20AAC9),
+                    ],
                   ),
                 ),
               ),
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
-                Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
+
+              // اللوجو الخلفي الكبير (Watermark)
+              Positioned(
+                top: 80.h,
+                left: 60.w,
+                child: SizedBox(
+                  width: 350.w,
+                  height: 380.h,
+                  child: Image.asset(
+                    'assets/images/pngs/TS_Logo0.png',
+                    fit: BoxFit.contain,
+                    // إذا أردت تلوينه استخدم color: Colors.white.withOpacity(...)
+                  ),
+                ),
+              ),
+
+              // المحتوى العمودي: اللوغو الأبيض والنص في الأسفل
+              Column(
+                children: [
+                  const Spacer(flex: 4),
+                  // اللوغو الأبيض (مربّع قليل التدوير) - محاذاة مركزية
+                  Center(
                     child: SizedBox(
-                      width: 200.w,
+                      width: 500.w,
                       height: 200.h,
                       child: Image.asset(
-                        'assets/images/pngs/tabibLogo.png',
-                        fit: BoxFit.cover,
+                        'assets/images/pngs/TS_Logo1.png',
+                        fit: BoxFit.contain,
+                        // في حال الـ SVG ملون بالفعل باللون الأبيض فلا حاجة للـ color
+                        // في حال احتجت تجبر اللون: uncomment السطر التالي
+                        // color: Colors.white,
                       ),
                     ),
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  'All Rights Reserved © AhmedElshora 2025',
-                  style: AppStyle.font13_400Weight.copyWith(
-                    color: AppColor.borderContainerColor,
+                  const Spacer(flex: 3),
+
+                  // نص "حقوق النشر" مثل التصميم - لون فاتح
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 30.h),
+                    child: Text(
+                      'All Rights Reserved © AhmedElshora 2025',
+                      style: AppStyle.font13_400Weight.copyWith(
+                        color: AppColor.borderContainerColor,
+                      ),
+                    ),
                   ),
-                ),
-                SizedBox(height: 30.h),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

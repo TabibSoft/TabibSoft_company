@@ -53,22 +53,13 @@ Report _$ReportFromJson(Map<String, dynamic> json) => Report(
       time: (json['time'] as num).toInt(),
     );
 
-Map<String, dynamic> _$ReportToJson(Report instance) {
-  final val = <String, dynamic>{};
-
-  void writeNotNull(String key, dynamic value) {
-    if (value != null) {
-      val[key] = value;
-    }
-  }
-
-  writeNotNull('id', instance.id);
-  val['name'] = instance.name;
-  val['note'] = instance.notes;
-  val['finshed'] = instance.finished;
-  val['time'] = instance.time;
-  return val;
-}
+Map<String, dynamic> _$ReportToJson(Report instance) => <String, dynamic>{
+      if (instance.id case final value?) 'id': value,
+      'name': instance.name,
+      'note': instance.notes,
+      'finshed': instance.finished,
+      'time': instance.time,
+    };
 
 SituationStatus _$SituationStatusFromJson(Map<String, dynamic> json) =>
     SituationStatus(

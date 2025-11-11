@@ -23,24 +23,17 @@ AddCustomerModel _$AddCustomerModelFromJson(Map<String, dynamic> json) =>
           : DateTime.parse(json['lastEditDate'] as String),
     );
 
-Map<String, dynamic> _$AddCustomerModelToJson(AddCustomerModel instance) {
-  final val = <String, dynamic>{
-    'name': instance.name,
-    'telephone': instance.telephone,
-    'engineerId': instance.engineerId,
-    'productId': instance.productId,
-  };
-
-  void writeNotNull(String key, dynamic value) {
-    if (value != null) {
-      val[key] = value;
-    }
-  }
-
-  writeNotNull('location', instance.location);
-  writeNotNull('createdUser', instance.createdUser);
-  writeNotNull('lastEditUser', instance.lastEditUser);
-  writeNotNull('createdDate', instance.createdDate?.toIso8601String());
-  writeNotNull('lastEditDate', instance.lastEditDate?.toIso8601String());
-  return val;
-}
+Map<String, dynamic> _$AddCustomerModelToJson(AddCustomerModel instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'telephone': instance.telephone,
+      'engineerId': instance.engineerId,
+      'productId': instance.productId,
+      if (instance.location case final value?) 'location': value,
+      if (instance.createdUser case final value?) 'createdUser': value,
+      if (instance.lastEditUser case final value?) 'lastEditUser': value,
+      if (instance.createdDate?.toIso8601String() case final value?)
+        'createdDate': value,
+      if (instance.lastEditDate?.toIso8601String() case final value?)
+        'lastEditDate': value,
+    };

@@ -7,11 +7,11 @@ import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
 import 'package:tabib_soft_company/features/management/presentation/screens/management_screen.dart';
 import 'package:tabib_soft_company/features/modirator/presentation/screens/mediator_screen.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/screens/programmers_screen.dart';
-import 'package:tabib_soft_company/features/sales/presentation/screens/sales_home_screen.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/presentation/screens/sales_home_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_screen.dart';
 import 'package:tabib_soft_company/features/home/presentation/screens/nav_bar/settings.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen  extends StatelessWidget {
   const HomeScreen({super.key});
 
   static const Color primaryColor =

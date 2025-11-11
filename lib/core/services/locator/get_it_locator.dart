@@ -9,12 +9,16 @@ import 'package:tabib_soft_company/features/programmers/data/repo/task_repositor
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/report_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_cubit.dart';
-import 'package:tabib_soft_company/features/sales/data/repo/details/sales_details_repo.dart';
-import 'package:tabib_soft_company/features/sales/data/repo/installation/installation_repository.dart';
-import 'package:tabib_soft_company/features/sales/data/repo/sales_repo.dart';
-import 'package:tabib_soft_company/features/sales/presentation/cubit/details/sales_details_cubit.dart';
-import 'package:tabib_soft_company/features/sales/presentation/cubit/inistallation/installation_cubit.dart';
-import 'package:tabib_soft_company/features/sales/presentation/cubit/sales_cubit.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/data/repos/notes/add_note_repository.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/data/repos/notes/sales_details_repo.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/data/repos/sales_repo.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/notes/add_note_cubit.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/notes/sales_details_cubit.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/sales_cubit.dart';
+import 'package:tabib_soft_company/features/sales/notifications/data/repo/notification_repo.dart';
+import 'package:tabib_soft_company/features/sales/notifications/presentation/cubits/notification_cubit.dart';
+import 'package:tabib_soft_company/features/sales/today_calls/data/repo/today_call_repo.dart';
+import 'package:tabib_soft_company/features/sales/today_calls/presentation/cubit/today_call_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/data/repo/add_customer/add_customer_repo.dart';
 import 'package:tabib_soft_company/features/technical_support/data/repo/add_customer/product_repo.dart';
 import 'package:tabib_soft_company/features/technical_support/data/repo/customer/customer_repo.dart';
@@ -92,24 +96,20 @@ class ServicesLocator {
       () => SalesRepository(locator<ApiService>()),
     );
 
-    // SalesDetailCubit
-    locator.registerFactory<SalesDetailCubit>(
-      () => SalesDetailCubit(locator<SalesDetailsRepository>()),
-    );
+    // // SalesDetailCubit (التعليقات دي خليها إذا مش محتاجها حالياً)
+    // locator.registerFactory<SalesDetailCubit>(
+    //   () => SalesDetailCubit(locator<SalesDetailsRepository>()),
+    // );
 
-    locator.registerLazySingleton<SalesDetailsRepository>(
-      () => SalesDetailsRepository(locator<ApiService>()),
-    );
+    // // InstallationRepository (إذا محتاجها في المستقبل)
+    // locator.registerLazySingleton<InstallationRepository>(
+    //   () => InstallationRepository(locator<ApiService>()),
+    // );
 
-    // InstallationRepository
-    locator.registerLazySingleton<InstallationRepository>(
-      () => InstallationRepository(locator<ApiService>()),
-    );
-
-    // InstallationCubit
-    locator.registerFactory<InstallationCubit>(
-      () => InstallationCubit(locator<InstallationRepository>()),
-    );
+    // // InstallationCubit
+    // locator.registerFactory<InstallationCubit>(
+    //   () => InstallationCubit(locator<InstallationRepository>()),
+    // );
 
     // Add Customer
     locator.registerLazySingleton<AddCustomerRepository>(
@@ -126,6 +126,42 @@ class ServicesLocator {
     locator.registerFactory<ProductCubit>(
       () => ProductCubit(locator<ProductRepository>()),
     );
+
+    // SalesDetails (التسجيل الوحيد هنا)
+    locator.registerFactory<SalesDetailsCubit>(
+      () => SalesDetailsCubit(locator<SalesDetailsRepository>()),
+    );
+
+    locator.registerLazySingleton<SalesDetailsRepository>(
+      () => SalesDetailsRepository(locator<ApiService>()),
+    );
+
+    // Add Note
+    locator.registerLazySingleton<AddNoteRepository>(
+      () => AddNoteRepository(locator<ApiService>()),
+    );
+
+    locator.registerFactory<AddNoteCubit>(
+      () => AddNoteCubit(locator<AddNoteRepository>()),
+    );
+
+    // Notifications
+    locator.registerLazySingleton<NotificationRepository>(
+      () => NotificationRepository(locator<ApiService>()),
+    );
+
+    locator.registerFactory<NotificationCubit>(
+      () => NotificationCubit(locator<NotificationRepository>()),
+    );
+
+    // Today Calls
+    locator.registerLazySingleton<TodayCallsRepository>(
+      () => TodayCallsRepository(locator<ApiService>()),
+    );
+
+    locator.registerFactory<TodayCallsCubit>(
+      () => TodayCallsCubit(locator<TodayCallsRepository>()),
+    );
   }
 
   static IntroAppCubit get introAppCubit => locator<IntroAppCubit>();
@@ -135,8 +171,14 @@ class ServicesLocator {
   static TaskCubit get taskCubit => locator<TaskCubit>();
   static ReportCubit get reportCubit => locator<ReportCubit>();
   static SalesCubit get salesCubit => locator<SalesCubit>();
-  static SalesDetailCubit get salesDetailCubit => locator<SalesDetailCubit>();
+  // static SalesDetailCubit get salesDetailCubit => locator<SalesDetailCubit>();
   static AddCustomerCubit get addCustomerCubit => locator<AddCustomerCubit>();
   static ProductCubit get productCubit => locator<ProductCubit>();
-  static InstallationCubit get installationCubit => locator<InstallationCubit>();
+  // static InstallationCubit get installationCubit => locator<InstallationCubit>();
+
+  static AddNoteCubit get addNoteCubit => locator<AddNoteCubit>();
+  static NotificationCubit get notificationCubit =>
+      locator<NotificationCubit>(); // Added
+  static TodayCallsCubit get todayCallsCubit =>
+      locator<TodayCallsCubit>(); // Added
 }

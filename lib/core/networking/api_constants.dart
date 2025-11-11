@@ -60,4 +60,15 @@ class ApiConstants {
 
   static const String makeReportDone = 'Programer/MakeReportDone';
   static const String updateTask = 'Programer/UpdateTask';
+
+  static const String getNotifications =
+      'Notification/GetNotifications'; // Added for notifications
+
+  static const String getTodayCalls =
+      'Sales/GetTodayCalls'; // Added new constant
+
+  static const String changeStatus = 'Sales/UpdateMeasurementStatus';
+
+    static const String getAllStatuses = 'Sales/GetAllStatus';
+
 }

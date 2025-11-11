@@ -6,14 +6,10 @@ part of 'api_service.dart';
 // RetrofitGenerator
 // **************************************************************************
 
-// ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers,unused_element
+// ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers,unused_element,unnecessary_string_interpolations,unused_element_parameter
 
 class _ApiService implements ApiService {
-  _ApiService(
-    this._dio, {
-    this.baseUrl,
-    this.errorLogger,
-  }) {
+  _ApiService(this._dio, {this.baseUrl, this.errorLogger}) {
     baseUrl ??= 'https://tabibsoft.ddns.net:7260/api/';
   }
 
@@ -30,22 +26,16 @@ class _ApiService implements ApiService {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(request.toJson());
-    final _options = _setStreamType<LoginResponse>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Auth/Login',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<LoginResponse>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Auth/Login',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late LoginResponse _value;
     try {
@@ -64,22 +54,16 @@ class _ApiService implements ApiService {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(customer.toJson());
-    final _options = _setStreamType<dynamic>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Customer/AddCustomer',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<dynamic>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Customer/AddCustomer',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch(_options);
     final _value = _result.data;
     return _value;
@@ -91,22 +75,16 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<ProductModel>>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Sales/GetAllProudcts',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<List<ProductModel>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Sales/GetAllProudcts',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<List<dynamic>>(_options);
     late List<ProductModel> _value;
     try {
@@ -126,22 +104,16 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<CustomerModel>>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Customer/GetAllCustomer',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<List<CustomerModel>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Customer/GetAllCustomer',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<List<dynamic>>(_options);
     late List<CustomerModel> _value;
     try {
@@ -161,22 +133,16 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<ProblemModel>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Problem/GetTechnicalSupportData/${customerId}',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<ProblemModel>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Problem/GetTechnicalSupportData/${customerId}',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late ProblemModel _value;
     try {
@@ -211,22 +177,16 @@ class _ApiService implements ApiService {
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<TechSupportResponse>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Problem/GetAllTechSupport',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<TechSupportResponse>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Problem/GetAllTechSupport',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late TechSupportResponse _value;
     try {
@@ -244,28 +204,24 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<ProblemStatusModel>>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Problem/GetProblemStatus',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<List<ProblemStatusModel>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Problem/GetProblemStatus',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<List<dynamic>>(_options);
     late List<ProblemStatusModel> _value;
     try {
       _value = _result.data!
-          .map((dynamic i) =>
-              ProblemStatusModel.fromJson(i as Map<String, dynamic>))
+          .map(
+            (dynamic i) =>
+                ProblemStatusModel.fromJson(i as Map<String, dynamic>),
+          )
           .toList();
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
@@ -280,28 +236,24 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<ProblemCategoryModel>>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Problem/GetAllProblemCategory',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<List<ProblemCategoryModel>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Problem/GetAllProblemCategory',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<List<dynamic>>(_options);
     late List<ProblemCategoryModel> _value;
     try {
       _value = _result.data!
-          .map((dynamic i) =>
-              ProblemCategoryModel.fromJson(i as Map<String, dynamic>))
+          .map(
+            (dynamic i) =>
+                ProblemCategoryModel.fromJson(i as Map<String, dynamic>),
+          )
           .toList();
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
@@ -333,22 +285,16 @@ class _ApiService implements ApiService {
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<void>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Problem/ChangeProblemStatus',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<void>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Problem/ChangeProblemStatus',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     await _dio.fetch<void>(_options);
   }
 
@@ -359,22 +305,16 @@ class _ApiService implements ApiService {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(dto.toJson());
-    final _options = _setStreamType<void>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Problem/CreateUnderTransaction',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<void>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Problem/CreateUnderTransaction',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     await _dio.fetch<void>(_options);
   }
 
@@ -384,22 +324,16 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<EngineerModel>>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Problem/GetAllEng',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<List<EngineerModel>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Problem/GetAllEng',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<List<dynamic>>(_options);
     late List<EngineerModel> _value;
     try {
@@ -419,22 +353,16 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{r'query': query};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<CustomerModel>>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Customer/AutoCompleteCustomer',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<List<CustomerModel>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Customer/AutoCompleteCustomer',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<List<dynamic>>(_options);
     late List<CustomerModel> _value;
     try {
@@ -454,22 +382,16 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = formData;
-    final _options = _setStreamType<void>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Problem/CreateProblem',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<void>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Problem/CreateProblem',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     await _dio.fetch<void>(_options);
   }
 
@@ -478,32 +400,34 @@ class _ApiService implements ApiService {
     int page = 1,
     int pageSize = 10,
     String? statusId,
+    String? productId,
+    String? search,
+    String? fromDate,
+    String? toDate,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
       r'page': page,
       r'pageSize': pageSize,
-      r'statusId': statusId,
+      r'StatusId': statusId,
+      r'ProudctId': productId,
+      r'search': search,
+      r'FromDate': fromDate,
+      r'ToDate': toDate,
     };
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<PaginatedSales>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Sales/GetAllMeasurement',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<PaginatedSales>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Sales/GetAllMeasurement',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late PaginatedSales _value;
     try {
@@ -521,62 +445,20 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{r'id': id};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<SalesDetailModel>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Sales/GetDealDetailById',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<SalesDetailModel>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Sales/GetDealDetailById',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late SalesDetailModel _value;
     try {
       _value = SalesDetailModel.fromJson(_result.data!);
-    } on Object catch (e, s) {
-      errorLogger?.logError(e, s, _options);
-      rethrow;
-    }
-    return _value;
-  }
-
-  @override
-  Future<List<PaymentMethodModel>> getAllPaymentMethods() async {
-    final _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{};
-    final _headers = <String, dynamic>{};
-    const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<PaymentMethodModel>>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Sales/GetAllPaymentMethod',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
-    final _result = await _dio.fetch<List<dynamic>>(_options);
-    late List<PaymentMethodModel> _value;
-    try {
-      _value = _result.data!
-          .map((dynamic i) =>
-              PaymentMethodModel.fromJson(i as Map<String, dynamic>))
-          .toList();
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
       rethrow;
@@ -603,52 +485,66 @@ class _ApiService implements ApiService {
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<void>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Sales/AddPayment',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<void>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Sales/AddPayment',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     await _dio.fetch<void>(_options);
   }
 
   @override
   Future<void> addRequirement(
-    Map<String, dynamic> data,
+    String measurementId,
+    String? notes,
+    String? exepectedCallDate,
+    String? exepectedCallTimeFrom,
+    String? exepectedCallTimeTo,
     List<MultipartFile>? imageFiles,
   ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
-    final _data = <String, dynamic>{};
-    _data.addAll(data);
-    final _options = _setStreamType<void>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Sales/AddRequirement',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _data = FormData();
+    _data.fields.add(MapEntry('measurementId', measurementId));
+    if (notes != null) {
+      _data.fields.add(MapEntry('notes', notes));
+    }
+    if (exepectedCallDate != null) {
+      _data.fields.add(MapEntry('exepectedCallDate', exepectedCallDate));
+    }
+    if (exepectedCallTimeFrom != null) {
+      _data.fields.add(
+        MapEntry('exepectedCallTimeFrom', exepectedCallTimeFrom),
+      );
+    }
+    if (exepectedCallTimeTo != null) {
+      _data.fields.add(MapEntry('exepectedCallTimeTo', exepectedCallTimeTo));
+    }
+    if (imageFiles != null) {
+      _data.files.addAll(imageFiles.map((i) => MapEntry('imageFiles', i)));
+    }
+    final _options = _setStreamType<void>(
+      Options(
+        method: 'POST',
+        headers: _headers,
+        extra: _extra,
+        contentType: 'multipart/form-data',
+      )
+          .compose(
+            _dio.options,
+            'Sales/AddRequirement',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     await _dio.fetch<void>(_options);
   }
 
@@ -659,22 +555,16 @@ class _ApiService implements ApiService {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(body);
-    final _options = _setStreamType<void>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Sales/MakeMeasurementDone',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<void>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Sales/MakeMeasurementDone',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     await _dio.fetch<void>(_options);
   }
 
@@ -684,28 +574,24 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<CustomizationTaskModel>>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Programer/GetAll',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<List<CustomizationTaskModel>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Programer/GetAll',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<List<dynamic>>(_options);
     late List<CustomizationTaskModel> _value;
     try {
       _value = _result.data!
-          .map((dynamic i) =>
-              CustomizationTaskModel.fromJson(i as Map<String, dynamic>))
+          .map(
+            (dynamic i) =>
+                CustomizationTaskModel.fromJson(i as Map<String, dynamic>),
+          )
           .toList();
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
@@ -720,22 +606,16 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{r'id': id};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<TaskDetailsModel>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Programer/GetById',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<TaskDetailsModel>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Programer/GetById',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late TaskDetailsModel _value;
     try {
@@ -753,22 +633,16 @@ class _ApiService implements ApiService {
     final queryParameters = <String, dynamic>{r'Id': reportId};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<void>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Programer/MakeReportDone',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<void>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Programer/MakeReportDone',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     await _dio.fetch<void>(_options);
   }
 
@@ -779,23 +653,134 @@ class _ApiService implements ApiService {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(task.toJson());
-    final _options = _setStreamType<void>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          'Programer/UpdateTask',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<void>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Programer/UpdateTask',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     await _dio.fetch<void>(_options);
+  }
+
+  @override
+  Future<List<TodayCallModel>> getTodayCalls() async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<List<TodayCallModel>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Sales/GetTodayCalls',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<List<dynamic>>(_options);
+    late List<TodayCallModel> _value;
+    try {
+      _value = _result.data!
+          .map(
+            (dynamic i) => TodayCallModel.fromJson(i as Map<String, dynamic>),
+          )
+          .toList();
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<void> changeStatus({
+    required String measurementId,
+    required String statusId,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{
+      r'measurementId': measurementId,
+      r'statusId': statusId,
+    };
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<void>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Sales/UpdateMeasurementStatus',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    await _dio.fetch<void>(_options);
+  }
+
+  @override
+  Future<List<StatusModel>> getAllStatuses() async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<List<StatusModel>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Sales/GetAllStatus',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<List<dynamic>>(_options);
+    late List<StatusModel> _value;
+    try {
+      _value = _result.data!
+          .map((dynamic i) => StatusModel.fromJson(i as Map<String, dynamic>))
+          .toList();
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<List<NotificationModel>> getNotifications() async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<List<NotificationModel>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Notification/GetNotifications',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<List<dynamic>>(_options);
+    late List<NotificationModel> _value;
+    try {
+      _value = _result.data!
+          .map(
+            (dynamic i) =>
+                NotificationModel.fromJson(i as Map<String, dynamic>),
+          )
+          .toList();
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
   }
 
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
@@ -811,10 +796,7 @@ class _ApiService implements ApiService {
     return requestOptions;
   }
 
-  String _combineBaseUrls(
-    String dioBaseUrl,
-    String? baseUrl,
-  ) {
+  String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
     if (baseUrl == null || baseUrl.trim().isEmpty) {
       return dioBaseUrl;
     }

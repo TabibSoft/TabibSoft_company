@@ -6,10 +6,11 @@ import 'package:tabib_soft_company/features/programmers/data/model/customization
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/task_details_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/task_update_model.dart';
-import 'package:tabib_soft_company/features/sales/data/model/details/payment_method_model.dart';
-import 'package:tabib_soft_company/features/sales/data/model/details/sales_details_model.dart';
-import 'package:tabib_soft_company/features/sales/data/model/measurement_done/measurement_done_model.dart';
-import 'package:tabib_soft_company/features/sales/data/model/paginated_sales_model.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/data/models/filter/status_model.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/data/models/notes/sales_detail_model.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/data/models/paginated_sales_model.dart';
+import 'package:tabib_soft_company/features/sales/notifications/data/model/notification_model.dart';
+import 'package:tabib_soft_company/features/sales/today_calls/data/models/today_call_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/add_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/product_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
@@ -95,15 +96,20 @@ abstract class ApiService {
   Future<PaginatedSales> getAllMeasurements({
     @Query("page") int page = 1,
     @Query("pageSize") int pageSize = 10,
-    @Query("statusId") String? statusId,
+    @Query("StatusId") String? statusId,
+    @Query("ProudctId") String? productId,
+    @Query("search") String? search,
+    @Query("FromDate") String? fromDate,
+    @Query("ToDate") String? toDate,
   });
+
 
   @GET(ApiConstants.getDealDetailById)
   Future<SalesDetailModel> getDealDetailById({
     @Query("id") required String id,
   });
-  @GET(ApiConstants.getAllPaymentMethods)
-  Future<List<PaymentMethodModel>> getAllPaymentMethods();
+  // @GET(ApiConstants.getAllPaymentMethods)
+  // Future<List<PaymentMethodModel>> getAllPaymentMethods();
   @POST(ApiConstants.addPayment)
   Future<void> addPayment({
     @Query("PaymentDate") String? PaymentDate,
@@ -113,12 +119,16 @@ abstract class ApiService {
     @Query("payMethodId") String? payMethodId,
   });
 
-  @POST(ApiConstants.addRequirement)
+ @POST(ApiConstants.addRequirement)
+  @MultiPart()
   Future<void> addRequirement(
-    @Body() Map<String, dynamic> data,
-    @Part() List<MultipartFile>? imageFiles,
+    @Part(name: "measurementId") String measurementId,
+    @Part(name: "notes") String? notes,
+    @Part(name: "exepectedCallDate") String? exepectedCallDate,
+    @Part(name: "exepectedCallTimeFrom") String? exepectedCallTimeFrom,
+    @Part(name: "exepectedCallTimeTo") String? exepectedCallTimeTo,
+    @Part(name: "imageFiles") List<MultipartFile>? imageFiles,
   );
-
   @POST(ApiConstants.makeMeasurementDone)
   Future<void> makeMeasurementDone(@Body() Map<String, dynamic> body);
 
@@ -133,4 +143,21 @@ abstract class ApiService {
 
   @POST(ApiConstants.updateTask)
   Future<void> updateTask(@Body() TaskUpdateModel task);
+
+  @GET(ApiConstants.getTodayCalls) // Added new method
+  Future<List<TodayCallModel>> getTodayCalls();
+
+@POST(ApiConstants.changeStatus) // Added new method for changing status
+  Future<void> changeStatus({
+    @Query("measurementId") required String measurementId,
+    @Query("statusId") required String statusId,
+  });
+
+
+  @GET(ApiConstants.getAllStatuses)
+Future<List<StatusModel>> getAllStatuses();
+
+@GET(ApiConstants.getNotifications) // Added for fetching notifications
+  Future<List<NotificationModel>> getNotifications();
+
 }

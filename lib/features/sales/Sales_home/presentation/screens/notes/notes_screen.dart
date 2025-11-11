@@ -772,11 +772,14 @@ class _NotesScreenState extends State<NotesScreen> {
                                         ),
                                       ),
                                       Positioned(
-                                        right: 0,
-                                        top: 0,
+                                        right: -12.w,
+                                        top: -15.h,
                                         child: IconButton(
-                                          icon: const Icon(Icons.close,
-                                              color: Colors.black),
+                                          icon: const Icon(
+                                            Icons.close,
+                                            color: Colors.black,
+                                            size: 30,
+                                          ),
                                           onPressed: () =>
                                               Navigator.pop(dialogContext),
                                         ),
@@ -998,8 +1001,9 @@ class _NoteCardState extends State<_NoteCard> {
               ),
               if (hasImages)
                 Positioned(
-                  right: 16.w,
-                  bottom: _bottomOffset,
+                  right: 230.w,
+                  left: 0,
+                  bottom: -30.h,
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
@@ -1022,7 +1026,9 @@ class _NoteCardState extends State<_NoteCard> {
                       }
                     },
                     child: Transform.rotate(
-                      angle: _isExpanded ? math.pi : 0,
+                      angle: _isExpanded
+                          ? math.pi
+                          : 0, // Rotate 180 degrees when expanded
                       child: Image.asset("assets/images/pngs/dropdown.png"),
                     ),
                   ),

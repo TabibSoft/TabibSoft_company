@@ -11,7 +11,7 @@ import 'package:tabib_soft_company/features/sales/Sales_home/presentation/screen
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_screen.dart';
 import 'package:tabib_soft_company/features/home/presentation/screens/nav_bar/settings.dart';
 
-class HomeScreen  extends StatelessWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   static const Color primaryColor =
@@ -240,7 +240,7 @@ class HomeScreen  extends StatelessWidget {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) =>
-                                        const MediatorScreen()),
+                                        const ModiratorScreen()),
                               ),
                               primaryColor: accentColor,
                             ),

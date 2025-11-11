@@ -276,37 +276,37 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               SizedBox(height: 14.h),
 
-                              GestureDetector(
-                                onTap: () {
-                                  // TODO: استعادة كلمة السر
-                                },
-                                child: const Text(
-                                  'نسيت كلمة السر؟ استعادة كلمة السر',
-                                  style: TextStyle(
-                                    fontFamily: 'Cairo',
-                                    // decoration: TextDecoration.underline,
-                                    color: Color(0xFF16A9B5),
-                                  ),
-                                ),
-                              ),
+                              // GestureDetector(
+                              //   onTap: () {
+                              //     // TODO: استعادة كلمة السر
+                              //   },
+                              //   child: const Text(
+                              //     'نسيت كلمة السر؟ استعادة كلمة السر',
+                              //     style: TextStyle(
+                              //       fontFamily: 'Cairo',
+                              //       // decoration: TextDecoration.underline,
+                              //       color: Color(0xFF16A9B5),
+                              //     ),
+                              //   ),
+                              // ),
 
                               SizedBox(height: 18.h),
                               Container(height: 1.h, color: Colors.grey[300]),
                               SizedBox(height: 12.h),
 
-                              GestureDetector(
-                                onTap: () {
-                                  // TODO: انشاء حساب
-                                },
-                                child: const Text(
-                                  'ليس لديك حساب؟ انشاء حساب',
-                                  style: TextStyle(
-                                    fontFamily: 'Cairo',
-                                    color: Color(0xFF2A6C73),
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
+                              // GestureDetector(
+                              //   onTap: () {
+                              //     // TODO: انشاء حساب
+                              //   },
+                              //   child: const Text(
+                              //     'ليس لديك حساب؟ انشاء حساب',
+                              //     style: TextStyle(
+                              //       fontFamily: 'Cairo',
+                              //       color: Color(0xFF2A6C73),
+                              //       fontSize: 15,
+                              //     ),
+                              //   ),
+                              // ),
 
                               SizedBox(height: 100.h),
                             ],

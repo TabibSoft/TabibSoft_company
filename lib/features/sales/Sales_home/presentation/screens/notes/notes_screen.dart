@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:async'; // Add this
@@ -8,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/notes/add_note_model.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/data/models/notes/sales_detail_model.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/notes/add_note_cubit.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/notes/add_note_state.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/notes/sales_details_cubit.dart';
@@ -15,8 +15,16 @@ import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits
 
 class NotesScreen extends StatefulWidget {
   final String measurementId;
+  final String? customerName;
+  final String? customerPhone;
+  final bool isFromNotification;
 
-  const NotesScreen({super.key, required this.measurementId});
+  const NotesScreen(
+      {super.key,
+      required this.measurementId,
+      this.customerName,
+      this.customerPhone,
+      this.isFromNotification = false});
 
   static const double horizontalPadding = 16.0;
 
@@ -213,19 +221,29 @@ class _NotesScreenState extends State<NotesScreen> {
                             } else if (state.status ==
                                 SalesDetailsStatus.loaded) {
                               final detail = state.detail!;
+                              final customerName = widget.customerName ??
+                                  detail.measurementRequirement.first
+                                      .customerName;
+                              final customerPhone = widget.customerPhone ??
+                                  detail.measurementRequirement.first
+                                      .customerPhone;
                               // Collect all notes and their associated images, ordered from newest to oldest
                               List<Map<String, dynamic>> allNotes = [];
                               // Add notes from measurementRequirement in reverse order (newest first)
                               for (var requirement
                                   in detail.measurementRequirement.reversed) {
                                 if (requirement.notes != null) {
-                                  final normalizedImages = (requirement.requireImages ?? <String>[])
+                                  final normalizedImages = (requirement
+                                              .requireImages ??
+                                          <String>[])
                                       .map((img) => img.replaceAll(r'\', '/'))
                                       .toList();
                                   allNotes.add({
                                     'note': requirement.notes,
                                     'images': normalizedImages,
-                                    'date': requirement.creatDate ?? detail.date, // Assuming creatDate exists in requirement model
+                                    'date': requirement.creatDate ??
+                                        detail
+                                            .date, // Assuming creatDate exists in requirement model
                                   });
                                 }
                               }
@@ -234,7 +252,8 @@ class _NotesScreenState extends State<NotesScreen> {
                                 allNotes.add({
                                   'note': detail.note,
                                   'images': <String>[],
-                                  'date': detail.date, // Use detail.date for main note
+                                  'date': detail
+                                      .date, // Use detail.date for main note
                                 });
                               }
                               return ListView(
@@ -242,6 +261,12 @@ class _NotesScreenState extends State<NotesScreen> {
                                     horizontal: NotesScreen.horizontalPadding,
                                     vertical: 8),
                                 children: [
+                                  if (widget.isFromNotification)
+                                    _buildCustomerCard(
+                                      customerName: customerName,
+                                      customerPhone: customerPhone,
+                                      detail: detail,
+                                    ),
                                   if (allNotes.isEmpty)
                                     Padding(
                                       padding: EdgeInsets.all(16.w),
@@ -800,6 +825,84 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 }
 
+Widget _buildCustomerCard({
+  required String? customerName,
+  required String? customerPhone,
+  required SalesDetailModel detail,
+}) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'معلومات العميل',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xff104D9D),
+          ),
+        ),
+        const Divider(height: 16, thickness: 1),
+        _buildInfoRow('الاشعار:', customerName ?? 'غير متوفر'),
+        _buildInfoRow('العميل:', customerPhone ?? 'غير متوفر'),
+        _buildInfoRow('المهندس:', detail.engineerName),
+        _buildInfoRow('تاريخ الصفقة:', detail.date.toString().substring(0, 10)),
+        _buildInfoRow(
+            'المكامله الآتيه:',
+            detail.measurementRequirement.first.exepectedCallDate
+                .toString()
+                .substring(0, 10)),
+        _buildInfoRow('إجمالي الصفقة:', detail.total.toStringAsFixed(2)),
+        _buildInfoRow('الخصم:', detail.discount.toStringAsFixed(2)),
+        _buildInfoRow('الإجمالي النهائي:', detail.endTotal.toStringAsFixed(2)),
+      ],
+    ),
+  );
+}
+
+Widget _buildInfoRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4.0),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black54,
+            ),
+            textAlign: TextAlign.end,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 class _NoteCard extends StatefulWidget {
   final String note;
   final List<String> images;
@@ -989,7 +1092,8 @@ class _NoteCardState extends State<_NoteCard> {
                               color: Colors.grey[300],
                               borderRadius: BorderRadius.circular(8.r),
                             ),
-                            child: const Icon(Icons.error, size: 50, color: Colors.red),
+                            child: const Icon(Icons.error,
+                                size: 50, color: Colors.red),
                           );
                         },
                       ),

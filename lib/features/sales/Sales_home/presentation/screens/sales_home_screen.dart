@@ -130,186 +130,186 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  Future<bool?> _showLogoutDialog() {
-    return showGeneralDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'تأكيد تسجيل الخروج',
-      barrierColor: Colors.black54.withOpacity(0.55),
-      transitionDuration: const Duration(milliseconds: 320),
-      pageBuilder: (ctx, anim1, anim2) => const SizedBox.shrink(),
-      transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
-        final curved = Curves.easeOutBack.transform(animation.value);
-        return Transform.scale(
-          scale: curved,
-          child: Opacity(
-            opacity: animation.value,
-            child: Center(
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.18),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        height: 110,
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            topRight: Radius.circular(16),
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 62,
-                                height: 62,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.12),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.logout,
-                                  size: 34,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      ' تسجيل الخروج',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 6),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 20.0, vertical: 18),
-                        child: Column(
-                          children: [
-                            Text(
-                              'هل أنت متأكد أنك تريد تسجيل الخروج الآن؟',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 15,
-                                height: 1.4,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 18.0, vertical: 12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  Navigator.of(dialogContext).pop(false);
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  side: const BorderSide(
-                                      color: Color(0xFF1976D2), width: 1.4),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
-                                ),
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.close, color: Color(0xFF1976D2)),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'لا، إلغاء',
-                                      style: TextStyle(
-                                          color: Color(0xFF1976D2),
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.of(dialogContext).pop(true);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF0D47A1),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
-                                  elevation: 6,
-                                ),
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.logout, color: Colors.white),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'نعم، تسجيل الخروج',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+  // Future<bool?> _showLogoutDialog() {
+  //   return showGeneralDialog<bool>(
+  //     context: context,
+  //     barrierDismissible: true,
+  //     barrierLabel: 'تأكيد تسجيل الخروج',
+  //     barrierColor: Colors.black54.withOpacity(0.55),
+  //     transitionDuration: const Duration(milliseconds: 320),
+  //     pageBuilder: (ctx, anim1, anim2) => const SizedBox.shrink(),
+  //     transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
+  //       final curved = Curves.easeOutBack.transform(animation.value);
+  //       return Transform.scale(
+  //         scale: curved,
+  //         child: Opacity(
+  //           opacity: animation.value,
+  //           child: Center(
+  //             child: Material(
+  //               color: Colors.transparent,
+  //               child: Container(
+  //                 margin: const EdgeInsets.symmetric(horizontal: 24),
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.white,
+  //                   borderRadius: BorderRadius.circular(16),
+  //                   boxShadow: [
+  //                     BoxShadow(
+  //                       color: Colors.black.withOpacity(0.18),
+  //                       blurRadius: 20,
+  //                       offset: const Offset(0, 10),
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 child: Column(
+  //                   mainAxisSize: MainAxisSize.min,
+  //                   children: [
+  //                     Container(
+  //                       height: 110,
+  //                       decoration: const BoxDecoration(
+  //                         gradient: LinearGradient(
+  //                           colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+  //                           begin: Alignment.topLeft,
+  //                           end: Alignment.bottomRight,
+  //                         ),
+  //                         borderRadius: BorderRadius.only(
+  //                           topLeft: Radius.circular(16),
+  //                           topRight: Radius.circular(16),
+  //                         ),
+  //                       ),
+  //                       child: Padding(
+  //                         padding: const EdgeInsets.symmetric(horizontal: 18.0),
+  //                         child: Row(
+  //                           crossAxisAlignment: CrossAxisAlignment.center,
+  //                           children: [
+  //                             Container(
+  //                               width: 62,
+  //                               height: 62,
+  //                               decoration: BoxDecoration(
+  //                                 color: Colors.white.withOpacity(0.12),
+  //                                 shape: BoxShape.circle,
+  //                               ),
+  //                               child: const Icon(
+  //                                 Icons.logout,
+  //                                 size: 34,
+  //                                 color: Colors.white,
+  //                               ),
+  //                             ),
+  //                             const SizedBox(width: 12),
+  //                             const Expanded(
+  //                               child: Column(
+  //                                 mainAxisAlignment: MainAxisAlignment.center,
+  //                                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                                 children: [
+  //                                   Text(
+  //                                     ' تسجيل الخروج',
+  //                                     style: TextStyle(
+  //                                       color: Colors.white,
+  //                                       fontSize: 22,
+  //                                       fontWeight: FontWeight.bold,
+  //                                     ),
+  //                                   ),
+  //                                   SizedBox(height: 6),
+  //                                 ],
+  //                               ),
+  //                             ),
+  //                           ],
+  //                         ),
+  //                       ),
+  //                     ),
+  //                     const Padding(
+  //                       padding: EdgeInsets.symmetric(
+  //                           horizontal: 20.0, vertical: 18),
+  //                       child: Column(
+  //                         children: [
+  //                           Text(
+  //                             'هل أنت متأكد أنك تريد تسجيل الخروج الآن؟',
+  //                             textAlign: TextAlign.center,
+  //                             style: TextStyle(
+  //                               fontSize: 15,
+  //                               height: 1.4,
+  //                               color: Colors.black87,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ),
+  //                     const SizedBox(height: 8),
+  //                     Padding(
+  //                       padding: const EdgeInsets.symmetric(
+  //                           horizontal: 18.0, vertical: 12),
+  //                       child: Row(
+  //                         children: [
+  //                           Expanded(
+  //                             child: OutlinedButton(
+  //                               onPressed: () {
+  //                                 Navigator.of(dialogContext).pop(false);
+  //                               },
+  //                               style: OutlinedButton.styleFrom(
+  //                                 backgroundColor: Colors.white,
+  //                                 side: const BorderSide(
+  //                                     color: Color(0xFF1976D2), width: 1.4),
+  //                                 shape: RoundedRectangleBorder(
+  //                                     borderRadius: BorderRadius.circular(12)),
+  //                                 padding:
+  //                                     const EdgeInsets.symmetric(vertical: 14),
+  //                               ),
+  //                               child: const Row(
+  //                                 mainAxisAlignment: MainAxisAlignment.center,
+  //                                 children: [
+  //                                   Icon(Icons.close, color: Color(0xFF1976D2)),
+  //                                   SizedBox(width: 8),
+  //                                   Text(
+  //                                     'لا، إلغاء',
+  //                                     style: TextStyle(
+  //                                         color: Color(0xFF1976D2),
+  //                                         fontWeight: FontWeight.bold),
+  //                                   ),
+  //                                 ],
+  //                               ),
+  //                             ),
+  //                           ),
+  //                           const SizedBox(width: 12),
+  //                           Expanded(
+  //                             child: ElevatedButton(
+  //                               onPressed: () {
+  //                                 Navigator.of(dialogContext).pop(true);
+  //                               },
+  //                               style: ElevatedButton.styleFrom(
+  //                                 backgroundColor: const Color(0xFF0D47A1),
+  //                                 shape: RoundedRectangleBorder(
+  //                                     borderRadius: BorderRadius.circular(12)),
+  //                                 padding:
+  //                                     const EdgeInsets.symmetric(vertical: 14),
+  //                                 elevation: 6,
+  //                               ),
+  //                               child: const Row(
+  //                                 mainAxisAlignment: MainAxisAlignment.center,
+  //                                 children: [
+  //                                   Icon(Icons.logout, color: Colors.white),
+  //                                   SizedBox(width: 8),
+  //                                   Text(
+  //                                     'نعم، تسجيل الخروج',
+  //                                     style: TextStyle(
+  //                                         color: Colors.white,
+  //                                         fontWeight: FontWeight.bold),
+  //                                   ),
+  //                                 ],
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -343,18 +343,20 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.logout, color: Colors.white),
-              onPressed: () async {
-                final shouldLogout = await _showLogoutDialog();
-                if (shouldLogout == true) {
-                  await CacheHelper.removeData(key: 'loginToken');
-                  await CacheHelper.removeData(key: 'userName');
-                  await CacheHelper.removeData(key: 'userRoles');
-                  if (!mounted) return;
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  );
-                }
+              icon: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+              onPressed: () {
+                Navigator.of(context).pop();
+
+                // final shouldLogout = await _showLogoutDialog();
+                // if (shouldLogout == true) {
+                //   await CacheHelper.removeData(key: 'loginToken');
+                //   await CacheHelper.removeData(key: 'userName');
+                //   await CacheHelper.removeData(key: 'userRoles');
+                //   if (!mounted) return;
+                //   Navigator.of(context).pushReplacement(
+                //     MaterialPageRoute(builder: (_) => const LoginScreen()),
+                //   );
+                // }
               },
             ),
           ],

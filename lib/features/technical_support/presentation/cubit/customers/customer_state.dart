@@ -78,6 +78,7 @@ class CustomerState extends Equatable {
         selectedStatus,
         newlyAddedIssue,
         newlyAddedIssueTime,
+        sitiuationList,
+        problemCategories,
       ];
 }
-

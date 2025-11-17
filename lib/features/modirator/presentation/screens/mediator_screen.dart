@@ -4,15 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:tabib_soft_company/core/networking/api_result.dart';
+import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/add_customer_model.dart';
-import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/product_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/add_cusomer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/add_customer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/product_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/product_state.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 
 class ModiratorScreen extends StatelessWidget {
   const ModiratorScreen({super.key});
@@ -447,284 +451,801 @@ class _AddIssueForm extends StatefulWidget {
 
 class _AddIssueFormState extends State<_AddIssueForm> {
   final _formKey = GlobalKey<FormState>();
-  final _client = TextEditingController();
-  final _specialty = TextEditingController();
-  final _problem = TextEditingController();
-  DateTime? _expectedDate;
-  TimeOfDay? _from;
-  TimeOfDay? _to;
-  final List<String> _imagePaths = [];
+  final _clientNameController = TextEditingController();
+  final _problemTypeController = TextEditingController();
+  final _phoneNumberController = TextEditingController();
+  final _directionController = TextEditingController();
+  final _detailsController = TextEditingController();
+  final _statusController = TextEditingController();
+
+  static const Color primaryColor = Color(0xff104D9D);
+
+  CustomerModel? _selectedCustomer;
+  final List<File> _selectedImages = [];
+  ProblemStatusModel? _selectedStatus;
+  ProblemCategoryModel? _selectedCategory;
+  EngineerModel? _selectedEngineer;
+
+  bool _isClientDropdownVisible = false;
+  bool _isTypeDropdownVisible = false;
+  bool _isDirectionDropdownVisible = false;
+  bool _isStatusDropdownVisible = false;
 
   @override
   void initState() {
     super.initState();
-    _expectedDate = DateTime.now();
-    final nowTime = TimeOfDay.now();
-    _from = nowTime;
-    _to = nowTime.replacing(hour: (nowTime.hour + 1) % 24);
+    context.read<CustomerCubit>().fetchCustomers();
+    context.read<CustomerCubit>().fetchProblemCategories();
+    context.read<CustomerCubit>().fetchProblemStatus();
+    context.read<EngineerCubit>().fetchEngineers();
+    _clientNameController.addListener(_onClientNameChanged);
+  }
+
+  void _onClientNameChanged() {
+    final query = _clientNameController.text;
+    if (query.isNotEmpty) {
+      context.read<CustomerCubit>().searchCustomers(query);
+      setState(() => _isClientDropdownVisible = true);
+    } else {
+      setState(() {
+        _isClientDropdownVisible = false;
+        _selectedCustomer = null;
+      });
+    }
   }
 
   @override
   void dispose() {
-    _client.dispose();
-    _specialty.dispose();
-    _problem.dispose();
+    _clientNameController.removeListener(_onClientNameChanged);
+    _clientNameController.dispose();
+    _problemTypeController.dispose();
+    _phoneNumberController.dispose();
+    _directionController.dispose();
+    _detailsController.dispose();
+    _statusController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickExpectedDate() async {
-    final now = DateTime.now();
-    final picked = await showDialog<DateTime>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => _DatePickerDialog(
-        initialDate: _expectedDate ?? now,
-        onConfirm: (d) => Navigator.of(context).pop(d),
+  void _onCustomerSelected(CustomerModel customer) {
+    setState(() {
+      _selectedCustomer = customer;
+      _clientNameController.text = customer.name ?? '';
+      _phoneNumberController.text = customer.phone ?? '';
+      _isClientDropdownVisible = false;
+    });
+  }
+
+  void _onImagePicked(File image) {
+    setState(() {
+      _selectedImages.add(image);
+    });
+  }
+
+  void _onImageRemoved(File image) {
+    setState(() {
+      _selectedImages.remove(image);
+    });
+  }
+
+  void _onSave() {
+    if (_selectedCustomer == null ||
+        _problemTypeController.text.isEmpty ||
+        _phoneNumberController.text.isEmpty ||
+        _directionController.text.isEmpty ||
+        _selectedStatus == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يرجى ملء جميع الحقول المطلوبة')),
+      );
+      return;
+    }
+
+    bool hasValidImages = true;
+    for (var image in _selectedImages) {
+      if (!image.existsSync() || image.lengthSync() == 0) {
+        hasValidImages = false;
+        print('Invalid image: ${image.path}');
+      }
+    }
+    if (!hasValidImages) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم اختيار صورة غير صالحة')),
+      );
+      return;
+    }
+
+    final customerState = context.read<CustomerCubit>().state;
+    final engineerState = context.read<EngineerCubit>().state;
+
+    final selectedCategory = customerState.problemCategories.firstWhere(
+      (c) => c.name == _problemTypeController.text,
+      orElse: () => ProblemCategoryModel(id: '', name: ''),
+    );
+
+    if (selectedCategory.id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('فئة المشكلة غير صالحة')),
+      );
+      return;
+    }
+
+    final selectedEngineer = engineerState.engineers.firstWhere(
+      (e) => e.name == _directionController.text,
+      orElse: () => EngineerModel(id: '', name: '', address: '', telephone: ''),
+    );
+
+    if (_selectedCustomer!.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('معرف العميل غير متاح')),
+      );
+      return;
+    }
+
+    if (!RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+        .hasMatch(_selectedCustomer!.id!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('معرف العميل غير صالح')),
+      );
+      return;
+    }
+    if (!RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+        .hasMatch(selectedCategory.id)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('معرف فئة المشكلة غير صالح')),
+      );
+      return;
+    }
+    if (selectedEngineer.id.isNotEmpty &&
+        !RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+            .hasMatch(selectedEngineer.id)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('معرف المهندس غير صالح')),
+      );
+      return;
+    }
+
+    context.read<CustomerCubit>().createProblem(
+          customerId: _selectedCustomer!.id!,
+          dateTime: DateTime.now(),
+          problemStatusId: _selectedStatus!.id,
+          problemCategoryId: selectedCategory.id,
+          note: _detailsController.text.isNotEmpty
+              ? _detailsController.text
+              : null,
+          engineerId:
+              selectedEngineer.id.isNotEmpty ? selectedEngineer.id : null,
+          details: _detailsController.text.isNotEmpty
+              ? _detailsController.text
+              : null,
+          phone: _phoneNumberController.text,
+          images: _selectedImages.isNotEmpty ? _selectedImages : null,
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<CustomerCubit, CustomerState>(
+      listener: (context, state) {
+        if (state.status == CustomerStatus.success && state.isProblemAdded) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('تم إضافة المشكلة بنجاح')),
+          );
+          widget.onSaved();
+        } else if (state.status == CustomerStatus.failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(state.errorMessage ?? 'حدث خطأ أثناء الإضافة')),
+          );
+        }
+      },
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            RowField(
+              label: 'اسم العميل',
+              child: ClientNameField(
+                controller: _clientNameController,
+                isDropdownVisible: _isClientDropdownVisible,
+                onToggleDropdown: () {
+                  setState(() {
+                    _isClientDropdownVisible = !_isClientDropdownVisible;
+                    if (_isClientDropdownVisible) {
+                      context.read<CustomerCubit>().fetchCustomers();
+                    }
+                  });
+                },
+                onCustomerSelected: _onCustomerSelected,
+              ),
+            ),
+            RowField(
+              label: 'رقم التواصل',
+              child:
+                  _boxedText(_phoneNumberController, type: TextInputType.phone),
+            ),
+            RowField(
+              label: 'نوع المشكلة',
+              child: ProblemTypeDropdown(
+                controller: _problemTypeController,
+                isDropdownVisible: _isTypeDropdownVisible,
+                onToggleDropdown: () {
+                  setState(() {
+                    _isTypeDropdownVisible = !_isTypeDropdownVisible;
+                  });
+                },
+              ),
+            ),
+            RowField(
+              label: 'توجيه إلى',
+              child: DirectionDropdown(
+                controller: _directionController,
+                isDropdownVisible: _isDirectionDropdownVisible,
+                onToggleDropdown: () {
+                  setState(() {
+                    _isDirectionDropdownVisible = !_isDirectionDropdownVisible;
+                  });
+                },
+              ),
+            ),
+            RowField(
+              label: 'حالة المشكلة',
+              child: StatusDropdown(
+                controller: _statusController,
+                isDropdownVisible: _isStatusDropdownVisible,
+                onToggleDropdown: () {
+                  setState(() {
+                    _isStatusDropdownVisible = !_isStatusDropdownVisible;
+                  });
+                },
+                onStatusSelected: (status) {
+                  setState(() {
+                    _selectedStatus = status;
+                  });
+                },
+              ),
+            ),
+            RowField(
+              label: 'التفاصيل',
+              child: _boxedMultiline(_detailsController),
+            ),
+            RowField(
+              label: 'الصور',
+              child: ImagePickerWidget(
+                onImagePicked: _onImagePicked,
+              ),
+            ),
+            if (_selectedImages.isNotEmpty)
+              SizedBox(
+                height: 100.h,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _selectedImages.length,
+                  itemBuilder: (context, index) {
+                    final image = _selectedImages[index];
+                    return Padding(
+                      padding: EdgeInsets.all(8.w),
+                      child: Stack(
+                        children: [
+                          Image.file(
+                            image,
+                            width: 80.w,
+                            height: 80.h,
+                            fit: BoxFit.cover,
+                          ),
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: () => _onImageRemoved(image),
+                              child: const Icon(
+                                Icons.remove_circle,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            SizedBox(height: 16.h),
+            _saveButton(onPressed: _onSave),
+          ],
+        ),
       ),
     );
-    if (picked != null) setState(() => _expectedDate = picked);
-  } // اختيار التاريخ عبر حوار مخصص ضمن showDialog.
+  }
+}
 
-  Future<void> _pickTime({required bool isFrom}) async {
-    final t = await showTimePicker(
-      context: context,
-      initialTime: (isFrom ? _from : _to) ?? TimeOfDay.now(),
-      builder: (ctx, child) =>
-          Directionality(textDirection: TextDirection.rtl, child: child!),
+class ClientNameField extends StatelessWidget {
+  final TextEditingController controller;
+  final bool isDropdownVisible;
+  final VoidCallback onToggleDropdown;
+  final Function(CustomerModel) onCustomerSelected;
+
+  const ClientNameField({
+    super.key,
+    required this.controller,
+    required this.isDropdownVisible,
+    required this.onToggleDropdown,
+    required this.onCustomerSelected,
+  });
+
+  static const Color primaryColor = Color(0xff104D9D);
+
+  InputDecoration _buildDropdownDecoration({
+    required String hint,
+    required VoidCallback onIconTap,
+    required String iconAsset,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: Colors.white70, fontSize: 16),
+      suffixIcon: GestureDetector(
+        onTap: onIconTap,
+        child: Padding(
+          padding: const EdgeInsets.only(right: 15.0, left: 19),
+          child: Image.asset(iconAsset, width: 24, height: 24),
+        ),
+      ),
+      filled: true,
+      fillColor: primaryColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
     );
-    if (t != null) setState(() => isFrom ? _from = t : _to = t);
-  } // showTimePicker قياسي لاختيار الوقت.
+  }
 
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext bc) {
-        return SafeArea(
-          child: Wrap(
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('معرض الصور'),
-                onTap: () async {
-                  Navigator.pop(bc);
-                  final XFile? image =
-                      await picker.pickImage(source: ImageSource.gallery);
-                  if (image != null) {
-                    setState(() {
-                      _imagePaths.add(image.path);
-                    });
-                  }
-                },
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<CustomerCubit, CustomerState>(
+      builder: (context, state) {
+        final filteredCustomers = state.customers;
+        return Column(
+          children: [
+            TextField(
+              controller: controller,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white),
+              decoration: _buildDropdownDecoration(
+                hint: 'اسم العميل',
+                iconAsset: 'assets/images/pngs/dropdown.png',
+                onIconTap: onToggleDropdown,
               ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('الكاميرا'),
-                onTap: () async {
-                  Navigator.pop(bc);
-                  final XFile? image =
-                      await picker.pickImage(source: ImageSource.camera);
-                  if (image != null) {
-                    setState(() {
-                      _imagePaths.add(image.path);
-                    });
-                  }
-                },
+            ),
+            if (isDropdownVisible && filteredCustomers.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                constraints: const BoxConstraints(maxHeight: 300),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: primaryColor, width: 1.5),
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const ClampingScrollPhysics(),
+                  itemCount: filteredCustomers.length,
+                  itemBuilder: (ctx, idx) {
+                    final customer = filteredCustomers[idx];
+                    return ListTile(
+                      title: Text(customer.name ?? ''),
+                      onTap: () => onCustomerSelected(customer),
+                    );
+                  },
+                ),
               ),
-            ],
-          ),
+          ],
         );
       },
     );
   }
+}
 
-  Widget _timeBox({required bool isFrom}) {
-    final time = isFrom ? _from : _to;
-    final label = isFrom ? 'من' : 'إلى';
-    String displayText;
-    if (time == null) {
-      displayText = 'اختر $label';
-    } else {
-      final hour = time.hour.toString().padLeft(2, '0');
-      final minute = time.minute.toString().padLeft(2, '0');
-      displayText = '$label $hour:$minute';
-    }
-    final onTapCallback =
-        isFrom ? () => _pickTime(isFrom: true) : () => _pickTime(isFrom: false);
-    return Expanded(
-      child: InkWell(
-        onTap: onTapCallback,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xff104D9D),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.access_time, color: Colors.white),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  displayText,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+class ProblemTypeDropdown extends StatelessWidget {
+  final TextEditingController controller;
+  final bool isDropdownVisible;
+  final VoidCallback onToggleDropdown;
 
-  Widget _clientDropdown() {
-    return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xff104D9D),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Center(
-        child: TextFormField(
-          controller: _client,
-          readOnly: true,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            hintText: 'اختر',
-            hintStyle: const TextStyle(color: Colors.white70),
-            isCollapsed: true,
-            suffixIcon: Padding(
-              padding: const EdgeInsetsDirectional.only(end: 6),
-              child: ColorFiltered(
-                colorFilter:
-                    const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                child: Image.asset(
-                  'assets/images/pngs/dropdown.png',
-                  width: 10,
-                  height: 14,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ),
-          validator: (v) => (v == null || v.trim().isEmpty) ? ' مطلوب' : null,
-          onTap: widget.onClientTap,
-        ),
-      ),
-    );
-  }
+  const ProblemTypeDropdown({
+    super.key,
+    required this.controller,
+    required this.isDropdownVisible,
+    required this.onToggleDropdown,
+  });
 
-  Widget _imagesUploadSection() {
+  static const Color primaryColor = Color(0xff104D9D);
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          'رفع الملفات',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        SizedBox(height: 10.h),
         GestureDetector(
-          onTap: _pickImage,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Image.asset(
-                'assets/images/pngs/Ellipse_3.png',
-                width: 90.w,
-                height: 90.h,
-                fit: BoxFit.contain,
-              ),
-              if (_imagePaths.isNotEmpty)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(2.w),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
+          onTap: onToggleDropdown,
+          child: Container(
+            decoration: BoxDecoration(
+              color: primaryColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    controller.text.isEmpty ? 'نوع المشكلة' : controller.text,
+                    style: TextStyle(
+                      color: controller.text.isEmpty
+                          ? Colors.white70
+                          : Colors.white,
+                      fontSize: 16,
                     ),
-                    child: Text(
-                      _imagePaths.length.toString(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.sp,
-                      ),
-                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-              const Text(
-                '+',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
+                Image.asset(
+                  'assets/images/pngs/dropdown.png',
+                  width: 24,
+                  height: 24,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-        if (_imagePaths.isNotEmpty)
-          SizedBox(
-            height: 100.h,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _imagePaths.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: EdgeInsets.all(8.w),
-                  child: Image.file(
-                    File(_imagePaths[index]),
-                    width: 80.w,
-                    height: 80.h,
-                    fit: BoxFit.cover,
-                  ),
-                );
+        if (isDropdownVisible)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            constraints: const BoxConstraints(maxHeight: 300),
+            padding: const EdgeInsets.only(right: 15.0, left: 15),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: primaryColor, width: 1.5),
+            ),
+            child: BlocBuilder<CustomerCubit, CustomerState>(
+              builder: (context, state) {
+                if (state.status == CustomerStatus.loading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state.status == CustomerStatus.failure) {
+                  return Column(
+                    children: [
+                      const Text('فشل في جلب فئات المشكلة'),
+                      TextButton(
+                        onPressed: () {
+                          context
+                              .read<CustomerCubit>()
+                              .fetchProblemCategories();
+                        },
+                        child: const Text('إعادة المحاولة'),
+                      ),
+                    ],
+                  );
+                } else if (state.problemCategories.isNotEmpty) {
+                  return ListView(
+                    shrinkWrap: true,
+                    physics: const ClampingScrollPhysics(),
+                    children: state.problemCategories.map((category) {
+                      return ListTile(
+                        title: Text(category.name),
+                        onTap: () {
+                          controller.text = category.name;
+                          onToggleDropdown();
+                        },
+                      );
+                    }).toList(),
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      const Text('لا توجد فئات متاحة'),
+                      TextButton(
+                        onPressed: () {
+                          context
+                              .read<CustomerCubit>()
+                              .fetchProblemCategories();
+                        },
+                        child: const Text('إعادة المحاولة'),
+                      ),
+                    ],
+                  );
+                }
               },
             ),
           ),
       ],
     );
   }
+}
+
+class DirectionDropdown extends StatelessWidget {
+  final TextEditingController controller;
+  final bool isDropdownVisible;
+  final VoidCallback onToggleDropdown;
+
+  const DirectionDropdown({
+    super.key,
+    required this.controller,
+    required this.isDropdownVisible,
+    required this.onToggleDropdown,
+  });
+
+  static const Color primaryColor = Color(0xff104D9D);
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          RowField(label: 'اسم العميل', child: _clientDropdown()),
-          RowField(label: 'التخصص', child: _boxedText(_specialty)),
-          RowField(label: 'المشكلة', child: _boxedMultiline(_problem)),
-          RowField(
-            label: 'تاريخ المتوقع',
-            child: _dateBox(
-              value: _expectedDate == null
-                  ? 'اختر التاريخ'
-                  : '${_expectedDate!.year}/${_expectedDate!.month.toString().padLeft(2, '0')}/${_expectedDate!.day.toString().padLeft(2, '0')}',
-              onTap: _pickExpectedDate,
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: onToggleDropdown,
+          child: Container(
+            decoration: BoxDecoration(
+              color: primaryColor,
+              borderRadius: BorderRadius.circular(12),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _timeBox(isFrom: true),
-                SizedBox(width: 8.w),
-                _timeBox(isFrom: false),
+                Expanded(
+                  child: Text(
+                    controller.text.isEmpty ? 'توجيه إلي' : controller.text,
+                    style: TextStyle(
+                      color: controller.text.isEmpty
+                          ? Colors.white70
+                          : Colors.white,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Image.asset(
+                  'assets/images/pngs/dropdown.png',
+                  width: 24,
+                  height: 24,
+                ),
               ],
             ),
           ),
-          _imagesUploadSection(),
-          SizedBox(height: 16.h),
-          _saveButton(onPressed: () {
-            if (_formKey.currentState?.validate() ?? false) widget.onSaved();
-          }),
+        ),
+        if (isDropdownVisible)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            constraints: const BoxConstraints(maxHeight: 300),
+            padding: const EdgeInsets.only(right: 15.0, left: 15),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: primaryColor, width: 1.5),
+            ),
+            child: BlocBuilder<EngineerCubit, EngineerState>(
+              builder: (context, state) {
+                if (state.status == EngineerStatus.loading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state.engineers.isNotEmpty) {
+                  return ListView(
+                    shrinkWrap: true,
+                    physics: const ClampingScrollPhysics(),
+                    children: state.engineers.map((engineer) {
+                      return ListTile(
+                        title: Text(engineer.name),
+                        onTap: () {
+                          controller.text = engineer.name;
+                          onToggleDropdown();
+                        },
+                      );
+                    }).toList(),
+                  );
+                } else {
+                  return const Text('لا توجد مهندسين متاحين');
+                }
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class StatusDropdown extends StatelessWidget {
+  final TextEditingController controller;
+  final bool isDropdownVisible;
+  final VoidCallback onToggleDropdown;
+  final Function(ProblemStatusModel) onStatusSelected;
+
+  const StatusDropdown({
+    super.key,
+    required this.controller,
+    required this.isDropdownVisible,
+    required this.onToggleDropdown,
+    required this.onStatusSelected,
+  });
+
+  static const Color primaryColor = Color(0xff104D9D);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: onToggleDropdown,
+          child: Container(
+            decoration: BoxDecoration(
+              color: primaryColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    controller.text.isEmpty ? 'حالة المشكلة' : controller.text,
+                    style: TextStyle(
+                      color: controller.text.isEmpty
+                          ? Colors.white70
+                          : Colors.white,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Image.asset(
+                  'assets/images/pngs/dropdown.png',
+                  width: 24,
+                  height: 24,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (isDropdownVisible)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            constraints: const BoxConstraints(maxHeight: 300),
+            padding: const EdgeInsets.only(right: 15.0, left: 15),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: primaryColor, width: 1.5),
+            ),
+            child: BlocBuilder<CustomerCubit, CustomerState>(
+              builder: (context, state) {
+                if (state.status == CustomerStatus.loading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state.status == CustomerStatus.failure) {
+                  return Column(
+                    children: [
+                      const Text('فشل في جلب حالات المشكلة'),
+                      TextButton(
+                        onPressed: () {
+                          context.read<CustomerCubit>().fetchProblemStatus();
+                        },
+                        child: const Text('إعادة المحاولة'),
+                      ),
+                    ],
+                  );
+                } else if (state.problemStatusList.isNotEmpty) {
+                  return ListView(
+                    shrinkWrap: true,
+                    physics: const ClampingScrollPhysics(),
+                    children: state.problemStatusList.map((status) {
+                      return ListTile(
+                        title: Text(status.name),
+                        onTap: () {
+                          controller.text = status.name;
+                          onStatusSelected(status);
+                          onToggleDropdown();
+                        },
+                      );
+                    }).toList(),
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      const Text('لا توجد حالات متاحة'),
+                      TextButton(
+                        onPressed: () {
+                          context.read<CustomerCubit>().fetchProblemStatus();
+                        },
+                        child: const Text('إعادة المحاولة'),
+                      ),
+                    ],
+                  );
+                }
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class ImagePickerWidget extends StatelessWidget {
+  final Function(File) onImagePicked;
+
+  const ImagePickerWidget({
+    super.key,
+    required this.onImagePicked,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (_) => ImagePickerBottomSheet(
+            onImagePicked: onImagePicked,
+          ),
+        );
+      },
+      child: Image.asset(
+        'assets/images/pngs/upload_pic.png',
+        width: 100,
+        height: 100,
+      ),
+    );
+  }
+}
+
+class ImagePickerBottomSheet extends StatelessWidget {
+  final Function(File) onImagePicked;
+
+  const ImagePickerBottomSheet({
+    super.key,
+    required this.onImagePicked,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.camera_alt),
+            title: const Text('الكاميرا'),
+            onTap: () async {
+              final picker = ImagePicker();
+              final pickedFile =
+                  await picker.pickImage(source: ImageSource.camera);
+              if (pickedFile != null && pickedFile.path.isNotEmpty) {
+                onImagePicked(File(pickedFile.path));
+                Navigator.of(context).pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('فشل في اختيار الصورة')),
+                );
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo),
+            title: const Text('المعرض'),
+            onTap: () async {
+              final picker = ImagePicker();
+              final pickedFile =
+                  await picker.pickImage(source: ImageSource.gallery);
+              if (pickedFile != null && pickedFile.path.isNotEmpty) {
+                onImagePicked(File(pickedFile.path));
+                Navigator.of(context).pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('فشل في اختيار الصورة')),
+                );
+              }
+            },
+          ),
         ],
       ),
     );
@@ -889,7 +1410,7 @@ class _AddSubscriptionFormState extends State<_AddSubscriptionForm> {
             alignment: Alignment.center,
             children: [
               Image.asset(
-                'assets/images/pngs/Ellipse_3.png',
+                'assets/images/pngs/pictures_folder.png',
                 width: 90.w,
                 height: 90.h,
                 fit: BoxFit.contain,
@@ -1051,13 +1572,15 @@ Widget _boxedText(TextEditingController c,
 
 Widget _boxedMultiline(TextEditingController c) {
   return Container(
+    height: 100.h, // ارتفاع محدد للتوافق مع التصميم
     decoration: BoxDecoration(
       color: const Color(0xff104D9D),
       borderRadius: BorderRadius.circular(12),
     ),
     child: TextFormField(
       controller: c,
-      maxLines: 4,
+      maxLines: null,
+      expands: true,
       style: const TextStyle(color: Colors.white),
       decoration: const InputDecoration(
         border: InputBorder.none,

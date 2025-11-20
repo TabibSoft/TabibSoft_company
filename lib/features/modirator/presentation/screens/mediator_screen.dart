@@ -1,9 +1,15 @@
 // lib/features/home/presentation/screens/mediator_screen.dart
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:tabib_soft_company/features/modirator/data/models/add_subscription_model.dart';
+import 'package:tabib_soft_company/features/modirator/data/models/payment_method_model.dart';
+import 'package:tabib_soft_company/features/modirator/presentation/cubits/add_subscription_cubit.dart';
+import 'package:tabib_soft_company/features/modirator/presentation/cubits/payment_method_cubit.dart';
+import 'package:tabib_soft_company/features/modirator/presentation/cubits/payment_method_state.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
@@ -1251,14 +1257,11 @@ class ImagePickerBottomSheet extends StatelessWidget {
     );
   }
 }
-
 class _AddSubscriptionForm extends StatefulWidget {
-  const _AddSubscriptionForm({
-    required this.onSaved,
-    this.onClientTap,
-  });
   final VoidCallback onSaved;
   final VoidCallback? onClientTap;
+
+  const _AddSubscriptionForm({required this.onSaved, this.onClientTap});
 
   @override
   State<_AddSubscriptionForm> createState() => _AddSubscriptionFormState();
@@ -1266,127 +1269,224 @@ class _AddSubscriptionForm extends StatefulWidget {
 
 class _AddSubscriptionFormState extends State<_AddSubscriptionForm> {
   final _formKey = GlobalKey<FormState>();
-  final _client = TextEditingController();
-  final _specialty = TextEditingController();
-  final _paymentMethod = TextEditingController();
-  final _amount = TextEditingController();
 
+  final _clientController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _notesController = TextEditingController();
+  final _paymentMethodController = TextEditingController();
+
+  DateTime? _contractDate;
   DateTime? _startDate;
   DateTime? _endDate;
-  DateTime? _date;
+
+  String? _selectedCustomerId;
+  String? _selectedPaymentMethodId;
+
   final List<String> _imagePaths = [];
+  final ImagePicker _picker = ImagePicker();
+
+  late AddSubscriptionCubit _cubit;
 
   @override
   void initState() {
     super.initState();
-    _date = DateTime.now();
+    _cubit = context.read<AddSubscriptionCubit>();
+    _contractDate = DateTime.now();
     _startDate = DateTime.now();
-    _endDate = DateTime.now();
+    _endDate = DateTime.now().add(const Duration(days: 365));
   }
 
-  @override
-  void dispose() {
-    _client.dispose();
-    _specialty.dispose();
-    _paymentMethod.dispose();
-    _amount.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickDate(
-      ValueSetter<DateTime> setValue, DateTime? current) async {
-    final now = DateTime.now();
-    final picked = await showDialog<DateTime>(
+  Future<void> _pickDate(ValueSetter<DateTime> setter, DateTime? current) async {
+    final picked = await showDatePicker(
       context: context,
-      barrierDismissible: false,
-      builder: (_) => _DatePickerDialog(
-        initialDate: current ?? now,
-        onConfirm: (d) => Navigator.of(context).pop(d),
-      ),
-    );
-    if (picked != null) {
-      setValue(picked);
-      setState(() {});
-    }
-  } // showDialog يمنع الإغلاق الخارجي أثناء اختيار التاريخ.
-
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext bc) {
-        return SafeArea(
-          child: Wrap(
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('معرض الصور'),
-                onTap: () async {
-                  Navigator.pop(bc);
-                  final XFile? image =
-                      await picker.pickImage(source: ImageSource.gallery);
-                  if (image != null) {
-                    setState(() {
-                      _imagePaths.add(image.path);
-                    });
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('الكاميرا'),
-                onTap: () async {
-                  Navigator.pop(bc);
-                  final XFile? image =
-                      await picker.pickImage(source: ImageSource.camera);
-                  if (image != null) {
-                    setState(() {
-                      _imagePaths.add(image.path);
-                    });
-                  }
-                },
-              ),
-            ],
+      initialDate: current ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(primary: Color(0xFF20AAC9)),
           ),
+          child: child!,
         );
       },
     );
+    if (picked != null) {
+      setter(picked);
+      setState(() {});
+    }
   }
 
-  Widget _clientDropdown() {
-    return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Colors.orange, // تغيير اللون إلى برتقالي
-        borderRadius: BorderRadius.circular(12),
+  Future<void> _pickImage() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('معرض الصور'),
+              onTap: () async {
+                Navigator.pop(context);
+                final file = await _picker.pickImage(source: ImageSource.gallery);
+                if (file != null) {
+                  setState(() => _imagePaths.add(file.path));
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('الكاميرا'),
+              onTap: () async {
+                Navigator.pop(context);
+                final file = await _picker.pickImage(source: ImageSource.camera);
+                if (file != null) {
+                  setState(() => _imagePaths.add(file.path));
+                }
+              },
+            ),
+          ],
+        ),
       ),
-      child: Center(
-        child: TextFormField(
-          controller: _client,
-          readOnly: true,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            hintText: 'اختر',
-            hintStyle: const TextStyle(color: Colors.white70),
-            isCollapsed: true,
-            suffixIcon: Padding(
-              padding: const EdgeInsetsDirectional.only(end: 6),
-              child: ColorFiltered(
-                colorFilter:
-                    const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                child: Image.asset(
-                  'assets/images/pngs/dropdown.png',
-                  width: 10,
-                  height: 14,
-                  fit: BoxFit.contain,
-                ),
+    );
+  }
+
+  Future<List<MultipartFile>?> _prepareImages() async {
+    if (_imagePaths.isEmpty) return null;
+    return Future.wait(_imagePaths.map((path) => MultipartFile.fromFile(path)));
+  }
+
+  void _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedCustomerId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يرجى اختيار العميل')),
+      );
+      return;
+    }
+
+    final images = await _prepareImages();
+
+    final model = AddSubscriptionModel(
+      customerId: _selectedCustomerId!,
+      contractDate: _contractDate!,
+      startDate: _startDate!,
+      endDate: _endDate!,
+      cost: double.tryParse(_amountController.text) ?? 0.0,
+      payment: double.tryParse(_amountController.text) ?? 0.0,
+      payMethodId: _selectedPaymentMethodId ?? '',
+      notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+      file: images,
+    );
+
+    _cubit.addSubscription(model);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AddSubscriptionCubit, AddSubscriptionState>(
+      listener: (context, state) {
+        if (state.status == AddSubscriptionStatus.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('تم إضافة الاشتراك بنجاح')),
+          );
+          widget.onSaved();
+        } else if (state.status == AddSubscriptionStatus.failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.errorMessage ?? 'فشل في إضافة الاشتراك')),
+          );
+        }
+      },
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            // العميل (بحث + اختيار)
+            RowField(
+              label: 'العميل',
+              child: ClientSearchField(
+                onCustomerSelected: (customer) {
+                  _selectedCustomerId = customer.id;
+                  _clientController.text = customer.name ?? '';
+                },
               ),
             ),
-          ),
-          validator: (v) => (v == null || v.trim().isEmpty) ? ' مطلوب' : null,
-          onTap: widget.onClientTap,
+
+            // تاريخ العقد
+            RowField(
+              label: 'تاريخ العقد',
+              child: _dateBox(
+                value: _contractDate == null
+                    ? 'اختر التاريخ'
+                    : '${_contractDate!.year}/${_contractDate!.month.toString().padLeft(2, '0')}/${_contractDate!.day.toString().padLeft(2, '0')}',
+                onTap: () => _pickDate((d) => _contractDate = d, _contractDate),
+              ),
+            ),
+
+            // بداية الاشتراك
+            RowField(
+              label: 'بداية الاشتراك',
+              child: _dateBox(
+                value: _startDate == null
+                    ? 'اختر التاريخ'
+                    : '${_startDate!.year}/${_startDate!.month.toString().padLeft(2, '0')}/${_startDate!.day.toString().padLeft(2, '0')}',
+                onTap: () => _pickDate((d) => _startDate = d, _startDate),
+              ),
+            ),
+
+            // نهاية الاشتراك
+            RowField(
+              label: 'نهاية الاشتراك',
+              child: _dateBox(
+                value: _endDate == null
+                    ? 'اختر التاريخ'
+                    : '${_endDate!.year}/${_endDate!.month.toString().padLeft(2, '0')}/${_endDate!.day.toString().padLeft(2, '0')}',
+                onTap: () => _pickDate((d) => _endDate = d, _endDate),
+              ),
+            ),
+
+            // المبلغ
+            RowField(
+              label: 'المبلغ',
+              child: _boxedText(_amountController, type: TextInputType.number),
+            ),
+
+            // طريقة الدفع (قابلة للتوسيع لاحقًا)
+  RowField(
+  label: 'طريقة الدفع',
+  child: PaymentMethodDropdown(
+    controller: _paymentMethodController,
+    onMethodSelected: (method) {
+      setState(() {
+        _selectedPaymentMethodId = method.id;
+        _paymentMethodController.text = method.name;
+      });
+    },
+  ),
+),
+            // ملاحظات
+            RowField(
+              label: 'ملاحظات',
+              child: _boxedMultiline(_notesController),
+            ),
+
+            // رفع الملفات
+            RowField(
+              label: 'الملفات',
+              child: _imagesUploadSection(),
+            ),
+
+            SizedBox(height: 20.h),
+
+            // زر الحفظ
+            BlocBuilder<AddSubscriptionCubit, AddSubscriptionState>(
+              builder: (context, state) {
+                return _saveButton(
+                  onPressed: state.status == AddSubscriptionStatus.loading ? null : _submit,
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -1395,53 +1495,23 @@ class _AddSubscriptionFormState extends State<_AddSubscriptionForm> {
   Widget _imagesUploadSection() {
     return Column(
       children: [
-        Text(
-          'رفع الملفات',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        SizedBox(height: 10.h),
         GestureDetector(
           onTap: _pickImage,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Image.asset(
-                'assets/images/pngs/pictures_folder.png',
-                width: 90.w,
-                height: 90.h,
-                fit: BoxFit.contain,
-              ),
+              Image.asset('assets/images/pngs/pictures_folder.png', width: 90.w, height: 90.h),
               if (_imagePaths.isNotEmpty)
                 Positioned(
-                  right: 0,
                   top: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(2.w),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      _imagePaths.length.toString(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.sp,
-                      ),
-                    ),
+                  right: 0,
+                  child: CircleAvatar(
+                    radius: 12,
+                    backgroundColor: Colors.red,
+                    child: Text(_imagePaths.length.toString(), style: const TextStyle(color: Colors.white, fontSize: 12)),
                   ),
                 ),
-              const Text(
-                '+',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              const Text('+', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -1451,74 +1521,198 @@ class _AddSubscriptionFormState extends State<_AddSubscriptionForm> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: _imagePaths.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: EdgeInsets.all(8.w),
-                  child: Image.file(
-                    File(_imagePaths[index]),
-                    width: 80.w,
-                    height: 80.h,
-                    fit: BoxFit.cover,
-                  ),
-                );
-              },
+              itemBuilder: (_, i) => Padding(
+                padding: EdgeInsets.all(8.w),
+                child: Stack(
+                  children: [
+                    Image.file(File(_imagePaths[i]), width: 80.w, height: 80.h, fit: BoxFit.cover),
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _imagePaths.removeAt(i)),
+                        child: const Icon(Icons.remove_circle, color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
       ],
     );
   }
+}
+
+class PaymentMethodDropdown extends StatelessWidget {
+  final TextEditingController controller;
+  final Function(PaymentMethodModel) onMethodSelected;
+
+  const PaymentMethodDropdown({
+    super.key,
+    required this.controller,
+    required this.onMethodSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          RowField(label: 'العميل', child: _clientDropdown()),
-          RowField(
-            label: 'التاريخ',
-            child: _dateBox(
-              value: _date == null
-                  ? 'اختر التاريخ'
-                  : '${_date!.year}/${_date!.month.toString().padLeft(2, '0')}/${_date!.day.toString().padLeft(2, '0')}',
-              onTap: () => _pickDate((d) => _date = d, _date),
-            ),
-          ),
-          RowField(label: 'التخصص', child: _boxedText(_specialty)),
-          RowField(
-            label: 'بداية الاشتراك',
-            child: _dateBox(
-              value: _startDate == null
-                  ? 'اختر التاريخ'
-                  : '${_startDate!.year}/${_startDate!.month.toString().padLeft(2, '0')}/${_startDate!.day.toString().padLeft(2, '0')}',
-              onTap: () => _pickDate((d) => _startDate = d, _startDate),
-            ),
-          ),
-          RowField(
-            label: 'نهاية الاشتراك',
-            child: _dateBox(
-              value: _endDate == null
-                  ? 'اختر التاريخ'
-                  : '${_endDate!.year}/${_endDate!.month.toString().padLeft(2, '0')}/${_endDate!.day.toString().padLeft(2, '0')}',
-              onTap: () => _pickDate((d) => _endDate = d, _endDate),
-            ),
-          ),
-          RowField(label: 'طريقة الدفع', child: _dropdownBox(_paymentMethod)),
-          RowField(
-              label: 'المبلغ',
-              child: _boxedText(_amount, type: TextInputType.number)),
-          _imagesUploadSection(),
-          SizedBox(height: 16.h),
-          _saveButton(onPressed: () {
-            if (_formKey.currentState?.validate() ?? false) widget.onSaved();
-          }),
-        ],
+    // عند الضغط على الحقل نجلب البيانات
+    return GestureDetector(
+      onTap: () {
+        context.read<PaymentMethodCubit>().fetchPaymentMethods();
+      },
+      child: BlocBuilder<PaymentMethodCubit, PaymentMethodState>(
+        builder: (context, state) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // الحقل الرئيسي
+              Container(
+                height: 52,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xff104D9D),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        controller.text.isEmpty ? 'اختر طريقة الدفع' : controller.text,
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    ),
+                    const Icon(Icons.arrow_drop_down, color: Colors.white),
+                  ],
+                ),
+              ),
+
+              // حالة التحميل
+              if (state.status == PaymentMethodStatus.loading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  ),
+                ),
+
+              // عرض القائمة عند النجاح
+              if (state.status == PaymentMethodStatus.success && state.paymentMethods.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  constraints: const BoxConstraints(maxHeight: 250),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xff104D9D), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3))
+                    ],
+                  ),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: state.paymentMethods.length,
+                    itemBuilder: (ctx, index) {
+                      final method = state.paymentMethods[index];
+                      return ListTile(
+                        dense: true,
+                        title: Text(method.name),
+                        onTap: () {
+                          onMethodSelected(method);
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+              // رسالة خطأ
+              if (state.status == PaymentMethodStatus.failure)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'فشل في جلب طرق الدفع',
+                    style: TextStyle(color: Colors.red[300], fontSize: 13),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
+    );
+  }
+}// ============ عناصر واجهة مشتركة (صف تسمية + حقل) ============
+
+class ClientSearchField extends StatelessWidget {
+  final Function(CustomerModel) onCustomerSelected;
+
+  const ClientSearchField({super.key, required this.onCustomerSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = TextEditingController();
+    bool showDropdown = false;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Column(
+          children: [
+            TextField(
+              controller: controller,
+              onChanged: (q) {
+                if (q.isNotEmpty) {
+                  context.read<CustomerCubit>().searchCustomers(q);
+                  setState(() => showDropdown = true);
+                } else {
+                  setState(() => showDropdown = false);
+                }
+              },
+              decoration: InputDecoration(
+                hintText: 'ابحث عن العميل',
+                filled: true,
+                fillColor: const Color(0xFF104D9D),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                suffixIcon: const Icon(Icons.search, color: Colors.white),
+              ),
+              style: const TextStyle(color: Colors.white),
+            ),
+            if (showDropdown)
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                constraints: const BoxConstraints(maxHeight: 300),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                child: BlocBuilder<CustomerCubit, CustomerState>(
+                  builder: (context, state) {
+                    if (state.customers.isEmpty) return const Text('لا يوجد عملاء');
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: state.customers.length,
+                      itemBuilder: (_, i) {
+                        final c = state.customers[i];
+                        return ListTile(
+                          title: Text(c.name ?? ''),
+                          subtitle: Text(c.phone ?? ''),
+                          onTap: () {
+                            onCustomerSelected(c);
+                            controller.text = c.name ?? '';
+                            setState(() => showDropdown = false);
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
 
-// ============ عناصر واجهة مشتركة (صف تسمية + حقل) ============
 
 class RowField extends StatelessWidget {
   const RowField({
@@ -1681,14 +1875,14 @@ Widget _dialogGrabberAndTitle(String title) {
   );
 } // عنوان الحوار.
 
-Widget _saveButton({required VoidCallback onPressed}) {
+Widget _saveButton({VoidCallback? onPressed}) {
   return SizedBox(
     width: double.infinity,
     height: 48,
     child: ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF20AAC9),
+        backgroundColor: onPressed != null ? const Color(0xFF20AAC9) : Colors.grey,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: const Text('حفظ',

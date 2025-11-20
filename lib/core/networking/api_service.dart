@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_response.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_request.dart';
+import 'package:tabib_soft_company/features/modirator/data/models/payment_method_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/task_details_model.dart';
@@ -108,8 +109,9 @@ abstract class ApiService {
   Future<SalesDetailModel> getDealDetailById({
     @Query("id") required String id,
   });
-  // @GET(ApiConstants.getAllPaymentMethods)
-  // Future<List<PaymentMethodModel>> getAllPaymentMethods();
+  @GET(ApiConstants.getAllPaymentMethods)
+Future<List<PaymentMethodModel>> getAllPaymentMethods();
+
   @POST(ApiConstants.addPayment)
   Future<void> addPayment({
     @Query("PaymentDate") String? PaymentDate,
@@ -160,4 +162,7 @@ Future<List<StatusModel>> getAllStatuses();
 @GET(ApiConstants.getNotifications) // Added for fetching notifications
   Future<List<NotificationModel>> getNotifications();
 
+@POST(ApiConstants.addSubscription)
+@MultiPart()
+Future<void> addSubscription(@Body() FormData formData);
 }

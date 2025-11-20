@@ -71,4 +71,7 @@ class ApiConstants {
 
     static const String getAllStatuses = 'Sales/GetAllStatus';
 
+
+    static const String addSubscription = 'Sales/AddSubscription';
+
 }

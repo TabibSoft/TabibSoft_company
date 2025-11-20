@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tabib_soft_company/core/cubit/internet/internet_cubit.dart';
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_cubit.dart';
+import 'package:tabib_soft_company/features/modirator/presentation/cubits/add_subscription_cubit.dart';
+import 'package:tabib_soft_company/features/modirator/presentation/cubits/payment_method_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/report_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_cubit.dart';
@@ -15,56 +17,35 @@ import 'package:tabib_soft_company/features/technical_support/presentation/cubit
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/product_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
 
+// جديد: استيراد AddSubscriptionCubit
+
 Widget buildAppWithProviders({required Widget child}) {
   return MultiBlocProvider(
     providers: [
-      BlocProvider(
-        create: (_) => InternetCubit()..checkStreamConnection(),
-      ),
-      BlocProvider<CustomerCubit>(
-        create: (_) => ServicesLocator.locator<CustomerCubit>(),
-      ),
-      BlocProvider<EngineerCubit>(
-        create: (_) => ServicesLocator.locator<EngineerCubit>(),
-      ),
-      BlocProvider<TaskCubit>(
-        create: (_) => ServicesLocator.locator<TaskCubit>(),
-      ),
-      BlocProvider<ReportCubit>(
-        create: (_) => ServicesLocator.locator<ReportCubit>(),
-      ),
-      BlocProvider<SalesCubit>(
-        create: (_) => ServicesLocator.locator<SalesCubit>(),
-      ),
-      BlocProvider<AddCustomerCubit>(
-        create: (_) => ServicesLocator.locator<AddCustomerCubit>(),
-      ),
-      BlocProvider<ProductCubit>(
-        create: (_) => ServicesLocator.locator<ProductCubit>(),
-      ),
-      // BlocProvider<SalesDetailCubit>(
-      //   create: (_) => ServicesLocator.locator<SalesDetailCubit>(),
-      // ),
-      BlocProvider<LoginCubit>(
-        create: (_) => ServicesLocator.locator<LoginCubit>(),
-      ),
-      // BlocProvider<InstallationCubit>(
-      //   create: (_) => ServicesLocator.locator<InstallationCubit>(),
-      // ),
+      BlocProvider(create: (_) => InternetCubit()..checkStreamConnection()),
 
-      
-      BlocProvider<SalesDetailsCubit>(
-        create: (_) => ServicesLocator.locator<SalesDetailsCubit>(),
+      BlocProvider<CustomerCubit>(create: (_) => ServicesLocator.customerCubit),
+      BlocProvider<EngineerCubit>(create: (_) => ServicesLocator.engineerCubit),
+      BlocProvider<TaskCubit>(create: (_) => ServicesLocator.taskCubit),
+      BlocProvider<ReportCubit>(create: (_) => ServicesLocator.reportCubit),
+      BlocProvider<SalesCubit>(create: (_) => ServicesLocator.salesCubit),
+      BlocProvider<AddCustomerCubit>(create: (_) => ServicesLocator.addCustomerCubit),
+      BlocProvider<ProductCubit>(create: (_) => ServicesLocator.productCubit),
+      BlocProvider<LoginCubit>(create: (_) => ServicesLocator.loginCubit),
+
+      BlocProvider<SalesDetailsCubit>(create: (_) => ServicesLocator.locator<SalesDetailsCubit>()),
+      BlocProvider<AddNoteCubit>(create: (_) => ServicesLocator.addNoteCubit),
+      BlocProvider<NotificationCubit>(create: (_) => ServicesLocator.notificationCubit),
+      BlocProvider<TodayCallsCubit>(create: (_) => ServicesLocator.todayCallsCubit),
+
+      // ==================== جديد: إضافة AddSubscriptionCubit ====================
+      BlocProvider<AddSubscriptionCubit>(
+        create: (_) => ServicesLocator.addSubscriptionCubit,
       ),
-      BlocProvider<AddNoteCubit>(
-        create: (_) => ServicesLocator.locator<AddNoteCubit>(),
-      ),
-      BlocProvider<NotificationCubit>( // Added
-        create: (_) => ServicesLocator.locator<NotificationCubit>(),
-      ),
-      BlocProvider<TodayCallsCubit>( // Added
-        create: (_) => ServicesLocator.locator<TodayCallsCubit>(),
-      ),
+
+      BlocProvider<PaymentMethodCubit>(
+  create: (_) => ServicesLocator.paymentMethodCubit,
+),
     ],
     child: child,
   );

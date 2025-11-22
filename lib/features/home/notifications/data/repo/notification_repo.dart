@@ -3,7 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:tabib_soft_company/core/networking/api_error_handler.dart';
 import 'package:tabib_soft_company/core/networking/api_service.dart';
-import 'package:tabib_soft_company/features/sales/notifications/data/model/notification_model.dart';
+import 'package:tabib_soft_company/features/home/notifications/data/model/notification_model.dart';
 
 class NotificationRepository {
   final ApiService _apiService;

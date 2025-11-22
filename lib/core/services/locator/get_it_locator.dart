@@ -19,8 +19,8 @@ import 'package:tabib_soft_company/features/sales/Sales_home/data/repos/sales_re
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/notes/add_note_cubit.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/notes/sales_details_cubit.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/sales_cubit.dart';
-import 'package:tabib_soft_company/features/sales/notifications/data/repo/notification_repo.dart';
-import 'package:tabib_soft_company/features/sales/notifications/presentation/cubits/notification_cubit.dart';
+import 'package:tabib_soft_company/features/home/notifications/data/repo/notification_repo.dart';
+import 'package:tabib_soft_company/features/home/notifications/presentation/cubits/notification_cubit.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/data/repo/today_call_repo.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/presentation/cubit/today_call_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/data/repo/add_customer/add_customer_repo.dart';

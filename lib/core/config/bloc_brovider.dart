@@ -11,7 +11,7 @@ import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/notes/add_note_cubit.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/notes/sales_details_cubit.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/sales_cubit.dart';
-import 'package:tabib_soft_company/features/sales/notifications/presentation/cubits/notification_cubit.dart';
+import 'package:tabib_soft_company/features/home/notifications/presentation/cubits/notification_cubit.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/presentation/cubit/today_call_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/add_cusomer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/product_cubit.dart';

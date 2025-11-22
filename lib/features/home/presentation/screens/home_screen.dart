@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
+import 'package:tabib_soft_company/features/home/notifications/presentation/screens/notification_screen.dart';
 import 'package:tabib_soft_company/features/management/presentation/screens/management_screen.dart';
 import 'package:tabib_soft_company/features/modirator/presentation/screens/mediator_screen.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/screens/programmers_screen.dart';
@@ -14,10 +15,9 @@ import 'package:tabib_soft_company/features/home/presentation/screens/nav_bar/se
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static const Color primaryColor =
-      Color(0xFF0F5FA8); // لون أزرق عميق يشبه الصورة
-  static const Color accentColor = Color(0xFF19A7CE); // أزرق فاتح / سماوي
-  static const Color lightBg = Color(0xFFF4F9FC); // خلفية خفيفة
+  static const Color primaryColor = Color(0xFF0F5FA8);
+  static const Color accentColor = Color(0xFF19A7CE);
+  static const Color lightBg = Color(0xFFF4F9FC);
 
   @override
   Widget build(BuildContext context) {
@@ -57,11 +57,9 @@ class HomeScreen extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: lightBg,
-        // لا AppBar ولا BottomNavigationBar كما طلبت
         body: SafeArea(
           child: Stack(
             children: [
-              // الخلفية العلوية المنحنية (مثل التصميم)
               Positioned(
                 top: 0,
                 left: 0,
@@ -74,14 +72,12 @@ class HomeScreen extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [Color(0xFFEFF9FF), Color(0xFFDFF6FB)],
                     ),
-                    // يمكن إضافة شكل منحني باستخدام borderRadius
                   ),
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const SizedBox(height: 8),
-                        // Greeting text
                         Text(
                           title,
                           style: TextStyle(
@@ -104,7 +100,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              // زر الإعدادات في أعلى اليسار (كما طلبت)
+              // زر الإعدادات
               Positioned(
                 top: 12,
                 left: 12,
@@ -139,7 +135,43 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              // المحتوى الرئيسي: شبكه الأزرار
+              // زر الإشعارات
+              Positioned(
+                top: 12,
+                right: 12,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationsScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color.fromARGB(255, 0, 0, 0)
+                              .withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        )
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.notifications,
+                      color: Color.fromARGB(221, 64, 144, 197),
+                      size: 26,
+                    ),
+                  ),
+                ),
+              ),
+
+              // المحتوى الرئيسي: buttons grid
               Positioned(
                 top: size.height * 0.30,
                 left: 16,
@@ -161,7 +193,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      // شبكة 2x3
                       Expanded(
                         child: GridView.count(
                           physics: const BouncingScrollPhysics(),
@@ -240,7 +271,7 @@ class HomeScreen extends StatelessWidget {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) =>
-                                        const ModiratorScreen()),
+                                        const ModeratorScreen()),
                               ),
                               primaryColor: accentColor,
                             ),
@@ -378,6 +409,7 @@ class HomeButton extends StatelessWidget {
       'لو ضغطت تاني هنبلغ الإدارة 😂',
       'ده مش ليك يا نجم 🤭',
       'حاول في مكان تاني يا بطل 🕵️‍♂️',
+      'بس يا بــابــا🤭'
     ];
     final random = Random().nextInt(responses.length);
     Fluttertoast.showToast(

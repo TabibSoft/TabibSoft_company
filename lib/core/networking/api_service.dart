@@ -10,7 +10,7 @@ import 'package:tabib_soft_company/features/programmers/data/model/task_update_m
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/filter/status_model.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/notes/sales_detail_model.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/paginated_sales_model.dart';
-import 'package:tabib_soft_company/features/sales/notifications/data/model/notification_model.dart';
+import 'package:tabib_soft_company/features/home/notifications/data/model/notification_model.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/data/models/today_call_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/add_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/product_model.dart';

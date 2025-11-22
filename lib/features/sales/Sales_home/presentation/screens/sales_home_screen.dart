@@ -10,7 +10,7 @@ import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/content_card_home_widget.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/filter_widget.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/home_skeltonizer_widget.dart';
-import 'package:tabib_soft_company/features/sales/notifications/presentation/screens/notification_screen.dart';
+import 'package:tabib_soft_company/features/home/notifications/presentation/screens/notification_screen.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/presentation/screens/taday_calls_screen.dart';
 
 class SalesHomeScreen extends StatefulWidget {
@@ -332,16 +332,16 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
             },
           ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.notifications, color: Colors.white),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const NotificationsScreen()),
-                );
-              },
-            ),
+            // IconButton(
+            //   icon: const Icon(Icons.notifications, color: Colors.white),
+            //   onPressed: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //           builder: (context) => const NotificationsScreen()),
+            //     );
+            //   },
+            // ),
             IconButton(
               icon: const Icon(Icons.arrow_forward_ios, color: Colors.white),
               onPressed: () {

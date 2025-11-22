@@ -6,9 +6,9 @@ import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/screens/notes/notes_screen.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/filter_widget.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/home_skeltonizer_widget.dart';
-import 'package:tabib_soft_company/features/sales/notifications/data/model/notification_model.dart';
-import 'package:tabib_soft_company/features/sales/notifications/presentation/cubits/notification_cubit.dart';
-import 'package:tabib_soft_company/features/sales/notifications/presentation/cubits/notification_state.dart';
+import 'package:tabib_soft_company/features/home/notifications/data/model/notification_model.dart';
+import 'package:tabib_soft_company/features/home/notifications/presentation/cubits/notification_cubit.dart';
+import 'package:tabib_soft_company/features/home/notifications/presentation/cubits/notification_state.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});

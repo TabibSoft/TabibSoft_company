@@ -1,6 +1,6 @@
 // New File: lib/features/home/presentation/cubits/notifications/notification_state.dart
 import 'package:tabib_soft_company/core/networking/api_error_handler.dart';
-import 'package:tabib_soft_company/features/sales/notifications/data/model/notification_model.dart';
+import 'package:tabib_soft_company/features/home/notifications/data/model/notification_model.dart';
 
 enum NotificationStatus { initial, loading, loaded, error }
 

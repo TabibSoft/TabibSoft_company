@@ -58,51 +58,53 @@ class CustomerCubit extends Cubit<CustomerState> {
       },
     );
   }
- Future<void> fetchTechSupportIssues({
-  String? customerId,
-  String? date,
-  String? address,
-  int? problem,
-  bool? isSearch,
-}) async {
-  if (!_hasMoreData) return;
 
-  // إرسال حالة التحميل فوراً
-  emit(state.copyWith(status: CustomerStatus.loading));
+  Future<void> fetchTechSupportIssues({
+    String? customerId,
+    String? date,
+    String? address,
+    int? problem,
+    bool? isSearch,
+  }) async {
+    if (!_hasMoreData) return;
 
-  final result = await _customerRepository.getAllTechSupport(
-    customerId: customerId,
-    date: date,
-    address: address,
-    problem: problem,
-    isSearch: isSearch,
-    pageNumber: _currentPage,
-    pageSize: _pageSize,
-  );
-  result.when(
-    success: (issues) {
-      print('Fetched tech support issues: ${issues.length} items');
-      if (issues.length < _pageSize) {
-        _hasMoreData = false;
-      }
-      final updatedIssues = _currentPage == 1
-          ? issues
-          : [...state.techSupportIssues, ...issues];
-      emit(state.copyWith(
-        status: CustomerStatus.success,
-        techSupportIssues: updatedIssues,
-      ));
-      _currentPage++;
-    },
-    failure: (error) {
-      print('Error fetching tech support issues: ${error.errMessages}');
-      emit(state.copyWith(
-        status: CustomerStatus.failure,
-        errorMessage: error.errMessages,
-      ));
-    },
-  );
-}
+    // إرسال حالة التحميل فوراً
+    emit(state.copyWith(status: CustomerStatus.loading));
+
+    final result = await _customerRepository.getAllTechSupport(
+      customerId: customerId,
+      date: date,
+      address: address,
+      problem: problem,
+      isSearch: isSearch,
+      pageNumber: _currentPage,
+      pageSize: _pageSize,
+    );
+    result.when(
+      success: (issues) {
+        print('Fetched tech support issues: ${issues.length} items');
+        if (issues.length < _pageSize) {
+          _hasMoreData = false;
+        }
+        final updatedIssues = _currentPage == 1
+            ? issues
+            : [...state.techSupportIssues, ...issues];
+        emit(state.copyWith(
+          status: CustomerStatus.success,
+          techSupportIssues: updatedIssues,
+        ));
+        _currentPage++;
+      },
+      failure: (error) {
+        print('Error fetching tech support issues: ${error.errMessages}');
+        emit(state.copyWith(
+          status: CustomerStatus.failure,
+          errorMessage: error.errMessages,
+        ));
+      },
+    );
+  }
+
   Future<void> fetchProblemStatus() async {
     emit(state.copyWith(status: CustomerStatus.loading));
     final result = await _customerRepository.getProblemStatus();
@@ -156,37 +158,39 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
   }
 
-Future<void> createUnderTransaction({
-  required String customerSupportId,
-  required String customerId,
-  required String note,
-  required int problemStatusId,
-}) async {
-  print('Starting createUnderTransaction: customerSupportId=$customerSupportId, customerId=$customerId, note=$note, problemStatusId=$problemStatusId');
-  emit(state.copyWith(status: CustomerStatus.loading));
-  final dto = CreateUnderTransaction(
-    customerSupportId: customerSupportId,
-    customerId: customerId,
-    note: note,
-    problemstausId: problemStatusId,
-  );
-  final result = await _customerRepository.createUnderTransaction(dto);
-  result.when(
-    success: (_) {
-      print('createUnderTransaction succeeded');
-      // إعادة جلب البيانات بعد النجاح
-      resetPagination();
-      fetchTechSupportIssues();
-    },
-    failure: (error) {
-      print('createUnderTransaction failed: ${error.errMessages}');
-      emit(state.copyWith(
-        status: CustomerStatus.failure,
-        errorMessage: error.errMessages,
-      ));
-    },
-  );
-}
+  Future<void> createUnderTransaction({
+    required String customerSupportId,
+    required String customerId,
+    required String note,
+    required int problemStatusId,
+  }) async {
+    print(
+        'Starting createUnderTransaction: customerSupportId=$customerSupportId, customerId=$customerId, note=$note, problemStatusId=$problemStatusId');
+    emit(state.copyWith(status: CustomerStatus.loading));
+    final dto = CreateUnderTransaction(
+      customerSupportId: customerSupportId,
+      customerId: customerId,
+      note: note,
+      problemstausId: problemStatusId,
+    );
+    final result = await _customerRepository.createUnderTransaction(dto);
+    result.when(
+      success: (_) {
+        print('createUnderTransaction succeeded');
+        // إعادة جلب البيانات بعد النجاح
+        resetPagination();
+        fetchTechSupportIssues();
+      },
+      failure: (error) {
+        print('createUnderTransaction failed: ${error.errMessages}');
+        emit(state.copyWith(
+          status: CustomerStatus.failure,
+          errorMessage: error.errMessages,
+        ));
+      },
+    );
+  }
+
   Future<void> searchCustomers(String query) async {
     emit(state.copyWith(status: CustomerStatus.loading));
     final result = await _customerRepository.autoCompleteCustomer(query);

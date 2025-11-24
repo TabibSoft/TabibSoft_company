@@ -14,12 +14,12 @@ import 'package:tabib_soft_company/features/sales/Sales_home/presentation/screen
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/product_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ContactCard extends StatefulWidget {
+class SalesContactCard extends StatefulWidget {
   final SalesModel measurement;
   final List<ProductModel> products;
   final List<StatusModel> statuses;
 
-  const ContactCard({
+  const SalesContactCard({
     super.key,
     required this.measurement,
     required this.products,
@@ -27,10 +27,10 @@ class ContactCard extends StatefulWidget {
   });
 
   @override
-  State<ContactCard> createState() => _ContactCardState();
+  State<SalesContactCard> createState() => _SalesContactCardState();
 }
 
-class _ContactCardState extends State<ContactCard>
+class _SalesContactCardState extends State<SalesContactCard>
     with TickerProviderStateMixin {
   bool _isExpanded = false;
   bool _hasMeasured = false;

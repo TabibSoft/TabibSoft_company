@@ -7,7 +7,7 @@ import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
 import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/sales_cubit.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/sales_state.dart';
-import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/content_card_home_widget.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/sales_content_card_home_widget.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/filter_widget.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/home_skeltonizer_widget.dart';
 import 'package:tabib_soft_company/features/home/notifications/presentation/screens/notification_screen.dart';
@@ -476,7 +476,7 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
                                       child: CircularProgressIndicator());
                                 }
                                 try {
-                                  return ContactCard(
+                                  return SalesContactCard(
                                     measurement: measurements[index],
                                     products: state.products,
                                     statuses: state.statuses, // Added statuses

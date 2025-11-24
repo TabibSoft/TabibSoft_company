@@ -1,14 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
 import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
-
-import 'dart:io';
-
-
-import '../../../export.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 
 class AddProblemScreen extends StatefulWidget {
   const AddProblemScreen({super.key});
@@ -20,21 +24,28 @@ class AddProblemScreen extends StatefulWidget {
 class _AddProblemScreenState extends State<AddProblemScreen> {
   final TextEditingController _clientNameController = TextEditingController();
   final TextEditingController _problemTypeController = TextEditingController();
-  final TextEditingController _phoneNumberController = TextEditingController();
-  final TextEditingController _directionController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
-  final TextEditingController _statusController = TextEditingController();
+  final TextEditingController _engineerController = TextEditingController();
 
-  static const Color primaryColor = Color(0xFF56C7F1);
+  static const Color headerColor = Color(0xFF0B4C99);
+  static const Color fieldColor = Color(0xFF104084);
+  static const Color primaryBtnColor = Color(0xFF28B5E1);
+  static const Color backgroundColor = Color(0xFFF5F6FA);
 
   CustomerModel? _selectedCustomer;
-  List<File> _selectedImages = [];
+  ProblemCategoryModel? _selectedCategory;
   ProblemStatusModel? _selectedStatus;
+  EngineerModel? _selectedEngineer; // متغير لتخزين المهندس
+
+  final List<File> _images = [];
+
+  // bool _isUrgent = false;
 
   bool _isClientDropdownVisible = false;
   bool _isTypeDropdownVisible = false;
-  bool _isDirectionDropdownVisible = false;
-  bool _isStatusDropdownVisible = false;
+  bool _isEngineerDropdownVisible = false;
 
   @override
   void initState() {
@@ -43,6 +54,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
     context.read<CustomerCubit>().fetchProblemCategories();
     context.read<CustomerCubit>().fetchProblemStatus();
     context.read<EngineerCubit>().fetchEngineers();
+
     _clientNameController.addListener(_onClientNameChanged);
   }
 
@@ -64,303 +76,417 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
     _clientNameController.removeListener(_onClientNameChanged);
     _clientNameController.dispose();
     _problemTypeController.dispose();
-    _phoneNumberController.dispose();
-    _directionController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
     _detailsController.dispose();
-    _statusController.dispose();
+    _engineerController.dispose();
     super.dispose();
   }
 
-  void _onCustomerSelected(CustomerModel customer) {
-    setState(() {
-      _selectedCustomer = customer;
-      _clientNameController.text = customer.name ?? '';
-      _phoneNumberController.text = customer.phone ?? '';
-      _isClientDropdownVisible = false;
-    });
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await showModalBottomSheet<XFile?>(
+      context: context,
+      builder: (_) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.camera_alt),
+            title: const Text('الكاميرا'),
+            onTap: () async {
+              Navigator.pop(
+                  context, await picker.pickImage(source: ImageSource.camera));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('المعرض'),
+            onTap: () async {
+              Navigator.pop(
+                  context, await picker.pickImage(source: ImageSource.gallery));
+            },
+          ),
+        ],
+      ),
+    );
+
+    if (pickedFile != null) {
+      setState(() => _images.add(File(pickedFile.path)));
+    }
   }
 
-  void _onImagePicked(File image) {
-    setState(() {
-      _selectedImages.add(image);
-    });
-  }
-
-  void _onImageRemoved(File image) {
-    setState(() {
-      _selectedImages.remove(image);
-    });
-  }
-
-  void _onSave() {
+  void _saveProblem() {
+    // 1. التحقق من جميع الحقول بما في ذلك المهندس
     if (_selectedCustomer == null ||
-        _problemTypeController.text.isEmpty ||
-        _phoneNumberController.text.isEmpty ||
-        _directionController.text.isEmpty ||
-        _selectedStatus == null) {
+        _selectedCategory == null ||
+        _selectedEngineer == null || // <-- تحقق إجباري من اختيار المهندس
+        _detailsController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى ملء جميع الحقول المطلوبة')),
+        const SnackBar(content: Text('يرجى ملء جميع الحقول واختيار المهندس')),
       );
       return;
     }
 
-    bool hasValidImages = true;
-    for (var image in _selectedImages) {
-      if (!image.existsSync() || image.lengthSync() == 0) {
-        hasValidImages = false;
-        print('Invalid image: ${image.path}');
+    int? finalStatusId;
+    final customerState = context.read<CustomerCubit>().state;
+
+    if (_selectedStatus != null) {
+      finalStatusId = _selectedStatus!.id;
+    } else {
+      if (customerState.problemStatusList.isNotEmpty) {
+        finalStatusId = customerState.problemStatusList.first.id;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('لا توجد حالات مشاكل متاحة')),
+        );
+        return;
       }
     }
-    if (!hasValidImages) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم اختيار صورة غير صالحة')),
-      );
-      return;
-    }
 
-    final customerState = context.read<CustomerCubit>().state;
-    final engineerState = context.read<EngineerCubit>().state;
-
-    final selectedCategory = customerState.problemCategories.firstWhere(
-      (c) => c.name == _problemTypeController.text,
-      orElse: () => ProblemCategoryModel(id: '', name: ''),
-    );
-
-    if (selectedCategory.id.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('فئة المشكلة غير صالحة')),
-      );
-      return;
-    }
-
-    final selectedEngineer = engineerState.engineers.firstWhere(
-      (e) => e.name == _directionController.text,
-      orElse: () => EngineerModel(id: '', name: '', address: '', telephone: ''),
-    );
-
-    if (_selectedCustomer!.id == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('معرف العميل غير متاح')),
-      );
-      return;
-    }
-
-    if (!RegExp(
-            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-        .hasMatch(_selectedCustomer!.id!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('معرف العميل غير صالح')),
-      );
-      return;
-    }
-    if (!RegExp(
-            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-        .hasMatch(selectedCategory.id)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('معرف فئة المشكلة غير صالح')),
-      );
-      return;
-    }
-    if (selectedEngineer.id.isNotEmpty &&
-        !RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-            .hasMatch(selectedEngineer.id)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('معرف المهندس غير صالح')),
-      );
-      return;
-    }
+    String finalCategoryId = _selectedCategory!.id;
 
     context.read<CustomerCubit>().createProblem(
           customerId: _selectedCustomer!.id!,
           dateTime: DateTime.now(),
-          problemStatusId: _selectedStatus!.id,
-          problemCategoryId: selectedCategory.id,
-          note: _detailsController.text.isNotEmpty
-              ? _detailsController.text
-              : null,
+          problemStatusId: finalStatusId ?? 0,
+          problemCategoryId: finalCategoryId,
+          details: _detailsController.text,
+          phone: _phoneController.text,
+          images: _images.isNotEmpty ? _images : null,
+          note: _detailsController.text,
           engineerId:
-              selectedEngineer.id.isNotEmpty ? selectedEngineer.id : null,
-          details: _detailsController.text.isNotEmpty
-              ? _detailsController.text
-              : null,
-          phone: _phoneNumberController.text,
-          images: _selectedImages.isNotEmpty ? _selectedImages : null,
+              _selectedEngineer!.id, // <-- لن يكون null أبداً بسبب التحقق أعلاه
         );
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final double horizontalPadding = 20.w;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: headerColor,
         body: BlocListener<CustomerCubit, CustomerState>(
-          listenWhen: (previous, current) =>
-              current.isProblemAdded != previous.isProblemAdded ||
-              current.status == CustomerStatus.failure,
           listener: (context, state) {
             if (state.isProblemAdded) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('تمت إضافة المشكلة بنجاح')),
               );
-              _detailsController.clear();
-              _clientNameController.clear();
-              _problemTypeController.clear();
-              _phoneNumberController.clear();
-              _directionController.clear();
-              _statusController.clear();
-              setState(() {
-                _selectedCustomer = null;
-                _selectedStatus = null;
-                _isClientDropdownVisible = false;
-                _isTypeDropdownVisible = false;
-                _isDirectionDropdownVisible = false;
-                _isStatusDropdownVisible = false;
-                _selectedImages.clear();
-              });
-              Navigator.of(context).pop();
+              Navigator.pop(context);
             } else if (state.status == CustomerStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.errorMessage ??
-                        'فشل في إضافة المشكلة. يرجى التحقق من البيانات وحاول مجددًا.',
-                  ),
-                ),
+                SnackBar(content: Text(state.errorMessage ?? 'فشل الحفظ')),
               );
             }
           },
-          child: Stack(
+          child: Column(
             children: [
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: CustomAppBar(
-                  title: 'إضافة مشكلة',
-                  height: 343,
-                  leading: IconButton(
-                    icon: Image.asset('assets/images/pngs/back.png',
-                        width: 30, height: 30),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  actions: [
-                    IconButton(
-                      icon: Image.asset('assets/images/pngs/add_customer.png',
-                          width: 38, height: 38),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const AddCustomerScreen()),
-                        );
-                      },
+              // Header
+              SizedBox(
+                height: 200.h,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 80.h,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Image.asset(
+                          'assets/images/pngs/TS_Logo0.png',
+                          height: 70.h,
+                          color: Colors.white.withOpacity(0.3),
+                          colorBlendMode: BlendMode.modulate,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 40.h,
+                      right: 10.w,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back_ios,
+                            color: Colors.white),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
                     ),
                   ],
                 ),
               ),
-              Positioned(
-                top: size.height * 0.25,
-                left: size.width * 0.05,
-                right: size.width * 0.05,
-                bottom: 0,
+
+              // Body
+              Expanded(
                 child: Container(
-                  decoration: BoxDecoration(
-                    color:
-                        const Color.fromARGB(100, 95, 93, 93).withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: primaryColor, width: 3),
+                  decoration: const BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 20),
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: ConstrainedBox(
-                        constraints:
-                            BoxConstraints(minHeight: size.height * 0.7),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ClientNameField(
-                              controller: _clientNameController,
-                              isDropdownVisible: _isClientDropdownVisible,
-                              onToggleDropdown: () {
-                                setState(() {
-                                  _isClientDropdownVisible =
-                                      !_isClientDropdownVisible;
-                                  if (_isClientDropdownVisible) {
-                                    context
-                                        .read<CustomerCubit>()
-                                        .fetchCustomers();
-                                  }
-                                });
-                              },
-                              onCustomerSelected: _onCustomerSelected,
-                            ),
-                            const SizedBox(height: 16),
-                            ProblemTypeDropdown(
-                              controller: _problemTypeController,
-                              isDropdownVisible: _isTypeDropdownVisible,
-                              onToggleDropdown: () {
-                                setState(() {
-                                  _isTypeDropdownVisible =
-                                      !_isTypeDropdownVisible;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            PhoneNumberField(
-                              controller: _phoneNumberController,
-                            ),
-                            const SizedBox(height: 16),
-                            DirectionDropdown(
-                              controller: _directionController,
-                              isDropdownVisible: _isDirectionDropdownVisible,
-                              onToggleDropdown: () {
-                                setState(() {
-                                  _isDirectionDropdownVisible =
-                                      !_isDirectionDropdownVisible;
-                                });
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding, vertical: 30.h),
+                    child: Column(
+                      children: [
+                        // -- اسم العميل --
+                        _buildLabelledRow(
+                          label: "اسم العميل:",
+                          child: _buildAutocompleteDropdown(
+                            controller: _clientNameController,
+                            hint: "",
+                            isVisible: _isClientDropdownVisible,
+                            onTap: () => setState(() =>
+                                _isClientDropdownVisible =
+                                    !_isClientDropdownVisible),
+                            child: BlocBuilder<CustomerCubit, CustomerState>(
+                              builder: (context, state) {
+                                if (state.customers.isEmpty) {
+                                  return const Padding(
+                                      padding: EdgeInsets.all(8),
+                                      child: Text("لا يوجد عملاء"));
+                                }
+                                return ListView.builder(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
+                                  itemCount: state.customers.length,
+                                  itemBuilder: (context, index) {
+                                    final customer = state.customers[index];
+                                    return ListTile(
+                                      title: Text(customer.name ?? '',
+                                          style: const TextStyle(fontSize: 14)),
+                                      subtitle: Text(
+                                          customer.phone?.toString() ?? '',
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey)),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedCustomer = customer;
+                                          _clientNameController.text =
+                                              customer.name ?? '';
+                                          _phoneController.text =
+                                              customer.phone?.toString() ?? '';
+                                          _isClientDropdownVisible = false;
+                                        });
+                                      },
+                                    );
+                                  },
+                                );
                               },
                             ),
-                            const SizedBox(height: 16),
-                            StatusDropdown(
-                              controller: _statusController,
-                              isDropdownVisible: _isStatusDropdownVisible,
-                              onToggleDropdown: () {
-                                setState(() {
-                                  _isStatusDropdownVisible =
-                                      !_isStatusDropdownVisible;
-                                });
-                              },
-                              onStatusSelected: (status) {
-                                setState(() {
-                                  _selectedStatus = status;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            DetailsField(
-                              controller: _detailsController,
-                            ),
-                            SelectedImagesDisplay(
-                              images: _selectedImages,
-                              onImageRemoved: _onImageRemoved,
-                            ),
-                            const SizedBox(height: 16),
-                            ImagePickerWidget(
-                              onImagePicked: _onImagePicked,
-                            ),
-                            const SizedBox(height: 24),
-                            SaveButton(
-                              onPressed: _onSave,
-                            ),
-                            const SizedBox(height: 16),
-                          ],
+                          ),
                         ),
-                      ),
+                        SizedBox(height: 16.h),
+
+                        // -- رقم العميل --
+                        _buildLabelledRow(
+                          label: "رقم العميل:",
+                          child: _buildTextField(
+                            controller: _phoneController,
+                            enabled: true,
+                            hint: "",
+                            keyboardType: TextInputType.phone,
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+
+                        // -- نوع المشكلة --
+                        _buildLabelledRow(
+                          label: "نوع المشكلة:",
+                          child: _buildAutocompleteDropdown(
+                            controller: _problemTypeController,
+                            hint: "",
+                            isVisible: _isTypeDropdownVisible,
+                            onTap: () => setState(() => _isTypeDropdownVisible =
+                                !_isTypeDropdownVisible),
+                            child: BlocBuilder<CustomerCubit, CustomerState>(
+                              builder: (context, state) {
+                                return ListView.builder(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
+                                  itemCount: state.problemCategories.length,
+                                  itemBuilder: (context, index) {
+                                    final cat = state.problemCategories[index];
+                                    return ListTile(
+                                      title: Text(cat.name,
+                                          style: const TextStyle(fontSize: 14)),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedCategory = cat;
+                                          _problemTypeController.text =
+                                              cat.name;
+                                          _isTypeDropdownVisible = false;
+                                        });
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+
+                        // -- عنوان المشكلة --
+                        _buildLabelledRow(
+                          label: "عنوان المشكلة:",
+                          child: _buildTextField(
+                            controller: _addressController,
+                            hint: "",
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+
+                        // -- تفاصيل المشكلة --
+                        _buildLabelledRow(
+                          label: "تفاصيل المشكلة:",
+                          child: SizedBox(
+                            height: 100.h,
+                            child: _buildTextField(
+                              controller: _detailsController,
+                              hint: "",
+                              maxLines: 5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+
+                        // -- تحويل الي --
+                        _buildLabelledRow(
+                          label: "تحويل الي:",
+                          child: _buildAutocompleteDropdown(
+                            controller: _engineerController,
+                            hint: "",
+                            isVisible: _isEngineerDropdownVisible,
+                            onTap: () => setState(() =>
+                                _isEngineerDropdownVisible =
+                                    !_isEngineerDropdownVisible),
+                            child: BlocBuilder<EngineerCubit, EngineerState>(
+                              builder: (context, state) {
+                                return ListView.builder(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
+                                  itemCount: state.engineers.length,
+                                  itemBuilder: (context, index) {
+                                    final eng = state.engineers[index];
+                                    return ListTile(
+                                      title: Text(eng.name,
+                                          style: const TextStyle(fontSize: 14)),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedEngineer =
+                                              eng; // تخزين المهندس
+                                          _engineerController.text = eng.name;
+                                          _isEngineerDropdownVisible = false;
+                                        });
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 30.h),
+
+                        // -- الفوتر --
+                        Center(
+                          child: GestureDetector(
+                            onTap: _pickImage,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "رفع ملفات",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.sp),
+                                ),
+                                SizedBox(height: 4.h),
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/pngs/upload_pic.png',
+                                      width: 50,
+                                      height: 50,
+                                    ),
+                                    if (_images.isNotEmpty)
+                                      Positioned(
+                                        bottom: 0,
+                                        right: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: const BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle),
+                                          child: const Icon(Icons.check_circle,
+                                              color: Colors.green, size: 14),
+                                        ),
+                                      )
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        if (_images.isNotEmpty) ...[
+                          SizedBox(height: 10.h),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: _images
+                                .map((img) => Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          child: Image.file(img,
+                                              width: 60,
+                                              height: 60,
+                                              fit: BoxFit.cover),
+                                        ),
+                                        Positioned(
+                                          top: 0,
+                                          right: 0,
+                                          child: GestureDetector(
+                                            onTap: () => setState(
+                                                () => _images.remove(img)),
+                                            child: const Icon(Icons.cancel,
+                                                color: Colors.red, size: 20),
+                                          ),
+                                        ),
+                                      ],
+                                    ))
+                                .toList(),
+                          ),
+                        ],
+
+                        SizedBox(height: 40.h),
+
+                        SizedBox(
+                          width: 160.w,
+                          height: 50.h,
+                          child: ElevatedButton(
+                            onPressed: _saveProblem,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryBtnColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              "حفظ",
+                              style: TextStyle(
+                                  fontSize: 20.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -368,12 +494,123 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
             ],
           ),
         ),
-        bottomNavigationBar: const CustomNavBar(
-          items: [],
-          alignment: MainAxisAlignment.spaceBetween,
-          padding: EdgeInsets.symmetric(horizontal: 32),
+      ),
+    );
+  }
+
+  Widget _buildLabelledRow({required String label, required Widget child}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 100.w,
+          child: Text(
+            label,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w900,
+              color: Colors.black,
+            ),
+          ),
+        ),
+        SizedBox(width: 12.w),
+        Expanded(child: child),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    bool enabled = true,
+    String? hint,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: fieldColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        enabled: enabled,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        style:
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Colors.white38),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
         ),
       ),
+    );
+  }
+
+  Widget _buildAutocompleteDropdown({
+    required TextEditingController controller,
+    required String hint,
+    required bool isVisible,
+    required VoidCallback onTap,
+    required Widget child,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 50),
+            decoration: BoxDecoration(
+              color: fieldColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    enabled: true,
+                    onTap: onTap,
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      hintText: hint,
+                      hintStyle: const TextStyle(color: Colors.white38),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.only(right: 5),
+                    ),
+                  ),
+                ),
+                Icon(Icons.keyboard_arrow_down,
+                    color: primaryBtnColor, size: 35.sp),
+              ],
+            ),
+          ),
+        ),
+        if (isVisible)
+          Container(
+            margin: const EdgeInsets.only(top: 5),
+            height: 150.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade300),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: child,
+          ),
+      ],
     );
   }
 }

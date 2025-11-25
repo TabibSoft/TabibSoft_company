@@ -16,6 +16,7 @@ import 'package:tabib_soft_company/features/sales/today_calls/presentation/cubit
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/add_cusomer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/product_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
 
 // جديد: استيراد AddSubscriptionCubit
 
@@ -45,6 +46,10 @@ Widget buildAppWithProviders({required Widget child}) {
 
       BlocProvider<PaymentMethodCubit>(
   create: (_) => ServicesLocator.paymentMethodCubit,
+),
+
+BlocProvider<VisitCubit>(
+  create: (_) => ServicesLocator.visitCubit..loadVisits(),
 ),
     ],
     child: child,

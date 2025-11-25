@@ -29,6 +29,8 @@ import 'package:tabib_soft_company/features/technical_support/data/repo/customer
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/add_cusomer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/product_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/data/repo/visit_repository.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
 
 // ==================== جديد: إضافة اشتراك ====================
 
@@ -105,6 +107,12 @@ locator.registerLazySingleton<PaymentMethodRepository>(
 locator.registerFactory<PaymentMethodCubit>(
   () => PaymentMethodCubit(locator<PaymentMethodRepository>()),
 );
+
+// داخل setup()
+locator.registerLazySingleton<VisitRepository>(() => VisitRepository());
+locator.registerFactory<VisitCubit>(() => VisitCubit(locator<VisitRepository>()));
+
+// في Getters
   }
 
   // Getters
@@ -125,4 +133,7 @@ locator.registerFactory<PaymentMethodCubit>(
   static AddSubscriptionCubit get addSubscriptionCubit => locator<AddSubscriptionCubit>();
 
   static PaymentMethodCubit get paymentMethodCubit => locator<PaymentMethodCubit>();
+
+  static VisitCubit get visitCubit => locator<VisitCubit>();
+
 }

@@ -68,12 +68,29 @@
             android:value="2"/>
      </application>
 
-    <!-- Required to query activities that can process text, see:
-         https://developer.android.com/training/package-visibility and
-         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
-
-         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <!-- Package visibility queries (required on Android 11+).
+         Added intents for opening http/https links and geo: (Google Maps),
+         plus the existing PROCESS_TEXT entry. -->
     <queries>
+        <!-- allow querying apps that can VIEW http/https links (browsers, etc.) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+
+        <!-- allow querying apps that can open geo: URIs (maps apps) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+
+        <!-- existing PROCESS_TEXT query (keep for Flutter text processing plugin) -->
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>

@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
 enum AddCustomerStatus { initial, loading, success, failure }
-
 class AddCustomerState extends Equatable {
   final AddCustomerStatus status;
   final String? errorMessage;

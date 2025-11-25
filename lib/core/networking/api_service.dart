@@ -20,6 +20,8 @@ import 'package:tabib_soft_company/features/technical_support/data/model/custome
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/create_under_transaction.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/data/models/paginated_visit_response.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/data/models/visit_model.dart';
 import 'api_constants.dart';
 
 part 'api_service.g.dart';
@@ -165,4 +167,23 @@ Future<List<StatusModel>> getAllStatuses();
 @POST(ApiConstants.addSubscription)
 @MultiPart()
 Future<void> addSubscription(@Body() FormData formData);
+
+
+@POST(ApiConstants.getAllVisits)
+Future<PaginatedVisitResponse> getAllVisits(
+  @Body() Map<String, dynamic> body, // ضروري
+);
+
+@POST(ApiConstants.addVisitDetail)
+@MultiPart()
+Future<void> addVisitDetail(@Body() FormData formData);
+
+@POST(ApiConstants.editVisitDetail)
+@MultiPart()
+Future<void> editVisitDetail(@Body() FormData formData);
+
+@POST(ApiConstants.makeVisitDone)
+Future<void> makeVisitDone({
+  @Query("visitId") required String visitId,
+});
 }

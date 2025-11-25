@@ -1,0 +1,57 @@
+// features/visits/data/models/visit_model.dart
+import 'package:json_annotation/json_annotation.dart';
+
+part 'visit_model.g.dart';
+
+@JsonSerializable()
+class VisitModel {
+  final String id;
+  final String customerName;
+  final DateTime visitDate;
+  final String visitId;
+  
+  @JsonKey(defaultValue: 'غير محدد')
+  final String? engineerName;
+  
+  @JsonKey(defaultValue: '--')
+  final String proudctName;
+  
+  @JsonKey(defaultValue: 'غير محدد')
+  final String? adress;
+  
+  @JsonKey(defaultValue: 'غير محدد')
+  final String location;
+  
+  @JsonKey(defaultValue: 'غير محدد')
+  final String? status;
+  
+  @JsonKey(defaultValue: '')
+  final String? statusId;
+  
+  @JsonKey(defaultValue: '#808080')
+  final String? statusColor;
+  
+  @JsonKey(name: 'isInstall')
+  final bool isInstallDone;
+  
+  final double totalRate;
+
+  VisitModel({
+    required this.id,
+    required this.customerName,
+    required this.visitDate,
+    required this.visitId,
+    this.engineerName,
+    required this.proudctName,
+    this.adress,
+    required this.location,
+    this.status,
+    this.statusId,
+    this.statusColor,
+    required this.isInstallDone,
+    required this.totalRate,
+  });
+
+  factory VisitModel.fromJson(Map<String, dynamic> json) =>
+      _$VisitModelFromJson(json);
+}

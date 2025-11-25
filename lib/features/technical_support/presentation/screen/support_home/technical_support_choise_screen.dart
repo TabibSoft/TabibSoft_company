@@ -1,6 +1,7 @@
 import 'dart:io'; // فقط إذا أردت استخدام الصورة المرفوعة بالمسار /mnt/data/...
 import 'package:flutter/material.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_screen.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/presentation/screens/visits_and_installs_screen.dart';
 
 class TechnicalSupportChoiseScreen extends StatelessWidget {
   const TechnicalSupportChoiseScreen({super.key});
@@ -123,10 +124,11 @@ class TechnicalSupportChoiseScreen extends StatelessWidget {
                           context: context,
                           text: 'زيارات و تسطيبات',
                           onTap: () {
-                            // Navigator.of(context).pushNamed('/visits_and_finishes');
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('ضغطت زيارات و تسطيبات')),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const VisitsAndInstallsScreen(),
+                              ),
                             );
                           },
                         ),
@@ -136,8 +138,6 @@ class TechnicalSupportChoiseScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-         
           ],
         ),
       ),

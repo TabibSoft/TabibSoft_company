@@ -74,4 +74,12 @@ class ApiConstants {
 
     static const String addSubscription = 'Sales/AddSubscription';
 
+
+//زيارات وتسطيبات 
+static const String getAllVisits = 'Problem/GetAllVisits';
+static const String addVisitDetail = 'Problem/AddVisitDetail';
+static const String editVisitDetail = 'Problem/EditVisitDetail';
+static const String makeVisitDone = 'Problem/MakeVisitDone';
+
+
 }

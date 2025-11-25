@@ -839,6 +839,101 @@ class _ApiService implements ApiService {
     await _dio.fetch<void>(_options);
   }
 
+  @override
+  Future<PaginatedVisitResponse> getAllVisits(Map<String, dynamic> body) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(body);
+    final _options = _setStreamType<PaginatedVisitResponse>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Problem/GetAllVisits',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late PaginatedVisitResponse _value;
+    try {
+      _value = PaginatedVisitResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<void> addVisitDetail(FormData formData) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = formData;
+    final _options = _setStreamType<void>(
+      Options(
+        method: 'POST',
+        headers: _headers,
+        extra: _extra,
+        contentType: 'multipart/form-data',
+      )
+          .compose(
+            _dio.options,
+            'Problem/AddVisitDetail',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    await _dio.fetch<void>(_options);
+  }
+
+  @override
+  Future<void> editVisitDetail(FormData formData) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = formData;
+    final _options = _setStreamType<void>(
+      Options(
+        method: 'POST',
+        headers: _headers,
+        extra: _extra,
+        contentType: 'multipart/form-data',
+      )
+          .compose(
+            _dio.options,
+            'Problem/EditVisitDetail',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    await _dio.fetch<void>(_options);
+  }
+
+  @override
+  Future<void> makeVisitDone({required String visitId}) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{r'visitId': visitId};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<void>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Problem/MakeVisitDone',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    await _dio.fetch<void>(_options);
+  }
+
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
     if (T != dynamic &&
         !(requestOptions.responseType == ResponseType.bytes ||

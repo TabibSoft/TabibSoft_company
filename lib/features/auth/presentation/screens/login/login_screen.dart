@@ -41,13 +41,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-  void dispose() {
-    // NOTE: controllers are provided by cubit. If cubit owns them you might not dispose here.
-    // But original code disposed them so we keep it.
-    _emailController.dispose();
-    _passController.dispose();
-    super.dispose();
-  }
+  // void dispose() {
+  //   // NOTE: controllers are provided by cubit. If cubit owns them you might not dispose here.
+  //   // But original code disposed them so we keep it.
+  //   _emailController.dispose();
+  //   _passController.dispose();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {

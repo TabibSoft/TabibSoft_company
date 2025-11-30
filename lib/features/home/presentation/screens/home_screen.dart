@@ -9,8 +9,8 @@ import 'package:tabib_soft_company/features/management/presentation/screens/mana
 import 'package:tabib_soft_company/features/modirator/presentation/screens/mediator_screen.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/screens/programmers_screen.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/screens/sales_home_screen.dart';
-import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_choise_screen.dart' show TechnicalSupportChoiseScreen;
-import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_screen.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/technical_support_choise_screen.dart'
+    show TechnicalSupportChoiseScreen;
 import 'package:tabib_soft_company/features/home/presentation/screens/nav_bar/settings.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -27,32 +27,27 @@ class HomeScreen extends StatelessWidget {
     final rawRoles = CacheHelper.getString(key: 'userRoles');
     final userRoles = (rawRoles.isNotEmpty) ? rawRoles.split(',') : <String>[];
 
-    // Title logic (مبسط)
+    final bool isAdmin = userRoles.contains('ADMIN');
+    final bool isModerator = userRoles.contains('MODERATOR');
+    final bool isTracker = userRoles.contains('TRACKER');
+
+    // تحديد العنوان
     String title;
-    if (userRoles.contains('ADMIN') || userRoles.contains('MANAGEMENT')) {
-      title = ' أهلا بالإدارة  ${userName.isNotEmpty ? userName : 'المستخدم'}';
+    if (isAdmin || userRoles.contains('MANAGEMENT')) {
+      title = 'أهلا بالإدارة ${userName.isNotEmpty ? userName : 'المستخدم'}';
     } else if (userRoles.contains('SALSE')) {
       title = 'أهلاً السيلز اللعيب ${userName.isNotEmpty ? userName : ''}';
-    } else if (userRoles.contains('PROGRAMMERS')) {
+    } else if (userRoles.contains('PROGRAMMER')) {
       title = 'ملك الكودينج ${userName.isNotEmpty ? userName : ''}';
     } else if (userRoles.contains('SUPPORT')) {
-      title = 'وحش الدعم  ${userName.isNotEmpty ? userName : ''}';
+      title = 'وحش الدعم ${userName.isNotEmpty ? userName : ''}';
+    } else if (isModerator) {
+      title = 'الوســـيط ${userName.isNotEmpty ? userName : ''}';
+    } else if (isTracker) {
+      title = 'ملك المتابعة ${userName.isNotEmpty ? userName : ''}';
     } else {
       title = 'أهلاً ${userName.isNotEmpty ? userName : 'المستخدم'}';
     }
-
-    // final jokes = [
-    //   "اجمد كدا مفيش مهندس بيعيط 😎",
-    //   'الtester لما بيغرق بيقول Bug Bug Bug 🐛',
-    //   'ليه المبرمج مش بيخاف؟ لأنه متعود على الكراش 💥',
-    //   'الدعم الفني دايمًا بيحلها... حتى لو بالكلام بس 😎',
-    // ];
-    // final randomJoke = (jokes..shuffle()).first;
-
-    // إظهار فقاعة نكتة عائمة بعد البناء
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   _showFloatingJoke(context, randomJoke);
-    // });
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -61,6 +56,7 @@ class HomeScreen extends StatelessWidget {
         body: SafeArea(
           child: Stack(
             children: [
+              // الخلفية العلوية
               Positioned(
                 top: 0,
                 left: 0,
@@ -88,7 +84,6 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Logo
                         Image.asset(
                           'assets/images/pngs/TS Logo Final 1.png',
                           width: size.width * 0.67,
@@ -106,14 +101,10 @@ class HomeScreen extends StatelessWidget {
                 top: 12,
                 left: 12,
                 child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
+                  onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const SettingsScreen(),
-                      ),
-                    );
-                  },
+                          builder: (_) => const SettingsScreen())),
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -121,17 +112,13 @@ class HomeScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        )
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2))
                       ],
                     ),
-                    child: Image.asset(
-                      'assets/images/pngs/settings.png',
-                      width: 26,
-                      height: 26,
-                    ),
+                    child: Image.asset('assets/images/pngs/settings.png',
+                        width: 26, height: 26),
                   ),
                 ),
               ),
@@ -141,14 +128,10 @@ class HomeScreen extends StatelessWidget {
                 top: 12,
                 right: 12,
                 child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
+                  onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const NotificationsScreen(),
-                      ),
-                    );
-                  },
+                          builder: (_) => const NotificationsScreen())),
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -156,23 +139,18 @@ class HomeScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color.fromARGB(255, 0, 0, 0)
-                              .withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        )
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2))
                       ],
                     ),
-                    child: const Icon(
-                      Icons.notifications,
-                      color: Color.fromARGB(221, 64, 144, 197),
-                      size: 26,
-                    ),
+                    child: const Icon(Icons.notifications,
+                        color: Color.fromARGB(221, 64, 144, 197), size: 26),
                   ),
                 ),
               ),
 
-              // المحتوى الرئيسي: buttons grid
+              // Grid الأزرار
               Positioned(
                 top: size.height * 0.30,
                 left: 16,
@@ -186,120 +164,103 @@ class HomeScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      )
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6))
                     ],
                   ),
-                  child: Column(
+                  child: GridView.count(
+                    physics: const BouncingScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                    childAspectRatio: 1.03,
                     children: [
-                      Expanded(
-                        child: GridView.count(
-                          physics: const BouncingScrollPhysics(),
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 14,
-                          crossAxisSpacing: 14,
-                          childAspectRatio: 1.03,
-                          children: [
-                            _buildFeatureTile(
-                              context: context,
-                              iconPath: 'assets/images/pngs/manager.png',
-                              label: 'الإدارة',
-                              enabled: userRoles.contains('MANAGEMENT') ||
-                                  userRoles.contains('ADMIN'),
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const ManagementScreen(),
-                                ),
-                              ),
-                              primaryColor: accentColor,
-                            ),
-                            _buildFeatureTile(
-                              context: context,
-                              iconPath: 'assets/images/pngs/sales.png',
-                              label: 'المبيعات',
-                              enabled: userRoles.contains('SALSE') ||
-                                  userRoles.contains('ADMIN'),
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SalesHomeScreen(),
-                                ),
-                              ),
-                              primaryColor: primaryColor,
-                            ),
-                            _buildFeatureTile(
-                              context: context,
-                              iconPath: 'assets/images/pngs/developers.png',
-                              label: 'المبرمجين',
-                              enabled: userRoles.contains('PROGRAMMERS') ||
-                                  userRoles.contains('ADMIN'),
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const ProgrammersScreen(),
-                                ),
-                              ),
-                              primaryColor: primaryColor,
-                            ),
-                            _buildFeatureTile(
-                              context: context,
-                              iconPath:
-                                  'assets/images/pngs/technical_support.png',
-                              label: 'الدعم الفني',
-                              enabled: userRoles.contains('SUPPORT') ||
-                                  userRoles.contains('ADMIN'),
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const TechnicalSupportChoiseScreen(),
-                                ),
-                              ),
-                              primaryColor: accentColor,
-                            ),
-                            _buildFeatureTile(
-                              context: context,
-                              iconPath:
-                                  'assets/images/pngs/icons8-find-user-40 1.png',
-                              label: 'الوسيط',
-                              enabled: true,
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ModeratorScreen()),
-                              ),
-                              primaryColor: accentColor,
-                            ),
-                            _buildFeatureTile(
-                              context: context,
-                              iconPath:
-                                  'assets/images/pngs/icons8-scroll-up-40 1.png',
-                              label: 'المتابعة',
-                              enabled: true,
-                              onTap: () {
-                                // action for follow up
-                              },
-                              primaryColor: primaryColor,
-                            ),
-                          ],
-                        ),
+                      // الإدارة
+                      _buildFeatureTile(
+                        context: context,
+                        iconPath: 'assets/images/pngs/manager.png',
+                        label: 'الإدارة',
+                        enabled: isAdmin || userRoles.contains('MANAGEMENT'),
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const ManagementScreen())),
+                        primaryColor: accentColor,
                       ),
-                      const SizedBox(height: 8),
-                      // optional small hint / copyright
-                      // Text(
-                      //   'TabibSoft',
-                      //   style: TextStyle(
-                      //     color: Colors.grey[500],
-                      //     fontWeight: FontWeight.bold,
-                      //   ),
-                      // ),
-                      // const SizedBox(height: 6),
+
+                      // المبيعات
+                      _buildFeatureTile(
+                        context: context,
+                        iconPath: 'assets/images/pngs/sales.png',
+                        label: 'المبيعات',
+                        enabled: isAdmin || userRoles.contains('SALSE'),
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const SalesHomeScreen())),
+                        primaryColor: primaryColor,
+                      ),
+
+                      // المبرمجين
+                      _buildFeatureTile(
+                        context: context,
+                        iconPath: 'assets/images/pngs/developers.png',
+                        label: 'المبرمجين',
+                        enabled: isAdmin || userRoles.contains('PROGRAMMER'),
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const ProgrammersScreen())),
+                        primaryColor: primaryColor,
+                      ),
+
+                      // الدعم الفني
+                      _buildFeatureTile(
+                        context: context,
+                        iconPath: 'assets/images/pngs/technical_support.png',
+                        label: 'الدعم الفني',
+                        enabled: isAdmin || userRoles.contains('SUPPORT'),
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const TechnicalSupportChoiseScreen())),
+                        primaryColor: accentColor,
+                      ),
+
+                      // الوسيط - موجود دائمًا، قابل للضغط فقط لـ MODERATOR أو ADMIN
+                      _buildFeatureTile(
+                        context: context,
+                        iconPath:
+                            'assets/images/pngs/icons8-find-user-40 1.png',
+                        label: 'الوسيط',
+                        enabled: isAdmin || isModerator,
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const ModeratorScreen())),
+                        primaryColor: accentColor,
+                      ),
+
+                      // المتابعة - موجود دائمًا، قابل للضغط فقط لـ TRACKER أو ADMIN
+                      _buildFeatureTile(
+                        context: context,
+                        iconPath:
+                            'assets/images/pngs/icons8-scroll-up-40 1.png',
+                        label: 'المتابعة',
+                        enabled: isAdmin || isTracker,
+                        onTap: () {
+                          // ضيف الشاشة لاحقًا
+                          if (isAdmin || isTracker) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('شاشة المتابعة قيد التطوير')),
+                            );
+                          }
+                        },
+                        primaryColor: primaryColor,
+                      ),
                     ],
                   ),
                 ),
@@ -311,7 +272,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Tile builder helper
   Widget _buildFeatureTile({
     required BuildContext context,
     required String iconPath,
@@ -320,7 +280,6 @@ class HomeScreen extends StatelessWidget {
     required bool enabled,
     required Color primaryColor,
   }) {
-    final size = MediaQuery.of(context).size;
     return HomeButton(
       iconPath: iconPath,
       label: label,
@@ -331,6 +290,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+// HomeButton بدون تغيير
 class HomeButton extends StatelessWidget {
   final String iconPath;
   final String label;
@@ -370,7 +330,6 @@ class HomeButton extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // أيقونة
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -383,7 +342,6 @@ class HomeButton extends StatelessWidget {
                 iconPath,
                 width: size.width * 0.12,
                 height: size.width * 0.12,
-                // <-- show original colors when enabled; gray tint when disabled
                 color: enabled ? null : Colors.grey,
                 fit: BoxFit.contain,
               ),
@@ -406,11 +364,11 @@ class HomeButton extends StatelessWidget {
 
   void _showToast(BuildContext context) {
     final responses = [
-      'إنت بتعمل إيه هنا؟ 😅',
-      'لو ضغطت تاني هنبلغ الإدارة 😂',
-      'ده مش ليك يا نجم 🤭',
-      'حاول في مكان تاني يا بطل 🕵️‍♂️',
-      'بس يا بــابــا🤭'
+      'إنت بتعمل إيه هنا؟',
+      'لو ضغطت تاني هنبلغ الإدارة',
+      'ده مش ليك يا نجم',
+      'حاول في مكان تاني يا بطل',
+      'بس يا بــابــا'
     ];
     final random = Random().nextInt(responses.length);
     Fluttertoast.showToast(
@@ -424,16 +382,14 @@ class HomeButton extends StatelessWidget {
   }
 }
 
-// Extension to darken a color slightly
 extension ColorBrightness on Color {
   Color darken([double amount = .1]) {
     assert(amount >= 0 && amount <= 1);
-    final h = this;
     return Color.fromARGB(
-      h.alpha,
-      (h.red * (1 - amount)).round(),
-      (h.green * (1 - amount)).round(),
-      (h.blue * (1 - amount)).round(),
+      alpha,
+      (red * (1 - amount)).round(),
+      (green * (1 - amount)).round(),
+      (blue * (1 - amount)).round(),
     );
   }
 }

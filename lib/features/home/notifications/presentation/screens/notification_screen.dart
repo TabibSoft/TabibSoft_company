@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
+import 'package:tabib_soft_company/features/home/notifications/presentation/screens/notification_detail_screen_anyRole.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/screens/notes/notes_screen.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/filter_widget.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/home_skeltonizer_widget.dart';
@@ -23,11 +24,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   List<String> _readNotificationIds = [];
+  String? _userRoles; // لتخزين الأدوار (مثل: SALSE,ADMIN,...)
 
   @override
   void initState() {
     super.initState();
     _loadReadNotifications();
+    _loadUserRoles(); // تحميل أدوار المستخدم
     context.read<NotificationCubit>().fetchNotifications();
     _searchController.addListener(() {
       setState(() {
@@ -52,6 +55,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
   }
 
+  Future<void> _loadUserRoles() async {
+    await CacheHelper.init();
+    final rolesString =
+        CacheHelper.sharedPreferences.getString('userRoles') ?? '';
+    setState(() {
+      _userRoles = rolesString;
+    });
+  }
+
   Future<void> _saveReadNotifications() async {
     await CacheHelper.sharedPreferences
         .setStringList('read_notification_ids', _readNotificationIds);
@@ -64,6 +76,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
       _saveReadNotifications();
     }
+  }
+
+  // دالة للتحقق من وجود دور SALES
+  bool _hasSalesRole() {
+    if (_userRoles == null || _userRoles!.isEmpty) return false;
+    final roles = _userRoles!.split(',');
+    return roles.contains('SALES') ||
+        roles.contains('SALSE'); // دعم كلا النسختين
   }
 
   String formatDate(DateTime date) {
@@ -205,11 +225,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             : notifications.toList();
 
                         if (filtered.isEmpty) {
-                          return Center(
+                          return const Center(
                             child: Text(
                               'لا توجد إشعارات',
-                              style: TextStyle(
-                                  color: Colors.grey[700], fontSize: 16),
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 16),
                             ),
                           );
                         }
@@ -237,9 +257,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
                               return GestureDetector(
                                 behavior: HitTestBehavior.opaque,
-                                onTap: () {
-                                  if (notification.referenceId != null) {
-                                    _markAsRead(notification.id);
+                                onTap: () async {
+                                  // دائمًا نحفظ كمقروء
+                                  _markAsRead(notification.id);
+
+                                  if (notification.referenceId == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'لا يوجد معرف مرجعي لهذا الإشعار')),
+                                    );
+                                    return;
+                                  }
+
+                                  if (_hasSalesRole()) {
+                                    // مبيعات → يفتح صفحة الملاحظات
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -253,10 +285,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                       ),
                                     );
                                   } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            'لا يوجد  ReferenceId لهذا الإشعار'),
+                                    // غير مبيعات → يفتح صفحة تفاصيل الإشعار فقط
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (ctx) =>
+                                            NotificationDetailScreenAnyRole(
+                                          notification: notification,
+                                        ),
                                       ),
                                     );
                                   }

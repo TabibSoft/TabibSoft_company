@@ -28,7 +28,11 @@ Customization _$CustomizationFromJson(Map<String, dynamic> json) =>
     Customization(
       id: json['id'] as String,
       engName: json['engName'] as String? ?? '',
-      projectName: json['projectName'] as String,
+      projectName: json['projectName'] as String? ?? '',
+      customerName: json['customerName'] as String? ?? '',
+      deadLine: json['deadLine'] as String?,
+      testEngName: json['testEngName'] as String? ?? '',
+      testNotes: json['testNotes'] as String? ?? '',
       reports: (json['reports'] as List<dynamic>)
           .map((e) => Report.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -41,6 +45,10 @@ Map<String, dynamic> _$CustomizationToJson(Customization instance) =>
       'id': instance.id,
       'engName': instance.engName,
       'projectName': instance.projectName,
+      'customerName': instance.customerName,
+      'deadLine': instance.deadLine,
+      'testEngName': instance.testEngName,
+      'testNotes': instance.testNotes,
       'reports': instance.reports,
       'sitiouationStatus': instance.situationStatus,
     };
@@ -50,6 +58,7 @@ Report _$ReportFromJson(Map<String, dynamic> json) => Report(
       name: json['name'] as String,
       notes: json['note'] as String? ?? '',
       finished: json['finshed'] as bool,
+      isTested: json['isTested'] as bool? ?? false,
       time: (json['time'] as num).toInt(),
     );
 
@@ -58,6 +67,7 @@ Map<String, dynamic> _$ReportToJson(Report instance) => <String, dynamic>{
       'name': instance.name,
       'note': instance.notes,
       'finshed': instance.finished,
+      'isTested': instance.isTested,
       'time': instance.time,
     };
 
@@ -68,8 +78,8 @@ SituationStatus _$SituationStatusFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       createdUser: json['createdUser'] as String?,
       lastEditUser: json['lastEditUser'] as String?,
-      createdDate: json['createdDate'] as String,
-      lastEditDate: json['lastEditDate'] as String,
+      createdDate: json['createdDate'] as String? ?? '0001-01-01T00:00:00',
+      lastEditDate: json['lastEditDate'] as String? ?? '0001-01-01T00:00:00',
     );
 
 Map<String, dynamic> _$SituationStatusToJson(SituationStatus instance) =>

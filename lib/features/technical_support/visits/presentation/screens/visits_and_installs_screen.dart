@@ -16,8 +16,17 @@ class VisitsAndInstallsScreen extends StatelessWidget {
     const sheetColor = Color(0xFFF5F7FA);
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: TextDirection.rtl, 
       child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        
         backgroundColor: mainBlueColor,
         body: SafeArea(
           bottom: false,

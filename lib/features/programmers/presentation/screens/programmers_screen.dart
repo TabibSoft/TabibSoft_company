@@ -1,10 +1,10 @@
+// programmers_screen.dart (النسخة المعدلة والصحيحة)
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:tabib_soft_company/core/networking/api_service.dart';
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
-import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart';
-import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart';
+import 'package:tabib_soft_company/core/networking/api_service.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/task_update_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/repo/report_repository.dart';
@@ -14,9 +14,9 @@ import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_state.dart';
 
 const statusToSectionId = {
-  'مؤجل': '0cf06194-17b8-4245-9594-08dcd09a6b67', // TASKS
-  'قيد العمل': '0d18c812-b508-4306-9595-08dcd09a6b67', // PROGRESS
-  'تم': '006bab2f-2709-4bcd-9597-08dcd09a6b67', // FINISH
+  'مؤجل': '0cf06194-17b8-4245-9594-08dcd09a6b67',
+  'قيد العمل': '0d18c812-b508-4306-9595-08dcd09a6b67',
+  'تم': '006bab2f-2709-4bcd-9597-08dcd09a6b67',
 };
 
 class ProgrammersScreen extends StatefulWidget {
@@ -35,86 +35,101 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    const mainBlueColor = Color(0xFF16669E);
+    const sheetColor = Color(0xFFF5F7FA);
+    const cardBorderColor = Color(0xFF20AAC9);
+    const cardShadowBlue = Color(0xFF104D9D);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        body: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: CustomAppBar(
-                title: 'المبرمجين',
-                height: 332,
-                leading: IconButton(
-                  icon: Image.asset(
-                    'assets/images/pngs/back.png',
-                    width: 30,
-                    height: 30,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
+        backgroundColor: mainBlueColor,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              Center(
+                child: Image.asset(
+                  'assets/images/pngs/TS_Logo0.png',
+                  width: 110,
+                  height: 110,
+                  fit: BoxFit.contain,
+                  color: Colors.white.withOpacity(0.4),
                 ),
               ),
-            ),
-            Positioned(
-              top: size.height * 0.25,
-              left: size.width * 0.05,
-              right: size.width * 0.05,
-              bottom: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  // color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF56C7F1), width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+              const SizedBox(height: 16),
+
+              // الشيت الأبيض المرفوع
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: sheetColor,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
                     ),
-                  ],
-                ),
-                child: BlocBuilder<TaskCubit, TaskState>(
-                  builder: (context, state) {
-                    final customizations = state.tasks
-                        .expand((task) => task.customization)
-                        .toList();
-                    return Skeletonizer(
-                      enabled: state.status == TaskStatus.loading,
-                      child: ListView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.all(16),
-                        itemCount: state.status == TaskStatus.loading
-                            ? 5
-                            : customizations.length,
-                        itemBuilder: (context, index) {
-                          if (state.status == TaskStatus.loading) {
-                            return _buildTaskCardSkeleton();
-                          } else if (state.status == TaskStatus.success) {
-                            final customization = customizations[index];
-                            return _buildTaskCard(context, customization);
-                          } else if (state.status == TaskStatus.failure) {
-                            return Center(
-                              child: Text('خطأ: ${state.errorMessage}'),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
-                    );
-                  },
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: BlocBuilder<TaskCubit, TaskState>(
+                      builder: (context, state) {
+                        // جمع كل الـ customizations من كل المهام
+                        final customizations = state.tasks
+                            .expand((task) => task.customization)
+                            .toList();
+
+                        // إذا مفيش داتا خالص → نعرض رسالة
+                        if (customizations.isEmpty &&
+                            state.status == TaskStatus.success) {
+                          return const Center(
+                            child: Text(
+                              'لا توجد مهام حاليًا',
+                              style: TextStyle(fontSize: 18, color: Colors.grey),
+                            ),
+                          );
+                        }
+
+                        return Skeletonizer(
+                          enabled: state.status == TaskStatus.loading,
+                          child: ListView.builder(
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 20),
+                            itemCount: state.status == TaskStatus.loading
+                                ? 6
+                                : customizations.length,
+                            itemBuilder: (context, index) {
+                              if (state.status == TaskStatus.loading) {
+                                return _buildTaskCardSkeleton();
+                              }
+
+                              if (state.status == TaskStatus.success) {
+                                final customization = customizations[index];
+                                return _buildTaskCard(context, customization);
+                              }
+
+                              if (state.status == TaskStatus.failure) {
+                                return Center(
+                                  child: Text(
+                                    'خطأ: ${state.errorMessage}',
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                );
+                              }
+
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: const CustomNavBar(
-          items: [],
-          alignment: MainAxisAlignment.spaceBetween,
-          padding: EdgeInsets.symmetric(horizontal: 32),
+            ],
+          ),
         ),
       ),
     );
@@ -123,8 +138,20 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
   Widget _buildTaskCardSkeleton() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: SizedBox(
+      child: Container(
         height: 180,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color.fromARGB(255, 185, 185, 185), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: const Color.fromARGB(255, 150, 153, 156).withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Stack(
           children: [
             Positioned(
@@ -134,56 +161,29 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
               child: Container(
                 width: 50,
                 decoration: const BoxDecoration(
-                  color: Color(0xff178CBB),
-                  borderRadius:
-                      BorderRadius.horizontal(left: Radius.circular(16)),
+                  color: Color.fromARGB(255, 143, 144, 145),
+                  borderRadius: BorderRadius.horizontal(left: Radius.circular(16)),
                 ),
               ),
             ),
-            Positioned.fill(
-              child: Container(
-                margin: const EdgeInsets.only(left: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: const Color(0xff178CBB), width: 2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'اسم المشروع: مشروع عينة',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[400],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'غير محدد',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[400]),
-                    ),
-                    const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 100,
-                          height: 40,
-                          color: Colors.grey[300],
-                        ),
-                        const SizedBox(width: 16),
-                        Container(
-                          width: 100,
-                          height: 40,
-                          color: Colors.grey[300],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            Padding(
+              padding: const EdgeInsets.all(16).copyWith(left: 60),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(height: 20, color: Colors.grey[300]),
+                  const SizedBox(height: 12),
+                  Container(height: 16, width: 200, color: Colors.grey[300]),
+                  const Spacer(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(width: 100, height: 40, color: Colors.grey[300]),
+                      const SizedBox(width: 16),
+                      Container(width: 100, height: 40, color: Colors.grey[300]),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -197,10 +197,23 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       child: GestureDetector(
         onTap: () => _showDetailsPopup(context, customization.id),
-        child: SizedBox(
+        child: Container(
           height: 180,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF20AAC9), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF104D9D).withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
           child: Stack(
             children: [
+              // الشريط الأزرق الجانبي
               Positioned(
                 left: 0,
                 top: 0,
@@ -209,57 +222,48 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                   width: 50,
                   decoration: const BoxDecoration(
                     color: Color(0xff178CBB),
-                    borderRadius:
-                        BorderRadius.horizontal(left: Radius.circular(16)),
+                    borderRadius: BorderRadius.horizontal(left: Radius.circular(16)),
                   ),
                 ),
               ),
-              Positioned.fill(
-                child: Container(
-                  margin: const EdgeInsets.only(left: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border:
-                        Border.all(color: const Color(0xff178CBB), width: 2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            const TextSpan(
-                              text: 'اسم المشروع: ',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xff178CBB),
-                              ),
+              // المحتوى
+              Padding(
+                padding: const EdgeInsets.all(16).copyWith(left: 60),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: 'اسم المشروع: ',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff178CBB),
                             ),
-                            TextSpan(
-                              text: customization.projectName,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black,
-                              ),
+                          ),
+                          TextSpan(
+                            text: customization.projectName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        customization.engName.isEmpty
-                            ? 'غير محدد'
-                            : customization.engName,
-                        style:
-                            const TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                      // const Spacer(),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      customization.engName.isEmpty
+                          ? 'غير محدد'
+                          : customization.engName,
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                    const Spacer(),
+                    // يمكن تضيف أزرار أو تفاصيل أكتر هنا لاحقًا
+                  ],
                 ),
               ),
             ],
@@ -268,7 +272,6 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
       ),
     );
   }
-
   void _showDetailsPopup(BuildContext ctx, String taskId) {
     context.read<TaskCubit>().fetchTaskById(taskId);
     showDialog(

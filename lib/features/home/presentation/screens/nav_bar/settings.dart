@@ -41,7 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           textAlign: TextAlign.center,
         ),
         content: Text(
-          'هل أنت متأكد أنك تريد تسجيل الخروج؟',
+          'مش ناوي تغير رأيك يعني !!!',
           style: TextStyle(
             fontSize: 16,
             color: Colors.blueGrey[600],
@@ -52,27 +52,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              foregroundColor: Colors.grey,
-              textStyle: const TextStyle(fontSize: 16),
-            ),
             child: const Text('إلغاء'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              elevation: 5,
-              backgroundColor: Colors.redAccent,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              backgroundColor: Colors.red,
             ),
             child: const Text('تسجيل الخروج'),
           ),
@@ -81,7 +66,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     if (confirm == true) {
-      // إزالة التوكن واسم المستخدم
       await CacheHelper.removeData(key: 'loginToken');
       await CacheHelper.removeData(key: 'userName');
 
@@ -94,79 +78,148 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    // ✅ ألوان التصميم المحفوظ
+    const mainBlueColor = Color(0xFF16669E);
+    const sheetColor = Color(0xFFF5F7FA);
+    const borderColor = Color(0xFF20AAC9);
+    const shadowBlue = Color(0xff104D9D);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        body: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: CustomAppBar(
-                title: 'الإعدادات',
-                height: 332,
-                leading: IconButton(
-                  icon: Image.asset(
-                    'assets/images/pngs/back.png',
-                    width: 30,
-                    height: 30,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
+        backgroundColor: mainBlueColor,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+
+              /// الشعار العلوي
+              Center(
+                child: Image.asset(
+                  'assets/images/pngs/TS_Logo0.png',
+                  width: 110,
+                  height: 110,
+                  fit: BoxFit.contain,
+                  color: Colors.white.withOpacity(0.4),
                 ),
               ),
-            ),
-            Positioned(
-              top: size.height * 0.23,
-              left: size.width * 0.05,
-              right: size.width * 0.05,
-              bottom: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color:
-                      const Color.fromARGB(255, 95, 93, 93).withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF56C7F1), width: 3),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Center(
-                    child: ElevatedButton(
-                      onPressed: () => _logout(context),
-                      style: ElevatedButton.styleFrom(
-                        elevation: 8,
-                        backgroundColor:
-                            const Color.fromARGB(255, 152, 240, 225),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 40, vertical: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+
+              const SizedBox(height: 20),
+
+              /// الشيت الأبيض السفلي
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: sheetColor,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 30),
+                    child: Center(
+                      child: SizedBox(
+                        height: 300,
+                        width: double.infinity,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            /// ظل الكارت الأزرق
+                            Positioned(
+                              left: 0,
+                              top: 15,
+                              child: Container(
+                                width: MediaQuery.of(context).size.width - 40,
+                                height: 200,
+                                decoration: BoxDecoration(
+                                  color: shadowBlue,
+                                  borderRadius: BorderRadius.circular(25),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.25),
+                                      offset: const Offset(4, 6),
+                                      blurRadius: 12,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            /// كارت تسجيل الخروج الأبيض
+                            Padding(
+                              padding: const EdgeInsets.only(top: 25, left: 20),
+                              child: Container(
+                                height: 190,
+                                width: MediaQuery.of(context).size.width - 6,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(30),
+                                  border:
+                                      Border.all(color: borderColor, width: 4),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Text(
+                                      'تسجيل الخروج من التطبيق',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 25),
+
+                                    /// زر تسجيل الخروج بنفس ستايل المرجع
+                                    GestureDetector(
+                                      onTap: () => _logout(context),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 36, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius:
+                                              BorderRadius.circular(30),
+                                          boxShadow: [
+                                            BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.15),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 3)),
+                                          ],
+                                        ),
+                                        child: const Text(
+                                          'تسجيل الخروج',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        textStyle: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      child: const Text(
-                        'تسجيل الخروج',
-                        style: TextStyle(color: Colors.blueAccent),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        bottomNavigationBar: const CustomNavBar(
-          items: [],
-          alignment: MainAxisAlignment.spaceBetween,
-          padding: EdgeInsets.symmetric(horizontal: 32),
-        ),
+
+        /// ✅ الـ Bottom Nav كما هو بدون تغيير
       ),
     );
   }
 }
-

@@ -246,7 +246,7 @@ class TechCardContent extends StatelessWidget {
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Text(
-                          issue.problemDetails ??
+                          issue.problemAddress ??
                               issue.problemAddress ??
                               'لا توجد تفاصيل',
                           style: TextStyle(

@@ -121,7 +121,7 @@ class CustomerRepository {
         if (engineerId != null) MapEntry('EngineerId', engineerId),
         if (details != null) MapEntry('Details', details),
         if (phone != null) MapEntry('Phone', phone),
-        if (problemType != null) MapEntry('ProblemType', problemType),
+        if (problemType != null) MapEntry('Problemtype', problemType),
       ]);
 
       if (images != null && images.isNotEmpty) {

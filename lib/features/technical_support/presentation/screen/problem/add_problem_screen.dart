@@ -261,7 +261,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                 
                 // إعادة تعيين الحالة قبل الرجوع
                 context.read<CustomerCubit>().resetProblemAddedFlag();
-                Navigator.pop(context, true); // إرجاع true للإشارة إلى نجاح الإضافة
+                Navigator.pop(context, state.newlyAddedIssue); // إرجاع المشكلة المضافة حديثًا
               } else if (state.status == CustomerStatus.failure) {
                 setState(() => _isSaving = false);
                 

@@ -4,6 +4,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/visit_model.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
 
@@ -25,13 +28,24 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
   bool _iconChecked = false;
   bool _attendanceChecked = false;
 
+  // جديد: مهندس المبيعات
+  String? _selectedSalesEngineerName;
+  String? _selectedSalesEngineerId;
+  bool _isEngineerDropdownVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // جلب المهندسين فور فتح الشاشة
+    context.read<EngineerCubit>().fetchEngineers();
+  }
+
   @override
   void dispose() {
     _noteController.dispose();
     super.dispose();
   }
 
-  // دالة اختيار صورة (كاميرا أو معرض)
   Future<void> _pickImage() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -63,14 +77,10 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     }
   }
 
-  // دالة حذف صورة
   void _removeImage(File image) {
-    setState(() {
-      _selectedImages.remove(image);
-    });
+    setState(() => _selectedImages.remove(image));
   }
 
-  // دالة إرسال البيانات للـ API
   Future<void> _addVisitDetail() async {
     if (_noteController.text.trim().isEmpty && _selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -93,6 +103,9 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     var formData = FormData.fromMap({
       'VisitInstallDetailId': widget.visit.id,
       'Note': finalNote.isEmpty ? "تم الزيارة بدون ملاحظات" : finalNote,
+      // إرسال مهندس المبيعات إذا تم اختياره
+      if (_selectedSalesEngineerId != null)
+        'SalesEngineerId': _selectedSalesEngineerId!,
     });
 
     for (var image in _selectedImages) {
@@ -167,12 +180,130 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                         _buildBlueFieldRow(
                             "رقم العميل:", "غير متوفر", fieldBlueColor),
                         const SizedBox(height: 15),
-                        _buildBlueFieldRow(
-                          "مهندس المبيعات:",
-                          widget.visit.engineerName ?? "غير محدد",
-                          fieldBlueColor,
-                          isDropdown: true,
+
+                        // منسدلة مهندس المبيعات (الجديدة)
+                        Row(
+                          children: [
+                            const SizedBox(
+                              width: 100,
+                              child: Text("مهندس المبيعات:",
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black),
+                                  textAlign: TextAlign.right),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() =>
+                                    _isEngineerDropdownVisible =
+                                        !_isEngineerDropdownVisible),
+                                child: Container(
+                                  height: 45,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 15),
+                                  decoration: BoxDecoration(
+                                    color: fieldBlueColor,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  alignment: Alignment.centerRight,
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          _selectedSalesEngineerName ??
+                                              widget.visit.engineerName ??
+                                              "اختر مهندس المبيعات",
+                                          style: TextStyle(
+                                            color: _selectedSalesEngineerName ==
+                                                    null
+                                                ? Colors.white70
+                                                : Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const Icon(Icons.keyboard_arrow_down,
+                                          color: Colors.lightBlueAccent,
+                                          size: 30),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+
+                        // قائمة المهندسين
+                        if (_isEngineerDropdownVisible)
+                          Container(
+                            height: 250,
+                            margin: const EdgeInsets.only(top: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300),
+                              boxShadow: const [
+                                BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 10,
+                                    offset: Offset(0, 4))
+                              ],
+                            ),
+                            child: BlocBuilder<EngineerCubit, EngineerState>(
+                              builder: (context, state) {
+                                if (state.status == EngineerStatus.loading) {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                }
+                                if (state.status == EngineerStatus.failure) {
+                                  return Center(
+                                      child: Text(
+                                          "فشل جلب المهندسين: ${state.errorMessage}"));
+                                }
+                                if (state.engineers.isEmpty) {
+                                  return const Center(
+                                      child: Text("لا يوجد مهندسين متاحين"));
+                                }
+
+                                return ListView.builder(
+                                  itemCount: state.engineers.length,
+                                  itemBuilder: (context, index) {
+                                    final engineer = state.engineers[index];
+                                    return ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor:
+                                            const Color(0xFF28B5E1),
+                                        child: Text(
+                                          engineer.name.isNotEmpty
+                                              ? engineer.name[0]
+                                              : "?",
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      title: Text(engineer.name),
+                                      subtitle: Text(engineer.telephone),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedSalesEngineerName =
+                                              engineer.name;
+                                          _selectedSalesEngineerId =
+                                              engineer.id;
+                                          _isEngineerDropdownVisible = false;
+                                        });
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+
                         const SizedBox(height: 15),
                         _buildBlueFieldRow(
                             "ملاحظات المبيعات:", "--", fieldBlueColor),
@@ -233,7 +364,7 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
 
                         const SizedBox(height: 20),
 
-                        // رفع ملفات (بالطريقة الجميلة)
+                        // رفع ملفات
                         Column(
                           children: [
                             const Text("رفع ملفات",
@@ -271,7 +402,6 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                           ],
                         ),
 
-                        // عرض الصور المختارة
                         if (_selectedImages.isNotEmpty) ...[
                           const SizedBox(height: 15),
                           Wrap(
@@ -282,12 +412,10 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Image.file(
-                                      image,
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                    ),
+                                    child: Image.file(image,
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover),
                                   ),
                                   Positioned(
                                     top: -8,

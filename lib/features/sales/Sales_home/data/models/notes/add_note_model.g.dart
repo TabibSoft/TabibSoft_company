@@ -17,6 +17,7 @@ AddNoteDto _$AddNoteDtoFromJson(Map<String, dynamic> json) => AddNoteDto(
       imageFiles: (json['imageFiles'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
+      expectedComment: json['expectedComment'] as String?,
     );
 
 Map<String, dynamic> _$AddNoteDtoToJson(AddNoteDto instance) =>
@@ -27,4 +28,5 @@ Map<String, dynamic> _$AddNoteDtoToJson(AddNoteDto instance) =>
       'exepectedCallTimeFrom': instance.expectedCallTimeFrom,
       'exepectedCallTimeTo': instance.expectedCallTimeTo,
       'imageFiles': instance.imageFiles,
+      'expectedComment': instance.expectedComment,
     };

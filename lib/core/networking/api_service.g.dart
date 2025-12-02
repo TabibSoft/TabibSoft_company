@@ -377,12 +377,12 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<void> createProblem(FormData formData) async {
+  Future<ProblemModel> createProblem(FormData formData) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = formData;
-    final _options = _setStreamType<void>(
+    final _options = _setStreamType<ProblemModel>(
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -392,13 +392,21 @@ class _ApiService implements ApiService {
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
-    await _dio.fetch<void>(_options);
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ProblemModel _value;
+    try {
+      _value = ProblemModel.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
   }
 
   @override
   Future<PaginatedSales> getAllMeasurements({
     int page = 1,
-    int pageSize = 10,
+    int pageSize = 20,
     String? statusId,
     String? productId,
     String? search,
@@ -534,6 +542,7 @@ class _ApiService implements ApiService {
   Future<void> addRequirement(
     String measurementId,
     String? notes,
+    String? exepectedComment,
     String? exepectedCallDate,
     String? exepectedCallTimeFrom,
     String? exepectedCallTimeTo,
@@ -547,6 +556,9 @@ class _ApiService implements ApiService {
     _data.fields.add(MapEntry('measurementId', measurementId));
     if (notes != null) {
       _data.fields.add(MapEntry('notes', notes));
+    }
+    if (exepectedComment != null) {
+      _data.fields.add(MapEntry('exepectedComment', exepectedComment));
     }
     if (exepectedCallDate != null) {
       _data.fields.add(MapEntry('exepectedCallDate', exepectedCallDate));

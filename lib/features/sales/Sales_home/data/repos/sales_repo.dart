@@ -13,7 +13,7 @@ class SalesRepository {
 
   Future<Either<ServerFailure, PaginatedSales>> getAllMeasurements({
     int page = 1,
-    int pageSize = 10,
+    int pageSize = 20,
     String? statusId,
     String? productId,
     String? search,

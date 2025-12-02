@@ -16,6 +16,11 @@ class CustomerCubit extends Cubit<CustomerState> {
   CustomerCubit(this._customerRepository)
       : super(const CustomerState(status: CustomerStatus.initial));
 
+  // دالة لإعادة تعيين حالة isProblemAdded
+  void resetProblemAddedFlag() {
+    emit(state.copyWith(isProblemAdded: false));
+  }
+
   Future<void> fetchCustomers() async {
     emit(state.copyWith(status: CustomerStatus.loading));
     final result = await _customerRepository.getAllCustomers();
@@ -86,9 +91,19 @@ class CustomerCubit extends Cubit<CustomerState> {
         if (issues.length < _pageSize) {
           _hasMoreData = false;
         }
+        
+        // ترتيب المشاكل من الأجدد للأقدم
+        final sortedIssues = List<ProblemModel>.from(issues);
+        sortedIssues.sort((a, b) {
+          final dateA = DateTime.tryParse(a.problemDate ?? '') ?? DateTime(1970);
+          final dateB = DateTime.tryParse(b.problemDate ?? '') ?? DateTime(1970);
+          return dateB.compareTo(dateA); // الأحدث أولاً
+        });
+        
         final updatedIssues = _currentPage == 1
-            ? issues
-            : [...state.techSupportIssues, ...issues];
+            ? sortedIssues
+            : [...state.techSupportIssues, ...sortedIssues];
+        
         emit(state.copyWith(
           status: CustomerStatus.success,
           techSupportIssues: updatedIssues,
@@ -212,104 +227,92 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
   }
 
-  Future<void> createProblem({
-    required String customerId,
-    required DateTime dateTime,
-    required int problemStatusId,
-    required String problemCategoryId,
-    String? note,
-    String? engineerId,
-    String? details,
-    String? phone,
-    List<File>? images,
-  }) async {
-    print(
-        'createProblem called with customerId: $customerId, problemStatusId: $problemStatusId, problemCategoryId: $problemCategoryId');
+Future<void> createProblem({
+  required String customerId,
+  required DateTime dateTime,
+  required int problemStatusId,
+  required String problemCategoryId,
+  String? note,
+  String? engineerId,
+  String? details,
+  String? phone,
+  List<File>? images,
+}) async {
+  print(
+      'createProblem called with customerId: $customerId, problemStatusId: $problemStatusId, problemCategoryId: $problemCategoryId');
 
-    // التحقق من صلاحية problemStatusId
-    if (state.problemStatusList.isEmpty) {
-      await fetchProblemStatus();
-    }
-    if (!state.problemStatusList.any((s) => s.id == problemStatusId)) {
-      print(
-          'Invalid problemStatusId: $problemStatusId. Available IDs: ${state.problemStatusList.map((s) => s.id).toList()}');
-      emit(state.copyWith(
-        status: CustomerStatus.failure,
-        errorMessage: 'حالة المشكلة غير صالحة',
-        isProblemAdded: false,
-      ));
-      return;
-    }
-
-    // التحقق من صلاحية problemCategoryId
-    if (state.problemCategories.isEmpty) {
-      await fetchProblemCategories();
-    }
-    if (!state.problemCategories.any((c) => c.id == problemCategoryId)) {
-      print(
-          'Invalid problemCategoryId: $problemCategoryId. Available IDs: ${state.problemCategories.map((c) => c.id).toList()}');
-      emit(state.copyWith(
-        status: CustomerStatus.failure,
-        errorMessage: 'فئة المشكلة غير صالحة',
-        isProblemAdded: false,
-      ));
-      return;
-    }
-
-    emit(state.copyWith(status: CustomerStatus.loading, isProblemAdded: false));
-    final result = await _customerRepository.createProblem(
-      customerId: customerId,
-      dateTime: dateTime,
-      problemStatusId: problemStatusId,
-      problemCategoryId: problemCategoryId,
-      note: note,
-      engineerId: engineerId,
-      details: details,
-      phone: phone,
-      images: images,
-    );
-    result.when(
-      success: (_) {
-        print('createProblem succeeded');
-        final tempId = DateTime.now().millisecondsSinceEpoch.toString();
-        final newIssue = ProblemModel(
-          id: tempId,
-          customerId: customerId,
-          customerName: state.customers
-              .firstWhere(
-                (c) => c.id == customerId,
-                orElse: () => CustomerModel(id: customerId, name: 'غير معروف'),
-              )
-              .name,
-          problemAddress: details ?? note,
-          problemDate: dateTime.toIso8601String(),
-          problemtype: state.problemStatusList
-              .firstWhere(
-                (s) => s.id == problemStatusId,
-                orElse: () => ProblemStatusModel(id: 0, name: 'غير معروف'),
-              )
-              .name,
-          phone: phone,
-          image: images?.isNotEmpty == true ? images!.first.path : null,
-        );
-        emit(state.copyWith(
-          status: CustomerStatus.success,
-          isProblemAdded: true,
-          newlyAddedIssue: newIssue,
-          newlyAddedIssueTime: DateTime.now(),
-          techSupportIssues: [newIssue, ...state.techSupportIssues],
-        ));
-      },
-      failure: (error) {
-        print('createProblem failed: ${error.errMessages}');
-        emit(state.copyWith(
-          status: CustomerStatus.failure,
-          errorMessage: error.errMessages,
-          isProblemAdded: false,
-        ));
-      },
-    );
+  // التحقق من صلاحية problemStatusId
+  if (state.problemStatusList.isEmpty) {
+    await fetchProblemStatus();
   }
+  if (!state.problemStatusList.any((s) => s.id == problemStatusId)) {
+    print(
+        'Invalid problemStatusId: $problemStatusId. Available IDs: ${state.problemStatusList.map((s) => s.id).toList()}');
+    emit(state.copyWith(
+      status: CustomerStatus.failure,
+      errorMessage: 'حالة المشكلة غير صالحة',
+      isProblemAdded: false,
+    ));
+    return;
+  }
+
+  // التحقق من صلاحية problemCategoryId
+  if (state.problemCategories.isEmpty) {
+    await fetchProblemCategories();
+  }
+  if (!state.problemCategories.any((c) => c.id == problemCategoryId)) {
+    print(
+        'Invalid problemCategoryId: $problemCategoryId. Available IDs: ${state.problemCategories.map((c) => c.id).toList()}');
+    emit(state.copyWith(
+      status: CustomerStatus.failure,
+      errorMessage: 'فئة المشكلة غير صالحة',
+      isProblemAdded: false,
+    ));
+    return;
+  }
+
+  emit(state.copyWith(status: CustomerStatus.loading, isProblemAdded: false));
+
+  final result = await _customerRepository.createProblem(
+    customerId: customerId,
+    dateTime: dateTime,
+    problemStatusId: problemStatusId,
+    problemCategoryId: problemCategoryId,
+    note: note,
+    engineerId: engineerId,
+    details: details,
+    phone: phone,
+    images: images,
+  );
+
+  result.when(
+    success: (createdProblem) {
+      print('createProblem succeeded with data: ${createdProblem.toJson()}');
+
+      // استخدام البيانات المرجعة من الـ API مباشرة
+      final newIssue = createdProblem;
+
+      // إضافة المشكلة الجديدة في البداية (الأحدث أولاً)
+      final updatedIssues = [newIssue, ...state.techSupportIssues];
+
+      emit(state.copyWith(
+        status: CustomerStatus.success,
+        isProblemAdded: true,
+        newlyAddedIssue: newIssue,
+        newlyAddedIssueTime: DateTime.now(),
+        techSupportIssues: updatedIssues,
+      ));
+    },
+    failure: (error) {
+      print('createProblem failed: ${error.errMessages}');
+      emit(state.copyWith(
+        status: CustomerStatus.failure,
+        errorMessage: error.errMessages,
+        isProblemAdded: false,
+      ));
+    },
+  );
+}
 
   void resetPagination() {
     _currentPage = 1;

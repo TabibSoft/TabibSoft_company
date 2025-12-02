@@ -40,11 +40,11 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
     if (cubit.state.products.isEmpty || cubit.state.statuses.isEmpty) {
       cubit.fetchProducts().then((_) {
         cubit.fetchStatuses().then((_) {
-          cubit.fetchMeasurements(page: 1, pageSize: 10);
+          cubit.fetchMeasurements(page: 1, pageSize: 20);
         });
       });
     } else {
-      cubit.fetchMeasurements(page: 1, pageSize: 10);
+      cubit.fetchMeasurements(page: 1, pageSize: 20);
     }
     _searchController.addListener(() {
       setState(() {
@@ -52,14 +52,23 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
       });
       _refreshMeasurements();
     });
+
+    // التعديل الأساسي: استخدام عتبة (threshold) بدلاً من المقارنة الدقيقة
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels ==
-              _scrollController.position.maxScrollExtent &&
+      // تحديد عتبة 200 بكسل قبل نهاية القائمة
+      const threshold = 200.0;
+      final currentScroll = _scrollController.position.pixels;
+      final maxScroll = _scrollController.position.maxScrollExtent;
+
+      // التحقق إذا وصل المستخدم قرب النهاية
+      if (currentScroll >= (maxScroll - threshold) &&
           context.read<SalesCubit>().state.currentPage <
-              context.read<SalesCubit>().state.totalPages) {
+              context.read<SalesCubit>().state.totalPages &&
+          context.read<SalesCubit>().state.status != SalesStatus.loadingMore &&
+          context.read<SalesCubit>().state.status != SalesStatus.loading) {
         context.read<SalesCubit>().fetchMeasurements(
               page: context.read<SalesCubit>().state.currentPage + 1,
-              pageSize: 10,
+              pageSize: 20,
               statusId: selectedStatusId,
               productId: selectedProductId,
               search: _searchQuery.isNotEmpty ? _searchQuery : null,
@@ -112,7 +121,7 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
   void _refreshMeasurements() {
     context.read<SalesCubit>().fetchMeasurements(
           page: 1,
-          pageSize: 10,
+          pageSize: 20,
           statusId: selectedStatusId,
           productId: selectedProductId,
           search: _searchQuery.isNotEmpty ? _searchQuery : null,
@@ -479,7 +488,7 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
                                   return SalesContactCard(
                                     measurement: measurements[index],
                                     products: state.products,
-                                    statuses: state.statuses, // Added statuses
+                                    statuses: state.statuses,
                                   );
                                 } catch (e) {
                                   debugPrint(e.toString());

@@ -229,66 +229,85 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                     const SizedBox(height: 18),
                     Expanded(
                       child: Container(
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF3F5F6),
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(28),
-                            topRight: Radius.circular(28),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF3F5F6),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(28),
+                              topRight: Radius.circular(28),
+                            ),
                           ),
-                        ),
-                        child: BlocBuilder<CustomerCubit, CustomerState>(
-                          builder: (context, state) {
-                            final List<ProblemModel> issues =
-                                state.techSupportIssues ?? [];
-                            if (state.status == CustomerStatus.loading &&
-                                issues.isEmpty) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            }
-                            if (issues.isEmpty) {
-                              return const Center(
-                                child: Text(
-                                  'لا توجد مشكلات حالياً',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                          child: // في build method داخل BlocBuilder
+                              BlocBuilder<CustomerCubit, CustomerState>(
+                            builder: (context, state) {
+                              final List<ProblemModel> issues =
+                                  state.techSupportIssues ?? [];
+
+                              if (state.status == CustomerStatus.loading &&
+                                  issues.isEmpty) {
+                                return const Center(
+                                    child: CircularProgressIndicator());
+                              }
+
+                              if (issues.isEmpty) {
+                                return const Center(
+                                  child: Text(
+                                    'لا توجد مشكلات حالياً',
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold),
                                   ),
+                                );
+                              }
+
+                              // ترتيب إضافي للتأكد (اختياري)
+                              final sortedIssues =
+                                  List<ProblemModel>.from(issues);
+                              sortedIssues.sort((a, b) {
+                                final dateA =
+                                    DateTime.tryParse(a.problemDate ?? '') ??
+                                        DateTime(1970);
+                                final dateB =
+                                    DateTime.tryParse(b.problemDate ?? '') ??
+                                        DateTime(1970);
+                                return dateB.compareTo(dateA); // الأحدث أولاً
+                              });
+
+                              return RefreshIndicator(
+                                onRefresh: () async {
+                                  _refreshIssues();
+                                },
+                                child: ListView.separated(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: TechnicalSupportScreen
+                                          .horizontalPadding,
+                                      vertical: 8),
+                                  itemCount: sortedIssues.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 20),
+                                  itemBuilder: (context, index) {
+                                    final issue = sortedIssues[index];
+                                    final matchesSearch =
+                                        _searchQuery.isEmpty ||
+                                            (issue.customerName ?? '')
+                                                .contains(_searchQuery) ||
+                                            (issue.customerPhone ??
+                                                    issue.phone ??
+                                                    '')
+                                                .contains(_searchQuery);
+                                    final matchesStatus = _selectedStatus ==
+                                            null ||
+                                        issue.problemtype == _selectedStatus;
+
+                                    if (!matchesSearch || !matchesStatus) {
+                                      return const SizedBox.shrink();
+                                    }
+
+                                    return TechCardContent(issue: issue);
+                                  },
                                 ),
                               );
-                            }
-                            return RefreshIndicator(
-                              onRefresh: () async {
-                                _refreshIssues();
-                              },
-                              child: ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: TechnicalSupportScreen
-                                        .horizontalPadding,
-                                    vertical: 8),
-                                itemCount: issues.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 20),
-                                itemBuilder: (context, index) {
-                                  final issue = issues[index];
-                                  final matchesSearch = _searchQuery.isEmpty ||
-                                      (issue.customerName ?? '')
-                                          .contains(_searchQuery) ||
-                                      (issue.customerPhone ?? issue.phone ?? '')
-                                          .contains(_searchQuery);
-                                  final matchesStatus =
-                                      _selectedStatus == null ||
-                                          issue.problemtype == _selectedStatus;
-                                  if (!matchesSearch || !matchesStatus) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  return TechCardContent(issue: issue);
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+                            },
+                          )),
                     ),
                   ],
                 ),

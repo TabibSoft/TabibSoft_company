@@ -14,7 +14,5 @@ export 'package:tabib_soft_company/features/technical_support/presentation/cubit
 export 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 export 'package:tabib_soft_company/features/technical_support/presentation/widget/create_problem/creat_problem_image_picker_widget.dart';
 export 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/add_problem_screen.dart';
-export 'package:tabib_soft_company/features/technical_support/presentation/screen/technical_support_nav_bar/calendar_screen.dart';
-export 'package:tabib_soft_company/features/technical_support/presentation/screen/technical_support_nav_bar/notification_screen.dart';
 export 'package:tabib_soft_company/features/technical_support/presentation/widget/customer_list_widget.dart';
 export 'package:tabib_soft_company/features/technical_support/presentation/widget/search_bar_widget.dart';

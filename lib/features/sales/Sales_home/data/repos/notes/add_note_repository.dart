@@ -22,6 +22,7 @@ class AddNoteRepository {
       await _apiService.addRequirement(
         dto.measurementId,
         dto.notes,
+        dto.expectedComment,
         dto.expectedCallDate?.toIso8601String(),
         dto.expectedCallTimeFrom,
         dto.expectedCallTimeTo,

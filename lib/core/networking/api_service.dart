@@ -92,13 +92,13 @@ abstract class ApiService {
   Future<List<CustomerModel>> autoCompleteCustomer(
       @Query("query") String query);
 
-  @POST(ApiConstants.createProblem)
-  Future<void> createProblem(@Body() FormData formData);
+ @POST(ApiConstants.createProblem)
+Future<ProblemModel> createProblem(@Body() FormData formData);
 
   @GET(ApiConstants.getAllMeasurements)
   Future<PaginatedSales> getAllMeasurements({
     @Query("page") int page = 1,
-    @Query("pageSize") int pageSize = 10,
+    @Query("pageSize") int pageSize = 20,
     @Query("StatusId") String? statusId,
     @Query("ProudctId") String? productId,
     @Query("search") String? search,
@@ -106,13 +106,12 @@ abstract class ApiService {
     @Query("ToDate") String? toDate,
   });
 
-
   @GET(ApiConstants.getDealDetailById)
   Future<SalesDetailModel> getDealDetailById({
     @Query("id") required String id,
   });
   @GET(ApiConstants.getAllPaymentMethods)
-Future<List<PaymentMethodModel>> getAllPaymentMethods();
+  Future<List<PaymentMethodModel>> getAllPaymentMethods();
 
   @POST(ApiConstants.addPayment)
   Future<void> addPayment({
@@ -123,11 +122,12 @@ Future<List<PaymentMethodModel>> getAllPaymentMethods();
     @Query("payMethodId") String? payMethodId,
   });
 
- @POST(ApiConstants.addRequirement)
+  @POST(ApiConstants.addRequirement)
   @MultiPart()
   Future<void> addRequirement(
     @Part(name: "measurementId") String measurementId,
     @Part(name: "notes") String? notes,
+    @Part(name: "exepectedComment") String? exepectedComment,
     @Part(name: "exepectedCallDate") String? exepectedCallDate,
     @Part(name: "exepectedCallTimeFrom") String? exepectedCallTimeFrom,
     @Part(name: "exepectedCallTimeTo") String? exepectedCallTimeTo,
@@ -151,39 +151,37 @@ Future<List<PaymentMethodModel>> getAllPaymentMethods();
   @GET(ApiConstants.getTodayCalls) // Added new method
   Future<List<TodayCallModel>> getTodayCalls();
 
-@POST(ApiConstants.changeStatus) // Added new method for changing status
+  @POST(ApiConstants.changeStatus) // Added new method for changing status
   Future<void> changeStatus({
     @Query("measurementId") required String measurementId,
     @Query("statusId") required String statusId,
   });
 
-
   @GET(ApiConstants.getAllStatuses)
-Future<List<StatusModel>> getAllStatuses();
+  Future<List<StatusModel>> getAllStatuses();
 
-@GET(ApiConstants.getNotifications) // Added for fetching notifications
+  @GET(ApiConstants.getNotifications) // Added for fetching notifications
   Future<List<NotificationModel>> getNotifications();
 
-@POST(ApiConstants.addSubscription)
-@MultiPart()
-Future<void> addSubscription(@Body() FormData formData);
+  @POST(ApiConstants.addSubscription)
+  @MultiPart()
+  Future<void> addSubscription(@Body() FormData formData);
 
+  @POST(ApiConstants.getAllVisits)
+  Future<PaginatedVisitResponse> getAllVisits(
+    @Body() Map<String, dynamic> body, // ضروري
+  );
 
-@POST(ApiConstants.getAllVisits)
-Future<PaginatedVisitResponse> getAllVisits(
-  @Body() Map<String, dynamic> body, // ضروري
-);
+  @POST(ApiConstants.addVisitDetail)
+  @MultiPart()
+  Future<void> addVisitDetail(@Body() FormData formData);
 
-@POST(ApiConstants.addVisitDetail)
-@MultiPart()
-Future<void> addVisitDetail(@Body() FormData formData);
+  @POST(ApiConstants.editVisitDetail)
+  @MultiPart()
+  Future<void> editVisitDetail(@Body() FormData formData);
 
-@POST(ApiConstants.editVisitDetail)
-@MultiPart()
-Future<void> editVisitDetail(@Body() FormData formData);
-
-@POST(ApiConstants.makeVisitDone)
-Future<void> makeVisitDone({
-  @Query("visitId") required String visitId,
-});
+  @POST(ApiConstants.makeVisitDone)
+  Future<void> makeVisitDone({
+    @Query("visitId") required String visitId,
+  });
 }

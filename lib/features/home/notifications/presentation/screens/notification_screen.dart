@@ -31,6 +31,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     super.initState();
     _loadReadNotifications();
     _loadUserRoles(); // تحميل أدوار المستخدم
+
+    // إخفاء النقطة الحمراء عند دخول صفحة الإشعارات
+    context.read<NotificationCubit>().clearUnreadNotificationBadge();
+
     context.read<NotificationCubit>().fetchNotifications();
     _searchController.addListener(() {
       setState(() {
@@ -308,6 +312,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           child: Text(state.failure?.errMessages ?? 'حدث خطأ'),
                         );
                       }
+
                       return const SizedBox.shrink();
                     },
                   ),
@@ -322,6 +327,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildNotificationCard(NotificationModel notification, bool isRead) {
     final dateStr = formatDate(notification.date);
+
     return Container(
       decoration: BoxDecoration(
         color: isRead ? Colors.white : Colors.blue[50],
@@ -331,7 +337,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             color: Colors.black.withOpacity(0.03),
             blurRadius: 6,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

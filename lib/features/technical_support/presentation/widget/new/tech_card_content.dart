@@ -8,7 +8,7 @@ import 'package:tabib_soft_company/features/technical_support/data/model/custome
 
 class TechCardContent extends StatelessWidget {
   final ProblemModel issue;
-  final VoidCallback? onDetailsPressed; // اختياري: إذا أردت فتح شاشة تفاصيل
+  final VoidCallback? onDetailsPressed;
 
   const TechCardContent({
     super.key,
@@ -41,7 +41,8 @@ class TechCardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color statusColor = _hexToColor(issue.porblemColor);
+    final Color statusColor =
+        _hexToColor(issue.porblemColor ?? issue.statusColor);
     final Color textColor =
         statusColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
 
@@ -106,7 +107,6 @@ class TechCardContent extends StatelessWidget {
                       ),
                     ],
                   ),
-                  // SizedBox(height: 5.h),
 
                   // رقم الهاتف + أيقونة الاتصال
                   Row(
@@ -132,7 +132,6 @@ class TechCardContent extends StatelessWidget {
                       ),
                     ],
                   ),
-                  // SizedBox(height: 10.h),
 
                   // نوع المشكلة (جديد، جاري، تم الحل...)
                   Row(children: [
@@ -157,9 +156,8 @@ class TechCardContent extends StatelessWidget {
                       ),
                     ),
                   ]),
-                  // SizedBox(height: 10.h),
 
-                  // مكان المشكلة (الأبلكيشن، السيرفر، إلخ)
+                  // عنوان المشكلة أو تفاصيلها
                   Row(
                     children: [
                       Icon(
@@ -170,17 +168,20 @@ class TechCardContent extends StatelessWidget {
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Text(
-                          issue.problemAddress ?? 'غير محدد',
+                          issue.problemDetails ??
+                              issue.problemAddress ??
+                              'لا توجد تفاصيل',
                           style: TextStyle(
                             fontSize: 17.sp,
                             fontWeight: FontWeight.w700,
                             color: Colors.black87,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                  // SizedBox(height: 5.h),
                 ],
               ),
             ),
@@ -190,65 +191,53 @@ class TechCardContent extends StatelessWidget {
           Positioned(
             left: 110.w,
             bottom: 10.h,
-            child: GestureDetector(
-              onTap: onDetailsPressed ??
-                  () {
-                    // افتح شاشة التفاصيل أو dialog هنا
-                    // مثال:
-                    showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: Text(issue.customerName ?? 'تفاصيل المشكلة'),
-                        content: Text(
-                            issue.problemDetails ?? 'لا توجد تفاصيل إضافية'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('إغلاق'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 36.w, vertical: 14.h),
-
-                child: TextButton(
-                  onPressed: () async {
-                    final result = await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ProblemDetailsScreen(issue: issue),
-                      ),
-                    );
-
-                    // إذا رجع true → يعني تم حفظ شيء → نعيد تحميل البيانات
-                    if (result == true) {
-                      context.read<CustomerCubit>().resetPagination();
-                      context.read<CustomerCubit>().fetchTechSupportIssues();
-                    }
-                  },
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.cyan,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF20AAC9), Color(0xFF1E96BA)],
+                ),
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF20AAC9).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
-                  child: const Text(
-                    'تفاصيل',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: onDetailsPressed ??
+                      () async {
+                        final result = await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ProblemDetailsScreen(issue: issue),
+                          ),
+                        );
+
+                        // إذا رجع true → يعني تم حفظ شيء → نعيد تحميل البيانات
+                        if (result == true && context.mounted) {
+                          context.read<CustomerCubit>().resetPagination();
+                          context
+                              .read<CustomerCubit>()
+                              .fetchTechSupportIssues();
+                        }
+                      },
+                  child: Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 36.w, vertical: 12.h),
+                    child: Text(
+                      'تفاصيل',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-
-                // Text(
-                //   'تفاصيل',
-                //   style: TextStyle(
-                //     color: Colors.white,
-                //     fontSize: 19.sp,
-                //     fontWeight: FontWeight.bold,
-                //   ),
-                // ),
               ),
             ),
           ),

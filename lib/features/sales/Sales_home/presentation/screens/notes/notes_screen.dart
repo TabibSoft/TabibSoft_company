@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:async'; // Add this
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/notes/add_note_model.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/notes/sales_detail_model.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/notes/add_note_cubit.dart';
@@ -38,6 +40,9 @@ class _NotesScreenState extends State<NotesScreen> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _installingNoteController =
       TextEditingController();
+  final TextEditingController _expectedCommentController =
+      TextEditingController();
+
   DateTime? _nextCallDate;
   TimeOfDay? _fromTime;
   TimeOfDay? _toTime;
@@ -80,10 +85,10 @@ class _NotesScreenState extends State<NotesScreen> {
     _addressController.dispose();
     _locationController.dispose();
     _installingNoteController.dispose();
+    _expectedCommentController.dispose();
     super.dispose();
   }
 
-  /// --- Helper: convert TimeOfDay? to "HH:mm:00" or return null if null
   String? _timeOfDayToHms(TimeOfDay? t) {
     if (t == null) return null;
     final hh = t.hour.toString().padLeft(2, '0');
@@ -227,9 +232,7 @@ class _NotesScreenState extends State<NotesScreen> {
                               final customerPhone = widget.customerPhone ??
                                   detail.measurementRequirement.first
                                       .customerPhone;
-                              // Collect all notes and their associated images, ordered from newest to oldest
                               List<Map<String, dynamic>> allNotes = [];
-                              // Add notes from measurementRequirement in reverse order (newest first)
                               for (var requirement
                                   in detail.measurementRequirement.reversed) {
                                 if (requirement.notes != null) {
@@ -241,19 +244,19 @@ class _NotesScreenState extends State<NotesScreen> {
                                   allNotes.add({
                                     'note': requirement.notes,
                                     'images': normalizedImages,
-                                    'date': requirement.creatDate ??
-                                        detail
-                                            .date, // Assuming creatDate exists in requirement model
+                                    'date':
+                                        requirement.creatDate ?? detail.date,
+                                    'expectedComment':
+                                        requirement.exepectedComment ?? '',
                                   });
                                 }
                               }
-                              // Add the main note at the end (assuming it's the oldest)
                               if (detail.note != null) {
                                 allNotes.add({
                                   'note': detail.note,
                                   'images': <String>[],
-                                  'date': detail
-                                      .date, // Use detail.date for main note
+                                  'date': detail.date,
+                                  'expectedComment': '',
                                 });
                               }
                               return ListView(
@@ -287,6 +290,8 @@ class _NotesScreenState extends State<NotesScreen> {
                                       final images =
                                           noteData['images'] as List<String>;
                                       final date = noteData['date'] as DateTime;
+                                      final expectedComment =
+                                          noteData['expectedComment'] as String;
                                       return Padding(
                                         padding:
                                             EdgeInsets.symmetric(vertical: 4.h),
@@ -294,6 +299,7 @@ class _NotesScreenState extends State<NotesScreen> {
                                           note: note,
                                           images: images,
                                           date: date,
+                                          expectedComment: expectedComment,
                                         ),
                                       );
                                     }),
@@ -329,6 +335,7 @@ class _NotesScreenState extends State<NotesScreen> {
                                   _addressController.text.isNotEmpty ||
                                   _locationController.text.isNotEmpty ||
                                   _installingNoteController.text.isNotEmpty ||
+                                  _expectedCommentController.text.isNotEmpty ||
                                   _nextCallDate != null ||
                                   _fromTime != null ||
                                   _toTime != null ||
@@ -348,6 +355,9 @@ class _NotesScreenState extends State<NotesScreen> {
                           _installingNoteController.addListener(() {
                             updateHasData((f) => f());
                           });
+                          _expectedCommentController.addListener(() {
+                            updateHasData((f) => f());
+                          });
 
                           return StatefulBuilder(
                             builder: (context, setState) {
@@ -364,6 +374,11 @@ class _NotesScreenState extends State<NotesScreen> {
                                         .read<SalesDetailsCubit>()
                                         .fetchDealDetails(
                                             id: widget.measurementId);
+                                    _notesController.clear();
+                                    _expectedCommentController.clear();
+                                    setState(() {
+                                      _imagePaths.clear();
+                                    });
                                   } else if (state.status ==
                                       AddNoteStatus.failure) {
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -400,41 +415,66 @@ class _NotesScreenState extends State<NotesScreen> {
                                                       BorderRadius.circular(
                                                           10.r),
                                                 ),
-                                                child: Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
+                                                child: Column(
                                                   children: [
-                                                    Expanded(
+                                                    TextField(
+                                                      controller:
+                                                          _notesController,
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 18.sp,
+                                                      ),
+                                                      decoration:
+                                                          const InputDecoration(
+                                                        hintText:
+                                                            'أدخل الملاحظات',
+                                                        hintStyle: TextStyle(
+                                                          color: Colors.white70,
+                                                        ),
+                                                        border:
+                                                            InputBorder.none,
+                                                      ),
+                                                      keyboardType:
+                                                          TextInputType
+                                                              .multiline,
+                                                      maxLines: null,
+                                                      minLines: 3,
+                                                      onChanged: (_) =>
+                                                          updateHasData(
+                                                              setState),
+                                                    ),
+                                                    SizedBox(height: 12.h),
+                                                    Container(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              horizontal: 12.w,
+                                                              vertical: 8.h),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8.r),
+                                                      ),
                                                       child: TextField(
                                                         controller:
-                                                            _notesController,
-                                                        style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 18.sp,
-                                                        ),
-                                                        decoration:
-                                                            const InputDecoration(
-                                                          hintText:
-                                                              'أدخل الملاحظات',
-                                                          hintStyle: TextStyle(
-                                                            color:
-                                                                Colors.white70,
-                                                          ),
-                                                          border:
-                                                              InputBorder.none,
-                                                        ),
+                                                            _expectedCommentController,
                                                         keyboardType:
                                                             TextInputType
                                                                 .multiline,
-                                                        maxLines: null,
-                                                        minLines: 3,
+                                                        maxLines: 3,
+                                                        minLines: 1,
+                                                        decoration:
+                                                            const InputDecoration(
+                                                          hintText:
+                                                              'أضف تعليق متوقع (Expected Comment)...',
+                                                          border:
+                                                              InputBorder.none,
+                                                        ),
                                                         onChanged: (_) =>
                                                             updateHasData(
                                                                 setState),
                                                       ),
                                                     ),
-                                                    const Icon(Icons.edit,
-                                                        color: Colors.white),
                                                   ],
                                                 ),
                                               ),
@@ -714,6 +754,13 @@ class _NotesScreenState extends State<NotesScreen> {
                                                                 notes:
                                                                     _notesController
                                                                         .text,
+                                                                expectedComment:
+                                                                    _expectedCommentController
+                                                                            .text
+                                                                            .isNotEmpty
+                                                                        ? _expectedCommentController
+                                                                            .text
+                                                                        : null,
                                                                 expectedCallDate:
                                                                     _nextCallDate,
                                                                 expectedCallTimeFrom:
@@ -796,6 +843,7 @@ class _NotesScreenState extends State<NotesScreen> {
                         _addressController.removeListener(() {});
                         _locationController.removeListener(() {});
                         _installingNoteController.removeListener(() {});
+                        _expectedCommentController.removeListener(() {});
                       });
                     },
                     child: Stack(
@@ -910,11 +958,13 @@ class _NoteCard extends StatefulWidget {
   final String note;
   final List<String> images;
   final DateTime date;
+  final String expectedComment;
 
   const _NoteCard({
     required this.note,
     required this.images,
     required this.date,
+    required this.expectedComment,
   });
 
   @override
@@ -928,6 +978,19 @@ class _NoteCardState extends State<_NoteCard> {
 
   static const double cardHeight = 200;
   static const double innerRadius = 19;
+
+  // دالة لفتح معرض الصور بشكل احترافي
+  void _openImageGallery(BuildContext context, int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _ImageGalleryScreen(
+          images: widget.images,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -980,6 +1043,34 @@ class _NoteCardState extends State<_NoteCard> {
                           ),
                         ],
                       ),
+                      if (widget.expectedComment.isNotEmpty) ...[
+                        SizedBox(height: 8.h),
+                        Row(
+                          children: [
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.all(8.w),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0F4F8),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Text(
+                                  'التعليق المتوقع: ${widget.expectedComment}',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xff104D9D),
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       SizedBox(height: 10.h),
                       Row(
                         children: [
@@ -1026,9 +1117,7 @@ class _NoteCardState extends State<_NoteCard> {
                       }
                     },
                     child: Transform.rotate(
-                      angle: _isExpanded
-                          ? math.pi
-                          : 0, // Rotate 180 degrees when expanded
+                      angle: _isExpanded ? math.pi : 0,
                       child: Image.asset("assets/images/pngs/dropdown.png"),
                     ),
                   ),
@@ -1042,7 +1131,7 @@ class _NoteCardState extends State<_NoteCard> {
             margin: EdgeInsets.only(right: 2.w),
             padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
             decoration: const BoxDecoration(
-              color: Color.fromARGB(255, 184, 137, 137),
+              color: Color.fromARGB(255, 255, 255, 255),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(innerRadius),
                 bottomRight: Radius.circular(innerRadius),
@@ -1074,34 +1163,61 @@ class _NoteCardState extends State<_NoteCard> {
                     physics: const NeverScrollableScrollPhysics(),
                     children: List.generate(
                       widget.images.length,
-                      (index) => Image.network(
-                        widget.images[index],
-                        width: 100.w,
-                        height: 100.h,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 100.w,
-                            height: 100.h,
+                      (index) => GestureDetector(
+                        onTap: () => _openImageGallery(context, index),
+                        child: Hero(
+                          tag: 'image_${widget.images[index]}',
+                          child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(8.r),
+                              borderRadius: BorderRadius.circular(12.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            child: const Icon(Icons.error,
-                                size: 50, color: Colors.red),
-                          );
-                        },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12.r),
+                              child: Image.network(
+                                widget.images[index],
+                                width: 100.w,
+                                height: 100.h,
+                                fit: BoxFit.cover,
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
+                                      color: const Color(0xff104D9D),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 100.w,
+                                    height: 100.h,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                    child: const Icon(Icons.error,
+                                        size: 50, color: Colors.red),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -1109,6 +1225,141 @@ class _NoteCardState extends State<_NoteCard> {
             ),
           ),
       ],
+    );
+  }
+}
+
+// شاشة معرض الصور الاحترافية مع إمكانية التكبير والتصغير
+class _ImageGalleryScreen extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+
+  const _ImageGalleryScreen({
+    required this.images,
+    required this.initialIndex,
+  });
+
+  @override
+  State<_ImageGalleryScreen> createState() => _ImageGalleryScreenState();
+}
+
+class _ImageGalleryScreenState extends State<_ImageGalleryScreen> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          PhotoViewGallery.builder(
+            scrollPhysics: const BouncingScrollPhysics(),
+            builder: (BuildContext context, int index) {
+              return PhotoViewGalleryPageOptions(
+                imageProvider: NetworkImage(widget.images[index]),
+                initialScale: PhotoViewComputedScale.contained,
+                minScale: PhotoViewComputedScale.contained * 0.8,
+                maxScale: PhotoViewComputedScale.covered * 3,
+                heroAttributes: PhotoViewHeroAttributes(
+                    tag: 'image_${widget.images[index]}'),
+                errorBuilder: (context, error, stackTrace) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.white,
+                          size: 60,
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          'فشل تحميل الصورة',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+            itemCount: widget.images.length,
+            loadingBuilder: (context, event) => Center(
+              child: CircularProgressIndicator(
+                value: event == null
+                    ? 0
+                    : event.cumulativeBytesLoaded / event.expectedTotalBytes!,
+                color: Colors.white,
+              ),
+            ),
+            backgroundDecoration: const BoxDecoration(
+              color: Colors.black,
+            ),
+            pageController: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+          ),
+          Positioned(
+            top: 40.h,
+            right: 16.w,
+            child: SafeArea(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(30.r),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ),
+          ),
+          if (widget.images.length > 1)
+            Positioned(
+              bottom: 30.h,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Center(
+                  child: Text(
+                    '${_currentIndex + 1} / ${widget.images.length}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -1,10 +1,13 @@
 // lib/features/home/presentation/screens/home_screen.dart
-import 'dart:math';
 
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart'; // إضافة BlocBuilder
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
 import 'package:tabib_soft_company/features/home/notifications/presentation/screens/notification_screen.dart';
+import 'package:tabib_soft_company/features/home/notifications/presentation/cubits/notification_cubit.dart'; // إضافة
+import 'package:tabib_soft_company/features/home/notifications/presentation/cubits/notification_state.dart'; // إضافة
 import 'package:tabib_soft_company/features/management/presentation/screens/management_screen.dart';
 import 'package:tabib_soft_company/features/modirator/presentation/screens/mediator_screen.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/screens/programmers_screen.dart';
@@ -123,30 +126,57 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              // زر الإشعارات
+              // زر الإشعارات مع النقطة الحمراء
               Positioned(
                 top: 12,
                 right: 12,
-                child: GestureDetector(
-                  onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const NotificationsScreen())),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2))
-                      ],
-                    ),
-                    child: const Icon(Icons.notifications,
-                        color: Color.fromARGB(221, 64, 144, 197), size: 26),
-                  ),
+                child: BlocBuilder<NotificationCubit, NotificationState>(
+                  builder: (context, state) {
+                    final bool hasUnread = state.hasUnreadNotifications;
+
+                    return GestureDetector(
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const NotificationsScreen())),
+                      child: Stack(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.black.withOpacity(0.08),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2))
+                              ],
+                            ),
+                            child: const Icon(Icons.notifications,
+                                color: Color.fromARGB(221, 64, 144, 197),
+                                size: 26),
+                          ),
+                          // النقطة الحمراء
+                          if (hasUnread)
+                            Positioned(
+                              right: 6,
+                              top: 6,
+                              child: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
 
@@ -229,7 +259,7 @@ class HomeScreen extends StatelessWidget {
                         primaryColor: accentColor,
                       ),
 
-                      // الوسيط - موجود دائمًا، قابل للضغط فقط لـ MODERATOR أو ADMIN
+                      // الوسيط
                       _buildFeatureTile(
                         context: context,
                         iconPath:
@@ -243,7 +273,7 @@ class HomeScreen extends StatelessWidget {
                         primaryColor: accentColor,
                       ),
 
-                      // المتابعة - موجود دائمًا، قابل للضغط فقط لـ TRACKER أو ADMIN
+                      // المتابعة
                       _buildFeatureTile(
                         context: context,
                         iconPath:
@@ -251,7 +281,6 @@ class HomeScreen extends StatelessWidget {
                         label: 'المتابعة',
                         enabled: isAdmin || isTracker,
                         onTap: () {
-                          // ضيف الشاشة لاحقًا
                           if (isAdmin || isTracker) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -310,7 +339,6 @@ class HomeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
     return InkWell(
       onTap: enabled ? onTap : () => _showToast(context),
       borderRadius: BorderRadius.circular(18),

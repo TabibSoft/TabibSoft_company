@@ -16,6 +16,8 @@ class AddNoteDto {
   final String? expectedCallTimeTo;
   @JsonKey(name: 'imageFiles')
   final List<String>? imageFiles;
+  @JsonKey(name: 'expectedComment')
+  final String? expectedComment;
 
   AddNoteDto({
     required this.measurementId,
@@ -24,6 +26,7 @@ class AddNoteDto {
     this.expectedCallTimeFrom,
     this.expectedCallTimeTo,
     this.imageFiles,
+    this.expectedComment,
   });
 
   factory AddNoteDto.fromJson(Map<String, dynamic> json) =>

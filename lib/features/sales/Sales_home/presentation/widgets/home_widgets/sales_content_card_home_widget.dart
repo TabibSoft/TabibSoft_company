@@ -112,7 +112,7 @@ class _SalesContactCardState extends State<SalesContactCard>
               Navigator.pop(context);
               context.read<SalesCubit>().fetchMeasurements(
                     page: 1,
-                    pageSize: 10,
+                    pageSize: 20,
                     isRefresh: true,
                   );
             } else if (state.status == UpdateStatusStatus.error) {

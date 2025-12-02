@@ -129,8 +129,8 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
 
     cubit.resetPagination();
     await cubit.createUnderTransaction(
-      customerSupportId: widget.issue.id,
-      customerId: widget.issue.customerId,
+      customerSupportId: widget.issue.id!,
+      customerId: widget.issue.customerId!,
       note: _solutionCtl.text,
       problemStatusId: _selectedSpecialty!.id,
     );

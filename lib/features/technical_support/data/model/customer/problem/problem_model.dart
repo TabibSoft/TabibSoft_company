@@ -9,7 +9,7 @@ class ProblemModel {
   final String? customerName;
   final String? customerPhone;
   final String? adderss;
-  final String? title;
+  final String? problemtype;
   final String? problemAddress;
   final String? problemDetails;
   final String? phone;
@@ -29,7 +29,7 @@ class ProblemModel {
     this.customerName,
     this.customerPhone,
     this.adderss,
-    this.title,
+    this.problemtype,
     this.problemAddress,
     this.problemDetails,
     this.phone,
@@ -62,7 +62,7 @@ class ProblemModel {
 //   final String? customerName;
 //   final String? customerPhone;
 //   final String? adderss; // العنوان
-//   final String? title; // نوع المشكلة (مثل "تم الحل")
+//   final String? problemtype; // نوع المشكلة (مثل "تم الحل")
 //   final String? problemAddress; // تفاصيل المشكلة
 //   final String? phone;
 //   final String? teacnicalSupportDate; // تاريخ الدعم الفني
@@ -88,7 +88,7 @@ class ProblemModel {
 //     this.customerName,
 //     this.customerPhone,
 //     this.adderss,
-//     this.title,
+//     this.problemtype,
 //     this.problemAddress,
 //     this.phone,
 //     this.teacnicalSupportDate,
@@ -145,7 +145,7 @@ class ProblemModel {
 //       customerName: customerName ?? this.customerName,
 //       customerPhone: customerPhone ?? this.customerPhone,
 //       adderss: adderss ?? this.adderss,
-//       problemtype: problemtype ?? this.title,
+//       problemtype: problemtype ?? this.problemtype,
 //       problemAddress: problemAddress ?? this.problemAddress,
 //       phone: phone ?? this.phone,
 //       teacnicalSupportDate: teacnicalSupportDate ?? this.teacnicalSupportDate,

@@ -148,7 +148,7 @@ class TechCardContent extends StatelessWidget {
                     SizedBox(width: 12.w),
                     Expanded(
                       child: Text(
-                        issue.title ?? 'غير محدد',
+                        issue.problemtype ?? 'غير محدد',
                         style: TextStyle(
                             fontSize: 17.sp,
                             fontWeight: FontWeight.bold,

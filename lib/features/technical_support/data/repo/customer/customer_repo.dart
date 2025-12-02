@@ -107,7 +107,6 @@ class CustomerRepository {
     String? engineerId,
     String? details,
     String? phone,
-    String? problemType,
     List<File>? images,
   }) async {
     try {
@@ -121,7 +120,6 @@ class CustomerRepository {
         if (engineerId != null) MapEntry('EngineerId', engineerId),
         if (details != null) MapEntry('Details', details),
         if (phone != null) MapEntry('Phone', phone),
-        if (problemType != null) MapEntry('Problemtype', problemType),
       ]);
 
       if (images != null && images.isNotEmpty) {

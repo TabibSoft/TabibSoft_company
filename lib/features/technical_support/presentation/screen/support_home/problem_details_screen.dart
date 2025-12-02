@@ -46,7 +46,7 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     _nameCtl = TextEditingController(text: widget.issue.customerName ?? '');
     _addressCtl = TextEditingController(text: widget.issue.adderss ?? '');
     _issueTitleCtl =
-        TextEditingController(text: widget.issue.title ?? '');
+        TextEditingController(text: widget.issue.problemAddress ?? '');
     _issueDetailsCtl =
         TextEditingController(text: widget.issue.problemDetails ?? '');
     _contactCtl = TextEditingController(text: widget.issue.customerPhone ?? '');

@@ -236,7 +236,6 @@ Future<void> createProblem({
   String? engineerId,
   String? details,
   String? phone,
-  String? problemType,
   List<File>? images,
 }) async {
   print(
@@ -283,7 +282,6 @@ Future<void> createProblem({
     engineerId: engineerId,
     details: details,
     phone: phone,
-    problemType: problemType,
     images: images,
   );
 

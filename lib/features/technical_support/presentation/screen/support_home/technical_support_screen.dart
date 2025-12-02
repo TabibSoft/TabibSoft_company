@@ -119,17 +119,10 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
     }
   }
 
-  void _navigateToAddProblemScreen() async {
-    final newIssue = await Navigator.of(context).push(
+  void _navigateToAddProblemScreen() {
+    Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const AddProblemScreen()),
     );
-
-    if (newIssue != null && newIssue is ProblemModel) {
-      // تحديث قائمة المشاكل في الـ Cubit مباشرة
-      final cubit = context.read<CustomerCubit>();
-      final updatedIssues = [newIssue, ...cubit.state.techSupportIssues];
-      cubit.emit(cubit.state.copyWith(techSupportIssues: updatedIssues));
-    }
   }
 
   void _refreshIssues() {

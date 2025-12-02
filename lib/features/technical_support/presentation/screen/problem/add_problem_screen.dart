@@ -22,6 +22,7 @@ class AddProblemScreen extends StatefulWidget {
 
 class _AddProblemScreenState extends State<AddProblemScreen> {
   final TextEditingController _clientNameController = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
   final TextEditingController _problemTypeController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
@@ -82,6 +83,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
     _phoneController.dispose();
     _addressController.dispose();
     _detailsController.dispose();
+    _titleController.dispose();
     _engineerController.dispose();
     super.dispose();
   }
@@ -154,10 +156,11 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
     if (_selectedCustomer == null ||
         _selectedCategory == null ||
         _selectedEngineer == null ||
-        _detailsController.text.trim().isEmpty) {
+        _detailsController.text.trim().isEmpty ||
+        _titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('يرجى ملء جميع الحقول واختيار المهندس'),
+          content: const Text('يرجى ملء جميع الحقول (العنوان والتفاصيل) واختيار المهندس'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -202,6 +205,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
           phone: _phoneController.text,
           images: _images.isNotEmpty ? _images : null,
           note: _detailsController.text,
+          problemType: _titleController.text,
           engineerId: _selectedEngineer!.id,
         );
   }
@@ -473,8 +477,8 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                         _buildLabelledRow(
                           label: "عنوان المشكلة:",
                           child: _buildTextField(
-                            controller: _addressController,
-                            hint: "",
+                            controller: _titleController,
+                            hint: "عنوان المشكلة",
                           ),
                         ),
                         SizedBox(height: 16.h),

@@ -1,0 +1,24 @@
+تم تعديل الملفات التالية:
+
+1.  **lib/features/technical_support/data/model/customer/problem/problem_model.dart**:
+    - تم تغيير اسم الحقل `problemtype` إلى `title` ليعكس عنوان المشكلة.
+
+2.  **lib/features/technical_support/data/repo/customer/customer_repo.dart**:
+    - تم تعديل دالة `createProblem` لقبول حقل `problemType` جديد وإضافته إلى `FormData` المرسلة إلى الـ API تحت مفتاح `ProblemType`.
+
+3.  **lib/features/technical_support/presentation/cubit/customers/customer_cubit.dart**:
+    - تم تعديل دالة `createProblem` لقبول حقل `problemType` جديد وتمريره إلى الـ Repository.
+
+4.  **lib/features/technical_support/presentation/screen/problem/add_problem_screen.dart**:
+    - تم إضافة `TextEditingController` جديد (`_titleController`) لعنوان المشكلة.
+    - تم إضافة حقل إدخال لـ "عنوان المشكلة" في واجهة المستخدم.
+    - تم تعديل دالة `_saveProblem` للتحقق من أن حقل العنوان غير فارغ وتمرير قيمته إلى `createProblem` في الـ Cubit.
+
+5.  **lib/features/technical_support/presentation/screen/support_home/problem_details_screen.dart**:
+    - تم تعديل `initState` لاستخدام الحقل الجديد `widget.issue.title` لملء حقل عنوان المشكلة.
+    - تم التأكد من عرض حقل "تفاصيل المشكلة" (`_issueDetailsCtl`) بشكل صحيح.
+
+6.  **lib/features/technical_support/presentation/widget/new/tech_card_content.dart**:
+    - تم تعديل الكود لاستخدام `issue.title` بدلاً من `issue.problemtype` لعرض عنوان المشكلة في كارت المشكلة.
+
+الخطوة التالية هي عمل Commit لهذه التغييرات وإعداد طلب سحب (Pull Request).

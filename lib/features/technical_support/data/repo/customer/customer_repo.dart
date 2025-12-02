@@ -98,61 +98,77 @@ class CustomerRepository {
     }
   }
 
-  Future<ApiResult<ProblemModel>> createProblem({
-    required String customerId,
-    required DateTime dateTime,
-    required int problemStatusId,
-    required String problemCategoryId,
-    String? note,
-    String? engineerId,
-    String? details,
-    String? phone,
-    List<File>? images,
-  }) async {
-    try {
-      final formData = FormData();
-      formData.fields.addAll([
-        MapEntry('CustomerId', customerId),
-        MapEntry('DateTime', dateTime.toIso8601String()),
-        MapEntry('ProblemStatusId', problemStatusId.toString()),
-        MapEntry('ProblemCategoryId', problemCategoryId),
-        if (note != null) MapEntry('Note', note),
-        if (engineerId != null) MapEntry('EngineerId', engineerId),
-        if (details != null) MapEntry('Details', details),
-        if (phone != null) MapEntry('Phone', phone),
-      ]);
+ Future<ApiResult<ProblemModel>> createProblem({
+  required String customerId,
+  required DateTime dateTime,
+  required int problemStatusId,
+  required String problemCategoryId,
+  String? note,
+  String? engineerId,
+  String? details,
+  String? phone,
+  String? problemAddress,   // جديد: عنوان المشكلة
+  bool? isUrgent,
+  List<File>? images,
+}) async {
+  try {
+    final formData = FormData();
 
-      if (images != null && images.isNotEmpty) {
-        for (var i = 0; i < images.length; i++) {
-          if (images[i].existsSync() && images[i].lengthSync() > 0) {
-            print(
-                'Adding image: ${images[i].path}, size: ${images[i].lengthSync()} bytes');
-            formData.files.add(
-              MapEntry(
-                'Images',
-                await MultipartFile.fromFile(
-                  images[i].path,
-                  filename: 'image_$i.jpg',
-                ),
+ formData.fields.addAll([
+  MapEntry('CustomerId', customerId),
+  MapEntry('DateTime', dateTime.toIso8601String()),
+  MapEntry('ProblemStatusId', problemStatusId.toString()),
+  MapEntry('ProblemCategoryId', problemCategoryId),
+  
+  // العنوان (شغال 100%)
+  if (problemAddress != null && problemAddress.isNotEmpty)
+    MapEntry('ProblemAddress', problemAddress),
+
+  // التفاصيل: نرسلها في Note + Details (لأن الـ API يقرأ Note غالبًا)
+  if (note != null && note.isNotEmpty) MapEntry('Note', note),
+  if (details != null && details.isNotEmpty) ...[
+    MapEntry('Note', details),      // الأهم: الـ API يعتمد على Note
+    MapEntry('Details', details),   // للتأكد
+  ],
+
+  if (engineerId != null && engineerId.isNotEmpty)
+    MapEntry('EngineerId', engineerId),
+  if (phone != null && phone.isNotEmpty)
+    MapEntry('Phone', phone),
+
+  // IsUrgent كـ String
+  MapEntry('IsUrgent', isUrgent.toString()), // مهم جدًا: كـ string
+
+  // إذا كان فيه Solvid أو غيره لاحقًا نضيفه
+]);
+    if (images != null && images.isNotEmpty) {
+      for (var i = 0; i < images.length; i++) {
+        final file = images[i];
+        if (await file.exists() && await file.length() > 0) {
+          formData.files.add(
+            MapEntry(
+              'Images',
+              await MultipartFile.fromFile(
+                file.path,
+                filename: 'image_$i.jpg',
               ),
-            );
-          } else {
-            print('Invalid image file at index $i: ${images[i].path}');
-          }
+            ),
+          );
         }
       }
-
-      print('Sending FormData: ${formData.fields}');
-      final response = await _apiService.createProblem(formData);
-      return ApiResult.success(response);
-    } on DioException catch (e) {
-      print('DioException in createProblem: ${e.message}');
-      print('Response data: ${e.response?.data}');
-      print('Response status: ${e.response?.statusCode}');
-      return ApiResult.failure(ServerFailure.fromDioError(e));
-    } catch (e) {
-      print('Unexpected error in createProblem: $e');
-      return ApiResult.failure(ServerFailure('خطأ غير متوقع: $e'));
     }
+
+    print('Sending CreateProblem FormData: ${formData.fields}');
+    print('Images count: ${formData.files.length}');
+
+    final response = await _apiService.createProblem(formData);
+    return ApiResult.success(response);
+  } on DioException catch (e) {
+    print('DioException in createProblem: ${e.message}');
+    print('Response: ${e.response?.data}');
+    return ApiResult.failure(ServerFailure.fromDioError(e));
+  } catch (e) {
+    print('Unexpected error: $e');
+    return ApiResult.failure(ServerFailure('خطأ غير متوقع: $e'));
   }
-}
+}}

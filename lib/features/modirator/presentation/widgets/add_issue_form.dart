@@ -30,6 +30,8 @@ class _AddIssueFormState extends State<AddIssueForm> {
   CustomerModel? _selectedCustomer;
   final List<File> _selectedImages = [];
   ProblemStatusModel? _selectedStatus;
+    final TextEditingController _problemTitleController = TextEditingController();
+
   ProblemCategoryModel? _selectedCategory;
   EngineerModel? _selectedEngineer;
   bool _isClientDropdownVisible = false;
@@ -167,6 +169,8 @@ class _AddIssueFormState extends State<AddIssueForm> {
           customerId: _selectedCustomer!.id!,
           dateTime: DateTime.now(),
           problemStatusId: _selectedStatus!.id,
+                    problemAddress: _problemTitleController.text,
+
           problemCategoryId: selectedCategory.id,
           note: _detailsController.text.isNotEmpty
               ? _detailsController.text

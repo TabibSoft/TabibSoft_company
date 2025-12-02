@@ -133,29 +133,107 @@ class TechCardContent extends StatelessWidget {
                     ],
                   ),
 
-                  // نوع المشكلة (جديد، جاري، تم الحل...)
-                  Row(children: [
-                    Container(
-                      padding: EdgeInsets.all(6.r),
-                      decoration: BoxDecoration(
-                          color: statusColor, shape: BoxShape.circle),
-                      child: Image.asset(
-                        'assets/images/pngs/specialization.png',
-                        width: 24.r,
-                        height: 24.r,
+                  // المنتجات أو نوع الحالة (الجزء المُعدّل)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(6.r),
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Image.asset(
+                          'assets/images/pngs/specialization.png',
+                          width: 24.r,
+                          height: 24.r,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Text(
-                        issue.problemtype ?? 'غير محدد',
-                        style: TextStyle(
-                            fontSize: 17.sp,
-                            fontWeight: FontWeight.bold,
-                            color: statusColor),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // إذا كان فيه منتجات → نعرضها
+                            if (issue.products != null &&
+                                issue.products!.isNotEmpty)
+                              Wrap(
+                                spacing: 8.w,
+                                runSpacing: 6.h,
+                                children: issue.products!
+                                    .take(3) // أول 3 منتجات فقط
+                                    .map((product) {
+                                  final String name = product is Map
+                                      ? (product['name'] ??
+                                          product['productName'] ??
+                                          product['title'] ??
+                                          'منتج')
+                                      : product.toString();
+
+                                  return Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 12.w, vertical: 6.h),
+                                    decoration: BoxDecoration(
+                                      color: statusColor.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(20.r),
+                                      border: Border.all(
+                                          color: statusColor, width: 1.2),
+                                    ),
+                                    child: Text(
+                                      name,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: statusColor,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              )
+                            else
+                              // إذا مفيش منتجات → نعرض نوع الحالة
+                              Row(
+                                children: [
+                                  Text(
+                                    issue.problemtype ?? 'نوع التخصص غير متاح',
+                                    style: TextStyle(
+                                      fontSize: 17.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: statusColor,
+                                    ),
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Text(
+                                    'نوع التخصص غير متاح',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: const Color.fromARGB(
+                                          255, 231, 110, 110),
+                                    ),
+                                  )
+                                ],
+                              ),
+
+                            // إذا كان فيه أكتر من 3 منتجات → نعرض +عدد
+                            if (issue.products != null &&
+                                issue.products!.length > 3)
+                              Padding(
+                                padding: EdgeInsets.only(top: 6.h),
+                                child: Text(
+                                  '+${issue.products!.length - 3} منتجات أخرى',
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ]),
+                    ],
+                  ),
 
                   // عنوان المشكلة أو تفاصيلها
                   Row(
@@ -217,7 +295,6 @@ class TechCardContent extends StatelessWidget {
                           ),
                         );
 
-                        // إذا رجع true → يعني تم حفظ شيء → نعيد تحميل البيانات
                         if (result == true && context.mounted) {
                           context.read<CustomerCubit>().resetPagination();
                           context

@@ -35,6 +35,10 @@ class LoginCubit extends Cubit<LoginState> {
           value: data.user.userName,
         );
         await CacheHelper.saveData(
+          key: 'userId',
+          value: data.user.userId,
+        );
+        await CacheHelper.saveData(
           key: 'userRoles',
           value: data.user.roles.join(','),
         );

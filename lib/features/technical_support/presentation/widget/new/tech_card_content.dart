@@ -2,13 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
+import 'package:flutter/material.dart'; // Ensure Material is imported for ScaffoldMessenger and SnackBar
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/problem_details_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:tabib_soft_company/core/networking/api_service.dart'; // Use the correct path for ApiService
+import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart'; // Use CacheHelper directly for user ID
+import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart'; // Import locator for ApiService
+import 'package:dio/dio.dart'; // Import Dio for error handling
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 
 class TechCardContent extends StatelessWidget {
   final ProblemModel issue;
   final VoidCallback? onDetailsPressed;
+
+  // Assuming a ProblemStatusId of 2 means "Assigned to Engineer" or "In Progress"
+  static const int _assignedStatusId = 2;
 
   const TechCardContent({
     super.key,
@@ -23,6 +31,55 @@ class TechCardContent extends StatelessWidget {
       if (await canLaunchUrl(url)) {
         await launchUrl(url);
       }
+    }
+  }
+
+  void _assignToEngineer(BuildContext context) async {
+    final problemId = issue.id;
+    final engineerId = CacheHelper.getString(key: 'userId'); // Get user ID from CacheHelper
+
+    if (problemId == null || engineerId.isEmpty || issue.customerId == null) {
+      // Handle error: Problem ID or Engineer ID not available
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('خطأ: لا يمكن تعيين المشكلة. البيانات غير متوفرة.')),
+      );
+      return;
+    }
+
+    try {
+      // Use the injected ApiService via GetIt locator
+      final apiService = ServicesLocator.locator<ApiService>();
+
+      await apiService.changeProblemStatus(
+        customerSupportId: problemId,
+        engineerId: engineerId,
+        problemStatusId: _assignedStatusId.toString(),
+        customerId: issue.customerId!,
+      );
+
+        // Success: Show a success message and refresh the list
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم تحويل المشكلة إلى المهندس بنجاح.')),
+        );
+        // Refresh the list of issues
+        if (context.mounted) {
+          context.read<CustomerCubit>().resetPagination();
+          context.read<CustomerCubit>().fetchTechSupportIssues();
+        }
+    } on DioException catch (e) {
+      // Handle Dio errors (network, 4xx, 5xx)
+      String errorMessage = 'حدث خطأ في الاتصال بالخادم.';
+      if (e.response != null) {
+        errorMessage = 'فشل تحويل المشكلة. رمز الخطأ: ${e.response!.statusCode}';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
+    } catch (e) {
+      // Handle other exceptions
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ غير متوقع: $e')),
+      );
     }
   }
 
@@ -51,6 +108,35 @@ class TechCardContent extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // أيقونة التحويل إلى مهندس في أعلى اليسار
+          Positioned(
+            top: 0,
+            left: 0,
+            child: GestureDetector(
+              onTap: () => _assignToEngineer(context),
+              child: Container(
+                padding: EdgeInsets.all(8.r),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF20AAC9), // لون مناسب
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      offset: Offset(2.w, 3.h),
+                      blurRadius: 6.r,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.person_add_alt_1_rounded, // أيقونة مناسبة للتحويل لمهندس
+                  color: Colors.white,
+                  size: 28.r,
+                ),
+              ),
+            ),
+          ),
+
+          // الخلفية الزرقاء الخارجية
           // الخلفية الزرقاء الخارجية
           Positioned(
             left: 0,

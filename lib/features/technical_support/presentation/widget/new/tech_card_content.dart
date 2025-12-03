@@ -9,6 +9,9 @@ import 'package:tabib_soft_company/core/networking/api_service.dart'; // Use the
 import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart'; // Use CacheHelper directly for user ID
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart'; // Import locator for ApiService
 import 'package:dio/dio.dart'; // Import Dio for error handling
+import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart'; // Import EngineerModel
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart'; // Import EngineerCubit
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart'; // Import EngineerState
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 
 class TechCardContent extends StatelessWidget {
@@ -34,9 +37,8 @@ class TechCardContent extends StatelessWidget {
     }
   }
 
-  void _assignToEngineer(BuildContext context) async {
+  void _assignProblem(BuildContext context, String engineerId) async {
     final problemId = issue.id;
-    final engineerId = CacheHelper.getString(key: 'userId'); // Get user ID from CacheHelper
 
     if (problemId == null || engineerId.isEmpty || issue.customerId == null) {
       // Handle error: Problem ID or Engineer ID not available
@@ -57,15 +59,15 @@ class TechCardContent extends StatelessWidget {
         customerId: issue.customerId!,
       );
 
-        // Success: Show a success message and refresh the list
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم تحويل المشكلة إلى المهندس بنجاح.')),
-        );
-        // Refresh the list of issues
-        if (context.mounted) {
-          context.read<CustomerCubit>().resetPagination();
-          context.read<CustomerCubit>().fetchTechSupportIssues();
-        }
+      // Success: Show a success message and refresh the list
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم تحويل المشكلة إلى المهندس بنجاح.')),
+      );
+      // Refresh the list of issues
+      if (context.mounted) {
+        context.read<CustomerCubit>().resetPagination();
+        context.read<CustomerCubit>().fetchTechSupportIssues();
+      }
     } on DioException catch (e) {
       // Handle Dio errors (network, 4xx, 5xx)
       String errorMessage = 'حدث خطأ في الاتصال بالخادم.';
@@ -81,6 +83,76 @@ class TechCardContent extends StatelessWidget {
         SnackBar(content: Text('حدث خطأ غير متوقع: $e')),
       );
     }
+  }
+
+  void _showEngineerSelectionDialog(BuildContext context) {
+    // Ensure engineers are fetched before showing the dialog
+    context.read<EngineerCubit>().fetchEngineers();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return BlocBuilder<EngineerCubit, EngineerState>(
+          builder: (context, state) {
+            if (state.status == EngineerStatus.loading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.status == EngineerStatus.failure) {
+              return AlertDialog(
+                title: const Text('خطأ'),
+                content: Text('فشل تحميل قائمة المهندسين: ${state.errorMessage}'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('إغلاق'),
+                  ),
+                ],
+              );
+            }
+            if (state.engineers.isEmpty) {
+              return AlertDialog(
+                title: const Text('تنبيه'),
+                content: const Text('لا يوجد مهندسون متاحون حاليًا.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('إغلاق'),
+                  ),
+                ],
+              );
+            }
+
+            return AlertDialog(
+              title: const Text('تعيين المشكلة إلى مهندس'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: state.engineers.length,
+                  itemBuilder: (context, index) {
+                    final engineer = state.engineers[index];
+                    return ListTile(
+                      title: Text(engineer.name),
+                      subtitle: Text(engineer.telephone),
+                      onTap: () {
+                        Navigator.of(dialogContext).pop();
+                        _assignProblem(context, engineer.id);
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('إلغاء'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Color _hexToColor(String? hex, {Color fallback = const Color(0xFF6BABFA)}) {
@@ -113,7 +185,7 @@ class TechCardContent extends StatelessWidget {
             top: 0,
             left: 0,
             child: GestureDetector(
-              onTap: () => _assignToEngineer(context),
+              onTap: () => _showEngineerSelectionDialog(context),
               child: Container(
                 padding: EdgeInsets.all(8.r),
                 decoration: BoxDecoration(

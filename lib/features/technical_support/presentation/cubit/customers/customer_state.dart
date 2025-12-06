@@ -15,11 +15,11 @@ class CustomerState extends Equatable {
   final String? errorMessage;
   final bool isProblemAdded;
   final String? selectedStatus;
-  final ProblemModel? newlyAddedIssue; 
-  final DateTime? newlyAddedIssueTime; 
-  final List<ProblemStatusModel> sitiuationList;
+  final ProblemModel? newlyAddedIssue;
+  final DateTime? newlyAddedIssueTime;
+  final List sitiuationList;
   final List<ProblemCategoryModel> problemCategories;
-
+  final bool isSearching; // إضافة جديدة لتتبع حالة البحث
 
   const CustomerState({
     this.status = CustomerStatus.initial,
@@ -34,6 +34,7 @@ class CustomerState extends Equatable {
     this.newlyAddedIssueTime,
     this.sitiuationList = const [],
     this.problemCategories = const [],
+    this.isSearching = false, // القيمة الافتراضية
   });
 
   CustomerState copyWith({
@@ -47,8 +48,9 @@ class CustomerState extends Equatable {
     String? selectedStatus,
     ProblemModel? newlyAddedIssue,
     DateTime? newlyAddedIssueTime,
-     List<ProblemStatusModel>? sitiuationList,
+    List? sitiuationList,
     List<ProblemCategoryModel>? problemCategories,
+    bool? isSearching,
   }) {
     return CustomerState(
       status: status ?? this.status,
@@ -63,6 +65,7 @@ class CustomerState extends Equatable {
       newlyAddedIssueTime: newlyAddedIssueTime ?? this.newlyAddedIssueTime,
       sitiuationList: sitiuationList ?? this.sitiuationList,
       problemCategories: problemCategories ?? this.problemCategories,
+      isSearching: isSearching ?? this.isSearching,
     );
   }
 
@@ -80,5 +83,6 @@ class CustomerState extends Equatable {
         newlyAddedIssueTime,
         sitiuationList,
         problemCategories,
+        isSearching,
       ];
 }

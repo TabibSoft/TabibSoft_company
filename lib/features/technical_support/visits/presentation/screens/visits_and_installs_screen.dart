@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/data/models/visit_model.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/screens/visit_detail_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
@@ -11,12 +12,11 @@ class VisitsAndInstallsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // الألوان الأساسية للشاشة
     const mainBlueColor = Color(0xFF16669E);
     const sheetColor = Color(0xFFF5F7FA);
 
     return Directionality(
-      textDirection: TextDirection.rtl, 
+      textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.transparent,
@@ -26,13 +26,11 @@ class VisitsAndInstallsScreen extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
-        
         backgroundColor: mainBlueColor,
         body: SafeArea(
           bottom: false,
           child: Column(
             children: [
-              // 1. الهيدر العلوي (الشعار/الأيقونة)
               const SizedBox(height: 20),
               Center(
                 child: Image.asset(
@@ -44,8 +42,6 @@ class VisitsAndInstallsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // 2. المحتوى الأبيض السفلي
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -60,13 +56,11 @@ class VisitsAndInstallsScreen extends StatelessWidget {
                     create: (_) => ServicesLocator.visitCubit..loadVisits(),
                     child: BlocBuilder<VisitCubit, VisitState>(
                       builder: (context, state) {
-                        // حالة التحميل
                         if (state.status == VisitStatus.loading) {
                           return const Center(
                               child: CircularProgressIndicator());
                         }
 
-                        // حالة الخطأ
                         if (state.status == VisitStatus.error) {
                           return Center(
                             child: Text(
@@ -76,20 +70,14 @@ class VisitsAndInstallsScreen extends StatelessWidget {
                           );
                         }
 
-                        // حالة لا توجد بيانات
                         if (state.visits.isEmpty) {
                           return const Center(
                               child: Text("لا توجد زيارات حالياً"));
                         }
 
-                        // قائمة الزيارات
                         return ListView.builder(
                           padding: const EdgeInsets.only(
-                            top: 30,
-                            left: 16,
-                            right: 16,
-                            bottom: 40,
-                          ),
+                              top: 30, left: 16, right: 16, bottom: 40),
                           itemCount: state.visits.length,
                           itemBuilder: (context, index) {
                             final visit = state.visits[index];
@@ -109,17 +97,20 @@ class VisitsAndInstallsScreen extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------
-// ويدجت الكارت المنفصلة (التصميم الجديد)
-// ---------------------------------------------------------
 class _VisitCard extends StatelessWidget {
-  final dynamic visit;
+  final VisitModel visit;
 
-  const _VisitCard({
-    required this.visit,
-  });
+  const _VisitCard({required this.visit});
 
-  /// يفتح العنوان في خرائط جوجل (رابط ويب)
+  Future<void> _makePhoneCall(String? phone) async {
+    if (phone == null || phone.trim().isEmpty) return;
+
+    final uri = Uri(scheme: 'tel', path: phone.trim());
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
   Future<void> _openInMaps(BuildContext context, String? address) async {
     final addr = (address ?? '').trim();
     if (addr.isEmpty) {
@@ -133,42 +124,34 @@ class _VisitCard extends StatelessWidget {
       'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(addr)}',
     );
 
-    try {
-      // حاول الفتح مباشرة في تطبيق خارجي (browser / maps)
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
-
-      if (!launched) {
-        // فشل الفتح — أعطِ رسالة للمستخدم
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('لا يمكن فتح الخرائط على هذا الجهاز')),
-        );
-      }
-    } catch (e) {
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('حدث خطأ أثناء محاولة فتح الخرائط')),
+        const SnackBar(content: Text('لا يمكن فتح الخرائط')),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final String displayVisitType =
+        (visit.visitType == null || visit.visitType!.trim().isEmpty)
+            ? '****'
+            : visit.visitType!;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: SizedBox(
-        height: 280,
+        height: 500,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            /// الظل الأزرق
+            // الظل الأزرق
             Positioned(
               left: 0,
               top: 13,
               child: Container(
                 width: MediaQuery.of(context).size.width - 40,
-                height: 275,
+                height: 350,
                 decoration: BoxDecoration(
                   color: const Color(0xff104D9D),
                   borderRadius: BorderRadius.circular(25),
@@ -183,70 +166,153 @@ class _VisitCard extends StatelessWidget {
               ),
             ),
 
-            /// الكارت الأبيض
+            // الكارت الأبيض
             Padding(
               padding: const EdgeInsets.only(top: 23, left: 20),
               child: Container(
-                height: 290,
+                height: 330,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: const Color(0xff20AAC9),
-                    width: 4,
-                  ),
+                  border: Border.all(color: const Color(0xff20AAC9), width: 4),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// الاسم
-                    _buildInfoRow(
-                      imagePath: "assets/images/pngs/new_person.png",
-                      text: visit.customerName,
-                      isTitle: true,
+                    // الصف العلوي: اسم العميل + نوع الزيارة
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Image.asset("assets/images/pngs/new_person.png",
+                                  width: 38, height: 38),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  visit.customerName,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.black87,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: visit.visitType == "*****"
+                                ? Colors.orange.shade100
+                                : Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            displayVisitType,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: visit.visitType == "****"
+                                  ? Colors.orange.shade800
+                                  : Colors.blue.shade800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                     ),
-                    const SizedBox(height: 10),
 
-                    /// التاريخ
+                    // الملاحظة
+                    if (visit.note != null && visit.note!.trim().isNotEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Text(
+                          "الملاحظة: ${visit.note}",
+                          style: const TextStyle(
+                              fontSize: 14, color: Colors.black87, height: 1.4),
+                        ),
+                      ),
+
+                    const SizedBox(height: 5),
+
+                    // التاريخ
                     _buildInfoRow(
                       imagePath: "assets/images/pngs/new_calender.png",
                       text: visit.visitDate.toString().substring(0, 10),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
 
-                    /// المنتج
+                    // رقم الهاتف - قابل للتحديد والنسخ + قابل للضغط للاتصال
+                    GestureDetector(
+                      onTap: () => _makePhoneCall(visit.customerPhone),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.phone,
+                              color: Colors.green, size: 24),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: SelectableText(
+                              visit.customerPhone ?? "غير متوفر",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                                decoration: TextDecoration.underline,
+                                decorationColor: Colors.green,
+                              ),
+                              textDirection: TextDirection.rtl,
+                              onTap: () => _makePhoneCall(visit.customerPhone),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    // المنتج
                     _buildInfoRow(
                       imagePath: "assets/images/pngs/specialization.png",
                       text: visit.proudctName,
                     ),
+                    const SizedBox(height: 5),
 
-                    /// العنوان الأول
+                    // العنوان
                     _buildInfoRow(
                       imagePath: "assets/images/pngs/location.png",
-                      text: visit.adress ?? 'العنوان غير محدد',
+                      text: visit.adress ?? 'غير محدد',
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 5),
 
-                    /// العنوان الثاني (باستخدام earth.png) - عند الضغط يفتح خرائط جوجل
+                    // الموقع على الخريطة
                     _buildInfoRow(
                       imagePath: "assets/images/pngs/earth.png",
-                      text: visit.location ?? 'العنوان غير محدد',
-                      onTap: () =>
-                          _openInMaps(context, visit.location ?? visit.adress),
+                      text: visit.location,
+                      onTap: () => _openInMaps(context, visit.location),
                     ),
-
-                    const SizedBox(height: 10),
                   ],
                 ),
               ),
             ),
 
-            /// زر إتمام الزيارة
+            // زر إضافة إجراء أو تم التركيب
             Positioned(
               left: 115,
-              bottom: 0,
+              bottom: 130,
               child: GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -258,7 +324,7 @@ class _VisitCard extends StatelessWidget {
                 },
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                   decoration: BoxDecoration(
                     color: visit.isInstallDone
                         ? Colors.green
@@ -266,17 +332,19 @@ class _VisitCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 5,
-                          offset: const Offset(0, 3)),
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
                   child: Text(
                     visit.isInstallDone ? "تم التركيب" : "إضافة إجراء",
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
@@ -287,43 +355,36 @@ class _VisitCard extends StatelessWidget {
     );
   }
 
-  /// الدالة بعد التعديل لقبول الصور بدلاً من الأيقونات
   Widget _buildInfoRow({
     required String imagePath,
     required String text,
-    bool isTitle = false,
     VoidCallback? onTap,
   }) {
     final row = Row(
       children: [
-        Image.asset(
-          imagePath,
-          width: isTitle ? 35 : 30,
-          height: isTitle ? 35 : 30,
-        ),
+        Image.asset(imagePath, width: 30, height: 30),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
-              fontSize: isTitle ? 22 : 16,
-              fontWeight: isTitle ? FontWeight.w900 : FontWeight.w600,
-              color: isTitle ? Colors.black87 : Colors.grey[800],
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
             ),
-            maxLines: 1,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
     );
 
-    if (onTap != null) {
-      return InkWell(
-        onTap: onTap,
-        child: row,
-      );
-    }
-
-    return row;
+    return onTap != null
+        ? InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: row,
+          )
+        : row;
   }
 }

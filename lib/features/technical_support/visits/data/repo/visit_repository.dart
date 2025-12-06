@@ -1,4 +1,5 @@
 // features/visits/data/repo/visit_repository.dart
+
 import 'package:dio/dio.dart';
 import 'package:tabib_soft_company/core/networking/api_service.dart';
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
@@ -16,16 +17,22 @@ class VisitRepository {
       "pageNumber": pageNumber,
       "pageSize": pageSize,
       "searchValue": searchValue,
-      // يمكن تضيف فلاتر زي customerId أو date لو حابب
     });
     return response.data;
   }
 
-
-  Future<void> addVisitDetail(FormData formData) async {
-  await _apiService.addVisitDetail(formData);
-}
-
+  // فقط الثلاث حقول المطلوبة
+  Future<void> addVisitDetail({
+    required String visitInstallDetailId,
+    required String note,
+    List<MultipartFile>? images,
+  }) async {
+    await _apiService.addVisitDetail(
+      visitInstallDetailId,
+      note,
+       images,
+    );
+  }
 
   Future<void> makeVisitDone(String visitId) async {
     await _apiService.makeVisitDone(visitId: visitId);

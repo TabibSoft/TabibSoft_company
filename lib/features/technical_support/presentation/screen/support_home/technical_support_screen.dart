@@ -5,11 +5,11 @@ import 'package:tabib_soft_company/core/utils/widgets/custom_app_bar_widget.dart
 import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/export.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/problem_details_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/widget/new/tech_card_content.dart';
 
 class TechnicalSupportScreen extends StatefulWidget {
   const TechnicalSupportScreen({super.key});
-
   static const double horizontalPadding = 16.0;
 
   @override
@@ -35,15 +35,19 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
         );
       });
     } else {
+      // تحميل البيانات الأساسية
       context.read<CustomerCubit>().fetchProblemStatus();
-      context.read<CustomerCubit>().fetchTechSupportIssues();
+      context.read<CustomerCubit>().refreshAllData();
     }
+
+    // مراقبة التغييرات في البحث
     _searchController.addListener(() {
       setState(() {
-        _searchQuery = _searchController.text;
+        _searchQuery = _searchController.text.trim();
       });
-      _refreshIssues();
     });
+
+    // مراقبة تغييرات الحالة
     context.read<CustomerCubit>().stream.listen((state) {
       if (state.problemStatusList.isNotEmpty && mounted) {
         setState(() {
@@ -68,8 +72,6 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
     });
     final cubit = context.read<CustomerCubit>();
     cubit.emit(cubit.state.copyWith(selectedStatus: status));
-    cubit.resetPagination();
-    _refreshIssues();
   }
 
   Future<void> _showStatusMenu() async {
@@ -114,20 +116,25 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
         );
       }).toList(),
     );
+
     if (selected != null || (_statuses.isNotEmpty && selected == null)) {
       _onStatusSelected(selected);
     }
   }
 
-  void _navigateToAddProblemScreen() {
-    Navigator.of(context).push(
+  void _navigateToAddProblemScreen() async {
+    final result = await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const AddProblemScreen()),
     );
+
+    // عند الرجوع من صفحة الإضافة، نحدث البيانات
+    if (result == true && mounted) {
+      context.read<CustomerCubit>().refreshAllData();
+    }
   }
 
-  void _refreshIssues() {
-    context.read<CustomerCubit>().resetPagination();
-    context.read<CustomerCubit>().fetchTechSupportIssues();
+  Future<void> _refreshIssues() async {
+    await context.read<CustomerCubit>().refreshAllData();
   }
 
   @override
@@ -142,9 +149,7 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
           title: const SizedBox.shrink(),
           leading: IconButton(
             icon: const Icon(Icons.headset, color: Colors.transparent),
-            onPressed: () {
-              // يمكن إضافة وظيفة هنا إذا لزم الأمر
-            },
+            onPressed: () {},
           ),
           actions: [
             IconButton(
@@ -174,7 +179,7 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                     const SizedBox(height: 8),
                     Center(
                       child: Image.asset(
-                        'assets/images/pngs/TS_Logo0.png', // افترض استخدام نفس الشعار من المرجع
+                        'assets/images/pngs/TS_Logo0.png',
                         width: 140,
                         height: 80,
                         fit: BoxFit.contain,
@@ -201,6 +206,7 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                           children: [
                             const SizedBox(width: 16),
                             GestureDetector(
+                              key: _statusKey,
                               onTap: _showStatusMenu,
                               child: Image.asset(
                                 'assets/images/pngs/filter.png',
@@ -222,6 +228,15 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                                 ),
                               ),
                             ),
+                            // زر مسح البحث
+                            if (_searchQuery.isNotEmpty)
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.clear, color: Colors.grey),
+                                onPressed: () {
+                                  _searchController.clear();
+                                },
+                              ),
                           ],
                         ),
                       ),
@@ -229,85 +244,151 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                     const SizedBox(height: 18),
                     Expanded(
                       child: Container(
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF3F5F6),
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(28),
-                              topRight: Radius.circular(28),
-                            ),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF3F5F6),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(28),
+                            topRight: Radius.circular(28),
                           ),
-                          child: // في build method داخل BlocBuilder
-                              BlocBuilder<CustomerCubit, CustomerState>(
-                            builder: (context, state) {
-                              final List<ProblemModel> issues =
-                                  state.techSupportIssues ?? [];
+                        ),
+                        child: BlocBuilder<CustomerCubit, CustomerState>(
+                          builder: (context, state) {
+                            final List<ProblemModel> allIssues =
+                                state.techSupportIssues;
 
-                              if (state.status == CustomerStatus.loading &&
-                                  issues.isEmpty) {
-                                return const Center(
-                                    child: CircularProgressIndicator());
-                              }
+                            if (state.status == CustomerStatus.loading &&
+                                allIssues.isEmpty) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }
 
-                              if (issues.isEmpty) {
-                                return const Center(
-                                  child: Text(
-                                    'لا توجد مشكلات حالياً',
-                                    style: TextStyle(
+                            // تطبيق البحث المحلي
+                            List<ProblemModel> searchedIssues = allIssues;
+                            if (_searchQuery.isNotEmpty) {
+                              final lowerQuery = _searchQuery.toLowerCase();
+                              searchedIssues = allIssues.where((issue) {
+                                // البحث في اسم العميل
+                                final customerName =
+                                    (issue.customerName ?? '').toLowerCase();
+                                if (customerName.contains(lowerQuery))
+                                  return true;
+
+                                // البحث في رقم الهاتف
+                                final phone =
+                                    (issue.customerPhone ?? issue.phone ?? '')
+                                        .toLowerCase();
+                                if (phone.contains(lowerQuery)) return true;
+
+                                // البحث في عنوان المشكلة
+                                final problemAddress =
+                                    (issue.problemAddress ?? '').toLowerCase();
+                                if (problemAddress.contains(lowerQuery))
+                                  return true;
+
+                                // البحث في العنوان
+                                final address =
+                                    (issue.adderss ?? '').toLowerCase();
+                                if (address.contains(lowerQuery)) return true;
+
+                                // البحث في تفاصيل المشكلة
+                                final details =
+                                    (issue.problemDetails ?? '').toLowerCase();
+                                if (details.contains(lowerQuery)) return true;
+
+                                return false;
+                              }).toList();
+                            }
+
+                            // ترتيب حسب التاريخ
+                            final sortedIssues =
+                                List<ProblemModel>.from(searchedIssues);
+                            sortedIssues.sort((a, b) {
+                              final dateA =
+                                  DateTime.tryParse(a.problemDate ?? '') ??
+                                      DateTime(1970);
+                              final dateB =
+                                  DateTime.tryParse(b.problemDate ?? '') ??
+                                      DateTime(1970);
+                              return dateB.compareTo(dateA);
+                            });
+
+                            // تصفية حسب الحالة المختارة
+                            final filteredIssues = _selectedStatus == null
+                                ? sortedIssues
+                                : sortedIssues
+                                    .where((issue) =>
+                                        issue.problemtype == _selectedStatus)
+                                    .toList();
+
+                            if (filteredIssues.isEmpty) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.inbox_outlined,
+                                      size: 64,
+                                      color: Colors.grey[400],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      _searchQuery.isNotEmpty
+                                          ? 'لا توجد نتائج للبحث عن "$_searchQuery"'
+                                          : _selectedStatus != null
+                                              ? 'لا توجد مشكلات بهذه الحالة'
+                                              : 'لا توجد مشكلات حالياً',
+                                      style: const TextStyle(
                                         fontSize: 18,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                );
-                              }
-
-                              // ترتيب إضافي للتأكد (اختياري)
-                              final sortedIssues =
-                                  List<ProblemModel>.from(issues);
-                              sortedIssues.sort((a, b) {
-                                final dateA =
-                                    DateTime.tryParse(a.problemDate ?? '') ??
-                                        DateTime(1970);
-                                final dateB =
-                                    DateTime.tryParse(b.problemDate ?? '') ??
-                                        DateTime(1970);
-                                return dateB.compareTo(dateA); // الأحدث أولاً
-                              });
-
-                              return RefreshIndicator(
-                                onRefresh: () async {
-                                  _refreshIssues();
-                                },
-                                child: ListView.separated(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: TechnicalSupportScreen
-                                          .horizontalPadding,
-                                      vertical: 8),
-                                  itemCount: sortedIssues.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(height: 20),
-                                  itemBuilder: (context, index) {
-                                    final issue = sortedIssues[index];
-                                    final matchesSearch =
-                                        _searchQuery.isEmpty ||
-                                            (issue.customerName ?? '')
-                                                .contains(_searchQuery) ||
-                                            (issue.customerPhone ??
-                                                    issue.phone ??
-                                                    '')
-                                                .contains(_searchQuery);
-                                    final matchesStatus = _selectedStatus ==
-                                            null ||
-                                        issue.problemtype == _selectedStatus;
-
-                                    if (!matchesSearch || !matchesStatus) {
-                                      return const SizedBox.shrink();
-                                    }
-
-                                    return TechCardContent(issue: issue);
-                                  },
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
                                 ),
                               );
-                            },
-                          )),
+                            }
+
+                            return RefreshIndicator(
+                              onRefresh: () async {
+                                await _refreshIssues();
+                              },
+                              child: ListView.separated(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal:
+                                      TechnicalSupportScreen.horizontalPadding,
+                                  vertical: 8,
+                                ),
+                                itemCount: filteredIssues.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 20),
+                                itemBuilder: (context, index) {
+                                  final issue = filteredIssues[index];
+                                  return TechCardContent(
+                                    issue: issue,
+                                    onDetailsPressed: () async {
+                                      final result =
+                                          await Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => ProblemDetailsScreen(
+                                              issue: issue),
+                                        ),
+                                      );
+
+                                      // تحديث البيانات عند الرجوع
+                                      if (result == true && mounted) {
+                                        context
+                                            .read<CustomerCubit>()
+                                            .refreshAllData();
+                                      }
+                                    },
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ],
                 ),

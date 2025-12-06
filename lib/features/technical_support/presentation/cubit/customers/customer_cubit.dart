@@ -19,7 +19,11 @@ class CustomerCubit extends Cubit<CustomerState> {
 
   // إعادة تعيين حالة إضافة المشكلة
   void resetProblemAddedFlag() {
-    emit(state.copyWith(isProblemAdded: false, newlyAddedIssue: null));
+    emit(state.copyWith(
+      isProblemAdded: false,
+      newlyAddedIssue: null,
+      newlyAddedIssueTime: null,
+    ));
   }
 
   Future<void> fetchCustomers() async {
@@ -67,9 +71,30 @@ class CustomerCubit extends Cubit<CustomerState> {
     int? problem,
     bool? isSearch,
   }) async {
-    if (!_hasMoreData && _currentPage != 1) return;
+    // إذا كان بحث، نحذف البيانات القديمة ونبدأ من جديد
+    final isSearching = isSearch == true ||
+        customerId != null ||
+        date != null ||
+        address != null ||
+        problem != null;
 
-    emit(state.copyWith(status: CustomerStatus.loading));
+    if (isSearching) {
+      // في حالة البحث: نعيد تعيين كل شيء
+      _currentPage = 1;
+      _hasMoreData = true;
+      emit(state.copyWith(
+        status: CustomerStatus.loading,
+        techSupportIssues: [], // إفراغ القائمة
+        isSearching: true,
+      ));
+    } else {
+      // في حالة التحميل العادي (pagination)
+      if (!_hasMoreData && _currentPage != 1) return;
+      emit(state.copyWith(
+        status: CustomerStatus.loading,
+        isSearching: false,
+      ));
+    }
 
     final result = await _customerRepository.getAllTechSupport(
       customerId: customerId,
@@ -92,13 +117,23 @@ class CustomerCubit extends Cubit<CustomerState> {
           return dateB.compareTo(dateA);
         });
 
-        final updatedIssues = _currentPage == 1
+        // في حالة البحث أو الصفحة الأولى، نستبدل القائمة بالكامل
+        final updatedIssues = (_currentPage == 1 || isSearching)
             ? sortedIssues
             : [...state.techSupportIssues, ...sortedIssues];
 
+        // إزالة التكرارات باستخدام Set
+        final uniqueIssues = <String, ProblemModel>{};
+        for (var issue in updatedIssues) {
+          if (issue.id != null) {
+            uniqueIssues[issue.id!] = issue;
+          }
+        }
+
         emit(state.copyWith(
           status: CustomerStatus.success,
-          techSupportIssues: updatedIssues,
+          techSupportIssues: uniqueIssues.values.toList(),
+          isSearching: false,
         ));
         _currentPage++;
       },
@@ -106,6 +141,7 @@ class CustomerCubit extends Cubit<CustomerState> {
         emit(state.copyWith(
           status: CustomerStatus.failure,
           errorMessage: error.errMessages,
+          isSearching: false,
         ));
       },
     );
@@ -113,7 +149,6 @@ class CustomerCubit extends Cubit<CustomerState> {
 
   Future<void> fetchProblemStatus() async {
     if (state.problemStatusList.isNotEmpty) return;
-
     emit(state.copyWith(status: CustomerStatus.loading));
     final result = await _customerRepository.getProblemStatus();
     result.when(
@@ -135,7 +170,6 @@ class CustomerCubit extends Cubit<CustomerState> {
   Future<void> fetchProblemCategories({int retryCount = 0}) async {
     const maxRetries = 3;
     if (state.problemCategories.isNotEmpty && retryCount == 0) return;
-
     emit(state.copyWith(status: CustomerStatus.loading));
     final result = await _customerRepository.getAllProblemCategories();
     result.when(
@@ -173,10 +207,10 @@ class CustomerCubit extends Cubit<CustomerState> {
       note: note,
       problemstausId: problemStatusId,
     );
-
     final result = await _customerRepository.createUnderTransaction(dto);
     result.when(
       success: (_) {
+        // إعادة تحميل البيانات من الصفر
         resetPagination();
         fetchTechSupportIssues();
       },
@@ -208,13 +242,13 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
   }
 
-  /// إنشاء مشكلة جديدة - محدث بالكامل وفق Swagger
+  /// إنشاء مشكلة جديدة - محدث بالكامل
   Future<void> createProblem({
     required String customerId,
     required DateTime dateTime,
     required int problemStatusId,
     required String problemCategoryId,
-    required String problemAddress, // عنوان المشكلة (مطلوب للعرض)
+    required String problemAddress,
     String? note,
     String? engineerId,
     String? details,
@@ -259,34 +293,36 @@ class CustomerCubit extends Cubit<CustomerState> {
 
     emit(state.copyWith(status: CustomerStatus.loading, isProblemAdded: false));
 
-   final result = await _customerRepository.createProblem(
-  customerId: customerId,
-  dateTime: dateTime,
-  problemStatusId: problemStatusId,
-  problemCategoryId: problemCategoryId,
-  problemAddress: problemAddress,
-  note: note ?? details,        // ندمج التفاصيل في Note
-  details: details,             // ونرسلها كمان
-  phone: phone,
-  engineerId: engineerId,
-  isUrgent: isUrgent,
-  images: images,
-);
+    final result = await _customerRepository.createProblem(
+      customerId: customerId,
+      dateTime: dateTime,
+      problemStatusId: problemStatusId,
+      problemCategoryId: problemCategoryId,
+      problemAddress: problemAddress,
+      note: note ?? details,
+      details: details,
+      phone: phone,
+      engineerId: engineerId,
+      isUrgent: isUrgent,
+      images: images,
+    );
+
     result.when(
       success: (createdProblem) {
         print('تم إنشاء المشكلة بنجاح: ${createdProblem.problemAddress}');
-
-        final newIssue = createdProblem;
-
-        final updatedIssues = [newIssue, ...state.techSupportIssues];
-
+        
+        // إعادة تعيين الصفحات وتحميل البيانات من جديد
+        resetPagination();
+        
         emit(state.copyWith(
           status: CustomerStatus.success,
           isProblemAdded: true,
-          newlyAddedIssue: newIssue,
+          newlyAddedIssue: createdProblem,
           newlyAddedIssueTime: DateTime.now(),
-          techSupportIssues: updatedIssues,
         ));
+
+        // تحميل البيانات من جديد بعد الإضافة
+        fetchTechSupportIssues();
       },
       failure: (error) {
         print('فشل إنشاء المشكلة: ${error.errMessages}');
@@ -302,5 +338,43 @@ class CustomerCubit extends Cubit<CustomerState> {
   void resetPagination() {
     _currentPage = 1;
     _hasMoreData = true;
+    emit(state.copyWith(techSupportIssues: [])); // إفراغ القائمة
+  }
+
+  // دالة جديدة لإعادة تحميل كامل البيانات
+  Future<void> refreshAllData() async {
+    resetPagination();
+    await fetchTechSupportIssues();
+  }
+
+  // دالة البحث المحلي - للاستخدام في الواجهة
+  List<ProblemModel> searchIssuesLocally(String query) {
+    if (query.isEmpty) return state.techSupportIssues;
+
+    final lowerQuery = query.toLowerCase().trim();
+    
+    return state.techSupportIssues.where((issue) {
+      // البحث في اسم العميل
+      final customerName = (issue.customerName ?? '').toLowerCase();
+      if (customerName.contains(lowerQuery)) return true;
+
+      // البحث في رقم الهاتف
+      final phone = (issue.customerPhone ?? issue.phone ?? '').toLowerCase();
+      if (phone.contains(lowerQuery)) return true;
+
+      // البحث في عنوان المشكلة
+      final problemAddress = (issue.problemAddress ?? '').toLowerCase();
+      if (problemAddress.contains(lowerQuery)) return true;
+
+      // البحث في العنوان
+      final address = (issue.adderss ?? '').toLowerCase();
+      if (address.contains(lowerQuery)) return true;
+
+      // البحث في تفاصيل المشكلة
+      final details = (issue.problemDetails ?? '').toLowerCase();
+      if (details.contains(lowerQuery)) return true;
+
+      return false;
+    }).toList();
   }
 }

@@ -880,11 +880,21 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<void> addVisitDetail(FormData formData) async {
+  Future<void> addVisitDetail(
+    String visitInstallDetailId,
+    String note,
+    List<MultipartFile>? images,
+  ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
+    queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
-    final _data = formData;
+    final _data = FormData();
+    _data.fields.add(MapEntry('VisitInstallDetailId', visitInstallDetailId));
+    _data.fields.add(MapEntry('Note', note));
+    if (images != null) {
+      _data.files.addAll(images.map((i) => MapEntry('Images', i)));
+    }
     final _options = _setStreamType<void>(
       Options(
         method: 'POST',

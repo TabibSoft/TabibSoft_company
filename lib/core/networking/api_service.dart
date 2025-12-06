@@ -92,8 +92,8 @@ abstract class ApiService {
   Future<List<CustomerModel>> autoCompleteCustomer(
       @Query("query") String query);
 
- @POST(ApiConstants.createProblem)
-Future<ProblemModel> createProblem(@Body() FormData formData);
+  @POST(ApiConstants.createProblem)
+  Future<ProblemModel> createProblem(@Body() FormData formData);
 
   @GET(ApiConstants.getAllMeasurements)
   Future<PaginatedSales> getAllMeasurements({
@@ -166,15 +166,19 @@ Future<ProblemModel> createProblem(@Body() FormData formData);
   @POST(ApiConstants.addSubscription)
   @MultiPart()
   Future<void> addSubscription(@Body() FormData formData);
-
-  @POST(ApiConstants.getAllVisits)
+@POST(ApiConstants.getAllVisits)
   Future<PaginatedVisitResponse> getAllVisits(
-    @Body() Map<String, dynamic> body, // ضروري
+    @Body() Map<String, dynamic> body,
   );
 
-  @POST(ApiConstants.addVisitDetail)
-  @MultiPart()
-  Future<void> addVisitDetail(@Body() FormData formData);
+  // تم التعديل الكامل هنا
+@POST(ApiConstants.addVisitDetail)
+@MultiPart()
+Future<void> addVisitDetail(
+  @Part(name: "VisitInstallDetailId") String visitInstallDetailId,
+  @Part(name: "Note") String note,
+  @Part(name: "Images") List<MultipartFile>? images,
+);
 
   @POST(ApiConstants.editVisitDetail)
   @MultiPart()

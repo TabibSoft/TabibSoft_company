@@ -31,7 +31,7 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
 
   ProblemStatusModel? _selectedSpecialty;
   EngineerModel? _selectedEngineer;
-  File? _selectedImage;
+  final List<File> _selectedImages = [];
   bool _isLoading = false;
 
   final GlobalKey _engineerKey = GlobalKey();
@@ -80,32 +80,158 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     final picker = ImagePicker();
     final pickedFile = await showModalBottomSheet<XFile?>(
       context: context,
-      builder: (_) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.camera_alt),
-            title: const Text('الكاميرا'),
-            onTap: () async {
-              Navigator.pop(
-                  context, await picker.pickImage(source: ImageSource.camera));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.photo_library),
-            title: const Text('المعرض'),
-            onTap: () async {
-              Navigator.pop(
-                  context, await picker.pickImage(source: ImageSource.gallery));
-            },
-          ),
-        ],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 50,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: checkColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.camera_alt, color: checkColor),
+              ),
+              title: const Text(
+                'الكاميرا',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              onTap: () async {
+                Navigator.pop(
+                    context, await picker.pickImage(source: ImageSource.camera));
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: checkColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.photo_library, color: checkColor),
+              ),
+              title: const Text(
+                'المعرض',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              onTap: () async {
+                Navigator.pop(
+                    context, await picker.pickImage(source: ImageSource.gallery));
+              },
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
       ),
     );
 
     if (pickedFile != null) {
-      setState(() => _selectedImage = File(pickedFile.path));
+      setState(() => _selectedImages.add(File(pickedFile.path)));
     }
+  }
+
+  // دالة عرض الصورة بشكل كامل
+  void _showFullScreenImage(File imageFile, int index) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            // الصورة بالحجم الكامل
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.file(
+                  imageFile,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            // زر الإغلاق
+            Positioned(
+              top: 40,
+              right: 20,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ),
+            // زر الحذف
+            Positioned(
+              top: 40,
+              left: 20,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.white, size: 30),
+                  onPressed: () {
+                    setState(() {
+                      _selectedImages.removeAt(index);
+                    });
+                    Navigator.pop(context);
+                    Fluttertoast.showToast(
+                      msg: 'تم حذف الصورة',
+                      backgroundColor: Colors.red,
+                      textColor: Colors.white,
+                    );
+                  },
+                ),
+              ),
+            ),
+            // معلومات الصورة
+            Positioned(
+              bottom: 20,
+              left: 0,
+              right: 0,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'صورة ${index + 1} من ${_selectedImages.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _saveChanges() async {
@@ -184,11 +310,6 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                     ),
                   ),
                 ),
-                // const Icon(
-                //   Icons.arrow_forward_ios,
-                //   size: 14,
-                //   color: Colors.grey,
-                // ),
               ],
             ),
           ),
@@ -371,7 +492,7 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
               textColor: Colors.white,
             );
             setState(() => _isLoading = false);
-            if (mounted) Navigator.pop(context); // الرجوع تلقائيًا
+            if (mounted) Navigator.pop(context, true); // الرجوع مع إرسال true
           } else if (state.status == CustomerStatus.failure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -414,7 +535,7 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
 
               // الجسم الرئيسي
               Positioned.fill(
-                top: 90,
+                top: 120.h,
                 child: Container(
                   decoration: const BoxDecoration(
                     color: Color(0xFFFDFDFD),
@@ -491,20 +612,6 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                       },
                                       itemBuilder: (status) => ListTile(
                                         dense: true,
-                                        // leading: CircleAvatar(
-                                        //   radius: 16,
-                                        //   backgroundColor: const Color.fromARGB(
-                                        //       255, 221, 144, 144),
-                                        //   child: Text(
-                                        //     status.name.isNotEmpty
-                                        //         ? status.name[0].toUpperCase()
-                                        //         : '',
-                                        //     style: const TextStyle(
-                                        //       color: Colors.white,
-                                        //       fontSize: 12,
-                                        //     ),
-                                        //   ),
-                                        // ),
                                         title: Text(
                                           status.name,
                                           style: const TextStyle(
@@ -533,66 +640,6 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                   controller: _solutionCtl,
                                   maxLines: 5),
 
-                              // إعادة توجيه للمهندس (اختياري)
-                              BlocBuilder<EngineerCubit, EngineerState>(
-                                builder: (context, state) {
-                                  if (state.engineers.isEmpty) {
-                                    return _buildLabeledField(
-                                      field: _buildDisabledDropdown(
-                                        value: 'جاري تحميل المهندسين...',
-                                        trailingText: 'المهندس',
-                                      ),
-                                      label: 'إعادة توجيه',
-                                    );
-                                  }
-                                  final displayName =
-                                      _selectedEngineer?.name ?? 'اختر مهندس';
-                                  return _buildLabeledField(
-                                    field: GestureDetector(
-                                      key: _engineerKey,
-                                      onTap: () =>
-                                          _showEngineersMenu(state.engineers),
-                                      child: Container(
-                                        height: 56,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 16),
-                                        decoration: BoxDecoration(
-                                          color: fieldBlue,
-                                          borderRadius:
-                                              BorderRadius.circular(24),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color:
-                                                  Colors.black.withOpacity(0.1),
-                                              blurRadius: 4,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                displayName,
-                                                style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 16),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const Icon(Icons.arrow_drop_down,
-                                                color: Colors.white, size: 30),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    label: 'إعادة توجيه',
-                                  );
-                                },
-                              ),
-
                               const SizedBox(height: 20),
                               Column(
                                 children: [
@@ -603,25 +650,92 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                   const SizedBox(height: 10),
                                   GestureDetector(
                                     onTap: _pickImage,
-                                    child: SizedBox(
-                                      width: 70,
-                                      height: 70,
-                                      child: Image.asset(
-                                        'assets/images/pngs/upload_pic.png', // ضع مسار صورتك هنا
-                                        width: 40,
-                                        height: 40,
-                                        fit: BoxFit.contain,
-                                      ),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Image.asset(
+                                          'assets/images/pngs/upload_pic.png',
+                                          width: 50,
+                                          height: 50,
+                                        ),
+                                        if (_selectedImages.isNotEmpty)
+                                          Positioned(
+                                            bottom: 0,
+                                            right: 0,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(2),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.white,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.check_circle,
+                                                color: Colors.green,
+                                                size: 14,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   ),
-                                  if (_selectedImage != null) ...[
+                                  if (_selectedImages.isNotEmpty) ...[
                                     const SizedBox(height: 12),
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(16),
-                                      child: Image.file(_selectedImage!,
-                                          height: 120,
-                                          width: 120,
-                                          fit: BoxFit.cover),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: _selectedImages
+                                          .asMap()
+                                          .entries
+                                          .map(
+                                            (entry) => GestureDetector(
+                                              onTap: () => _showFullScreenImage(
+                                                  entry.value, entry.key),
+                                              child: Stack(
+                                                children: [
+                                                  ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(8),
+                                                    child: Image.file(
+                                                      entry.value,
+                                                      width: 60,
+                                                      height: 60,
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    top: 0,
+                                                    right: 0,
+                                                    child: GestureDetector(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          _selectedImages
+                                                              .removeAt(
+                                                                  entry.key);
+                                                        });
+                                                      },
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                                2),
+                                                        decoration:
+                                                            const BoxDecoration(
+                                                          color: Colors.red,
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                        child: const Icon(
+                                                          Icons.close,
+                                                          color: Colors.white,
+                                                          size: 16,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
                                     ),
                                   ],
                                 ],

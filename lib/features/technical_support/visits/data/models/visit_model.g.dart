@@ -9,6 +9,9 @@ part of 'visit_model.dart';
 VisitModel _$VisitModelFromJson(Map<String, dynamic> json) => VisitModel(
       id: json['id'] as String,
       customerName: json['customerName'] as String,
+      customerPhone: json['customerPhone'] as String? ?? '',
+      note: json['note'] as String? ?? '',
+      visitType: json['visitType'] as String? ?? '',
       visitDate: DateTime.parse(json['visitDate'] as String),
       visitId: json['visitId'] as String,
       engineerName: json['engineerName'] as String? ?? 'غير محدد',
@@ -26,6 +29,9 @@ Map<String, dynamic> _$VisitModelToJson(VisitModel instance) =>
     <String, dynamic>{
       'id': instance.id,
       'customerName': instance.customerName,
+      'customerPhone': instance.customerPhone,
+      'note': instance.note,
+      'visitType': instance.visitType,
       'visitDate': instance.visitDate.toIso8601String(),
       'visitId': instance.visitId,
       'engineerName': instance.engineerName,

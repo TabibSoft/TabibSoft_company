@@ -4,9 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
-import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
-import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/visit_model.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
 
@@ -24,21 +21,10 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
   final ImagePicker _picker = ImagePicker();
   final List<File> _selectedImages = [];
 
-  bool _printChecked = false;
-  bool _iconChecked = false;
-  bool _attendanceChecked = false;
-
-  // جديد: مهندس المبيعات
-  String? _selectedSalesEngineerName;
-  String? _selectedSalesEngineerId;
-  bool _isEngineerDropdownVisible = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // جلب المهندسين فور فتح الشاشة
-    context.read<EngineerCubit>().fetchEngineers();
-  }
+  // Checkboxes للإجراءات المنفذة أثناء الزيارة (تُضاف للملاحظة تلقائيًا)
+  final bool _printChecked = false; // تم طباعة الفاتورة أو الأوراق
+  final bool _iconChecked = false; // تم تركيب الأيقونة أو اللوجو
+  final bool _attendanceChecked = false; // تم تسجيل الحضور أو توقيع العميل
 
   @override
   void dispose() {
@@ -46,6 +32,7 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     super.dispose();
   }
 
+  // اختيار صورة من الكاميرا أو المعرض
   Future<void> _pickImage() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -77,10 +64,12 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     }
   }
 
+  // حذف صورة مرفوعة
   void _removeImage(File image) {
     setState(() => _selectedImages.remove(image));
   }
 
+  // إرسال تفاصيل الزيارة (Note + Images فقط + VisitInstallDetailId)
   Future<void> _addVisitDetail() async {
     if (_noteController.text.trim().isEmpty && _selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -90,6 +79,7 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
       return;
     }
 
+    // جمع الإجراءات المختارة من الـ Checkboxes
     List<String> actions = [];
     if (_printChecked) actions.add("طباعة");
     if (_iconChecked) actions.add("أيقون");
@@ -99,25 +89,25 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     if (actions.isNotEmpty) {
       finalNote += "\n\nالإجراءات المنفذة: ${actions.join('، ')}";
     }
+    if (finalNote.isEmpty) {
+      finalNote = "تم الزيارة بدون ملاحظات";
+    }
 
-    var formData = FormData.fromMap({
-      'VisitInstallDetailId': widget.visit.id,
-      'Note': finalNote.isEmpty ? "تم الزيارة بدون ملاحظات" : finalNote,
-      // إرسال مهندس المبيعات إذا تم اختياره
-      if (_selectedSalesEngineerId != null)
-        'SalesEngineerId': _selectedSalesEngineerId!,
-    });
-
+    // تحويل الصور إلى MultipartFile
+    List<MultipartFile> imageFiles = [];
     for (var image in _selectedImages) {
-      String fileName = image.path.split('/').last;
-      formData.files.add(MapEntry(
-        'Images',
-        await MultipartFile.fromFile(image.path, filename: fileName),
-      ));
+      final fileName = image.path.split('/').last;
+      imageFiles
+          .add(await MultipartFile.fromFile(image.path, filename: fileName));
     }
 
     try {
-      await context.read<VisitCubit>().addVisitDetail(formData);
+      await context.read<VisitCubit>().addVisitDetail(
+            visitInstallDetailId: widget.visit.id,
+            note: finalNote,
+            images: imageFiles.isNotEmpty ? imageFiles : null,
+          );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -146,6 +136,14 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
         backgroundColor: mainBlueColor,
         body: SafeArea(
           bottom: false,
@@ -153,9 +151,11 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
             children: [
               const SizedBox(height: 20),
               Center(
-                child: Icon(
-                  Icons.monitor_heart_outlined,
-                  size: 80,
+                child: Image.asset(
+                  'assets/images/pngs/TS_Logo0.png',
+                  width: 110,
+                  height: 110,
+                  fit: BoxFit.contain,
                   color: Colors.white.withOpacity(0.4),
                 ),
               ),
@@ -174,141 +174,19 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
+                        // اسم العميل
                         _buildBlueFieldRow("اسم العميل:",
                             widget.visit.customerName, fieldBlueColor),
                         const SizedBox(height: 15),
                         _buildBlueFieldRow(
-                            "رقم العميل:", "غير متوفر", fieldBlueColor),
+                            "رقم العميل:",
+                            widget.visit.customerPhone ?? 'غير  متوفر',
+                            fieldBlueColor),
                         const SizedBox(height: 15),
-
-                        // منسدلة مهندس المبيعات (الجديدة)
-                        Row(
-                          children: [
-                            const SizedBox(
-                              width: 100,
-                              child: Text("مهندس المبيعات:",
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black),
-                                  textAlign: TextAlign.right),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() =>
-                                    _isEngineerDropdownVisible =
-                                        !_isEngineerDropdownVisible),
-                                child: Container(
-                                  height: 45,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15),
-                                  decoration: BoxDecoration(
-                                    color: fieldBlueColor,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  alignment: Alignment.centerRight,
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          _selectedSalesEngineerName ??
-                                              widget.visit.engineerName ??
-                                              "اختر مهندس المبيعات",
-                                          style: TextStyle(
-                                            color: _selectedSalesEngineerName ==
-                                                    null
-                                                ? Colors.white70
-                                                : Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      const Icon(Icons.keyboard_arrow_down,
-                                          color: Colors.lightBlueAccent,
-                                          size: 30),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        // قائمة المهندسين
-                        if (_isEngineerDropdownVisible)
-                          Container(
-                            height: 250,
-                            margin: const EdgeInsets.only(top: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey.shade300),
-                              boxShadow: const [
-                                BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 10,
-                                    offset: Offset(0, 4))
-                              ],
-                            ),
-                            child: BlocBuilder<EngineerCubit, EngineerState>(
-                              builder: (context, state) {
-                                if (state.status == EngineerStatus.loading) {
-                                  return const Center(
-                                      child: CircularProgressIndicator());
-                                }
-                                if (state.status == EngineerStatus.failure) {
-                                  return Center(
-                                      child: Text(
-                                          "فشل جلب المهندسين: ${state.errorMessage}"));
-                                }
-                                if (state.engineers.isEmpty) {
-                                  return const Center(
-                                      child: Text("لا يوجد مهندسين متاحين"));
-                                }
-
-                                return ListView.builder(
-                                  itemCount: state.engineers.length,
-                                  itemBuilder: (context, index) {
-                                    final engineer = state.engineers[index];
-                                    return ListTile(
-                                      leading: CircleAvatar(
-                                        backgroundColor:
-                                            const Color(0xFF28B5E1),
-                                        child: Text(
-                                          engineer.name.isNotEmpty
-                                              ? engineer.name[0]
-                                              : "?",
-                                          style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                      title: Text(engineer.name),
-                                      subtitle: Text(engineer.telephone),
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedSalesEngineerName =
-                                              engineer.name;
-                                          _selectedSalesEngineerId =
-                                              engineer.id;
-                                          _isEngineerDropdownVisible = false;
-                                        });
-                                      },
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-
-                        const SizedBox(height: 15),
-                        _buildBlueFieldRow(
-                            "ملاحظات المبيعات:", "--", fieldBlueColor),
-                        const SizedBox(height: 15),
-                        _buildBlueFieldRow("السعر:", "--", fieldBlueColor),
+                        // _buildBlueFieldRow(
+                        //     "ملاحظات المبيعات:", "--", fieldBlueColor),
+                        // const SizedBox(height: 15),
+                        // _buildBlueFieldRow("السعر:", "--", fieldBlueColor),
                         const SizedBox(height: 15),
 
                         // حقل الملاحظات
@@ -349,25 +227,14 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
 
                         const SizedBox(height: 25),
 
-                        // Checkboxes
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildCheckboxLabel("طباعة", _printChecked,
-                                (v) => setState(() => _printChecked = v!)),
-                            _buildCheckboxLabel("أيقون", _iconChecked,
-                                (v) => setState(() => _iconChecked = v!)),
-                            _buildCheckboxLabel("الحضور", _attendanceChecked,
-                                (v) => setState(() => _attendanceChecked = v!)),
-                          ],
-                        ),
+                        // Checkboxes للإجراءات المنفذة
 
                         const SizedBox(height: 20),
 
-                        // رفع ملفات
+                        // رفع الصور
                         Column(
                           children: [
-                            const Text("رفع ملفات",
+                            const Text("رفع صور",
                                 style: TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
@@ -402,6 +269,7 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                           ],
                         ),
 
+                        // عرض الصور المختارة
                         if (_selectedImages.isNotEmpty) ...[
                           const SizedBox(height: 15),
                           Wrap(
@@ -438,7 +306,7 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
 
                         const SizedBox(height: 40),
 
-                        // الأزرار
+                        // أزرار الحفظ والأرشيف
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -499,8 +367,8 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     );
   }
 
-  Widget _buildBlueFieldRow(String label, String value, Color fieldColor,
-      {bool isDropdown = false}) {
+  // حقل أزرق عادي
+  Widget _buildBlueFieldRow(String label, String value, Color fieldColor) {
     return Row(
       children: [
         SizedBox(
@@ -520,28 +388,19 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
             decoration: BoxDecoration(
                 color: fieldColor, borderRadius: BorderRadius.circular(10)),
             alignment: Alignment.centerRight,
-            child: Row(
-              children: [
-                if (isDropdown)
-                  const Icon(Icons.keyboard_arrow_down,
-                      color: Colors.lightBlueAccent, size: 30),
-                if (isDropdown) const SizedBox(width: 8),
-                Expanded(
-                  child: Text(value,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500),
-                      overflow: TextOverflow.ellipsis),
-                ),
-              ],
-            ),
+            child: Text(value,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis),
           ),
         ),
       ],
     );
   }
 
+  // Checkbox مع تسمية
   Widget _buildCheckboxLabel(
       String label, bool value, Function(bool?)? onChanged) {
     return Row(

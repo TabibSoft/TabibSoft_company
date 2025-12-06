@@ -2,24 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
-import 'package:flutter/material.dart'; // Ensure Material is imported for ScaffoldMessenger and SnackBar
-import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/problem_details_screen.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/problem_details_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:tabib_soft_company/core/networking/api_service.dart'; // Use the correct path for ApiService
-import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart'; // Use CacheHelper directly for user ID
-import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart'; // Import locator for ApiService
-import 'package:dio/dio.dart'; // Import Dio for error handling
-import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart'; // Import EngineerModel
-import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart'; // Import EngineerCubit
-import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart'; // Import EngineerState
+import 'package:tabib_soft_company/core/networking/api_service.dart';
+import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
+import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
+import 'package:dio/dio.dart';
+import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 
 class TechCardContent extends StatelessWidget {
   final ProblemModel issue;
   final VoidCallback? onDetailsPressed;
-
-  // Assuming a ProblemStatusId of 2 means "Assigned to Engineer" or "In Progress"
-  static const int _assignedStatusId = 2;
 
   const TechCardContent({
     super.key,
@@ -37,70 +33,420 @@ class TechCardContent extends StatelessWidget {
     }
   }
 
-  void _assignProblem(BuildContext context, String engineerId) async {
+ void _assignProblem(BuildContext context, String engineerId) async {
     final problemId = issue.id;
 
-    if (problemId == null || engineerId.isEmpty || issue.customerId == null) {
-      // Handle error: Problem ID or Engineer ID not available
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('خطأ: لا يمكن تعيين المشكلة. البيانات غير متوفرة.')),
-      );
+    final String? problemStatusIdFromIssue = (() {
+      try {
+        final dynamic val = (issue as dynamic).problemStatusId;
+        if (val != null) return val.toString();
+      } catch (_) {}
+      try {
+        final dynamic val = (issue as dynamic).statusId;
+        if (val != null) return val.toString();
+      } catch (_) {}
+      try {
+        final dynamic val = (issue as dynamic).status;
+        if (val != null) return val.toString();
+      } catch (_) {}
+      return null;
+    })();
+
+    // التحقق من البيانات المطلوبة
+    if (problemId == null ||
+        engineerId.isEmpty ||
+        issue.customerId == null ||
+        (problemStatusIdFromIssue == null || problemStatusIdFromIssue.isEmpty)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'خطأ: لا يمكن تعيين المشكلة. تأكد من توفر جميع البيانات المطلوبة')),
+        );
+      }
       return;
     }
 
+    // إظهار مؤشر التحميل
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+    }
+
     try {
-      // Use the injected ApiService via GetIt locator
       final apiService = ServicesLocator.locator<ApiService>();
 
       await apiService.changeProblemStatus(
         customerSupportId: problemId,
         engineerId: engineerId,
-        problemStatusId: _assignedStatusId.toString(),
+        problemStatusId: problemStatusIdFromIssue,
         customerId: issue.customerId!,
       );
 
-      // Success: Show a success message and refresh the list
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم تحويل المشكلة إلى المهندس بنجاح.')),
-      );
-      // Refresh the list of issues
+      // إغلاق مؤشر التحميل
       if (context.mounted) {
-        context.read<CustomerCubit>().resetPagination();
-        context.read<CustomerCubit>().fetchTechSupportIssues();
+        Navigator.of(context).pop();
+      }
+
+      // التحقق من أن الـ context لا يزال صالحاً
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم تحويل المشكلة إلى المهندس بنجاح'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // تحديث القائمة بالكامل
+        context.read<CustomerCubit>().refreshAllData();
       }
     } on DioException catch (e) {
-      // Handle Dio errors (network, 4xx, 5xx)
-      String errorMessage = 'حدث خطأ في الاتصال بالخادم.';
-      if (e.response != null) {
-        errorMessage = 'فشل تحويل المشكلة. رمز الخطأ: ${e.response!.statusCode}';
+      // إغلاق مؤشر التحميل
+      if (context.mounted) {
+        Navigator.of(context).pop();
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
-      );
+
+      if (context.mounted) {
+        String errorMessage = 'حدث خطأ في الاتصال بالخادم';
+        if (e.response != null) {
+          errorMessage = 'فشل تحويل المشكلة. رمز الخطأ: ${e.response!.statusCode}';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } catch (e) {
-      // Handle other exceptions
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('حدث خطأ غير متوقع: $e')),
-      );
+      // إغلاق مؤشر التحميل
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('حدث خطأ غير متوقع: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
-  void _showEngineerSelectionDialog(BuildContext context) {
-    // Ensure engineers are fetched before showing the dialog
+  // حوار تأكيد التحويل الاحترافي
+  Future<bool?> _showConfirmationDialog(
+    BuildContext context,
+    EngineerModel engineer,
+  ) async {
+    if (!context.mounted) return null;
+
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28.r),
+          ),
+          elevation: 10,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [
+                  Color(0xFFF8FBFF),
+                  Color(0xFFFFFFFF),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(28.r),
+              border: Border.all(
+                color: const Color(0xFF20AAC9),
+                width: 3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF20AAC9).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(24.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // أيقونة التأكيد
+                  Container(
+                    padding: EdgeInsets.all(16.r),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF20AAC9), Color(0xFF104D9D)],
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF20AAC9).withOpacity(0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.assignment_turned_in_rounded,
+                      color: Colors.white,
+                      size: 48.r,
+                    ),
+                  ),
+
+                  SizedBox(height: 24.h),
+
+                  // عنوان الحوار
+                  Text(
+                    'تأكيد التحويل',
+                    style: TextStyle(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF104D9D),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  SizedBox(height: 16.h),
+
+                  // محتوى الحوار
+                  Container(
+                    padding: EdgeInsets.all(16.w),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F8FF),
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(
+                        color: const Color(0xFF20AAC9).withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'هل تريد تحويل هذه المشكلة إلى المهندس؟',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: Colors.grey[800],
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+
+                        SizedBox(height: 16.h),
+
+                        // معلومات المهندس
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 12.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.person_rounded,
+                                color: const Color(0xFF20AAC9),
+                                size: 24.r,
+                              ),
+                              SizedBox(width: 8.w),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      engineer.name,
+                                      style: TextStyle(
+                                        fontSize: 17.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF104D9D),
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.phone,
+                                          color: Colors.grey[600],
+                                          size: 14.r,
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          engineer.telephone,
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            color: Colors.grey[700],
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 28.h),
+
+                  // الأزرار
+                  Row(
+                    children: [
+                      // زر الإلغاء
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16.r),
+                            border: Border.all(
+                              color: Colors.grey[400]!,
+                              width: 2,
+                            ),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16.r),
+                              onTap: () =>
+                                  Navigator.of(dialogContext).pop(false),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 14.h),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.close_rounded,
+                                      color: Colors.grey[700],
+                                      size: 22.r,
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      'إلغاء',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(width: 12.w),
+
+                      // زر التأكيد
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF20AAC9), Color(0xFF104D9D)],
+                            ),
+                            borderRadius: BorderRadius.circular(16.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF20AAC9).withOpacity(0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16.r),
+                              onTap: () =>
+                                  Navigator.of(dialogContext).pop(true),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 14.h),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle_rounded,
+                                      color: Colors.white,
+                                      size: 22.r,
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      'تأكيد',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+ void _showEngineerSelectionDialog(BuildContext context) {
+    // تحميل المهندسين
     context.read<EngineerCubit>().fetchEngineers();
 
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return BlocBuilder<EngineerCubit, EngineerState>(
-          builder: (context, state) {
+          builder: (blocContext, state) {
             if (state.status == EngineerStatus.loading) {
               return const Center(child: CircularProgressIndicator());
             }
+
             if (state.status == EngineerStatus.failure) {
               return AlertDialog(
                 title: const Text('خطأ'),
-                content: Text('فشل تحميل قائمة المهندسين: ${state.errorMessage}'),
+                content:
+                    Text('فشل تحميل قائمة المهندسين: ${state.errorMessage}'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(),
@@ -109,6 +455,7 @@ class TechCardContent extends StatelessWidget {
                 ],
               );
             }
+
             if (state.engineers.isEmpty) {
               return AlertDialog(
                 title: const Text('تنبيه'),
@@ -123,21 +470,93 @@ class TechCardContent extends StatelessWidget {
             }
 
             return AlertDialog(
-              title: const Text('تعيين المشكلة إلى مهندس'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.engineering_rounded,
+                    color: const Color(0xFF20AAC9),
+                    size: 28.r,
+                  ),
+                  SizedBox(width: 12.w),
+                  const Text('اختر المهندس'),
+                ],
+              ),
               content: SizedBox(
                 width: double.maxFinite,
                 child: ListView.builder(
                   shrinkWrap: true,
                   itemCount: state.engineers.length,
-                  itemBuilder: (context, index) {
+                  itemBuilder: (listContext, index) {
                     final engineer = state.engineers[index];
-                    return ListTile(
-                      title: Text(engineer.name),
-                      subtitle: Text(engineer.telephone),
-                      onTap: () {
-                        Navigator.of(dialogContext).pop();
-                        _assignProblem(context, engineer.id);
-                      },
+                    return Container(
+                      margin: EdgeInsets.only(bottom: 8.h),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: const Color(0xFF20AAC9).withOpacity(0.3),
+                        ),
+                      ),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 8.h,
+                        ),
+                        leading: CircleAvatar(
+                          backgroundColor: const Color(0xFF20AAC9),
+                          child: Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 24.r,
+                          ),
+                        ),
+                        title: Text(
+                          engineer.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.sp,
+                          ),
+                        ),
+                        subtitle: Row(
+                          children: [
+                            Icon(
+                              Icons.phone,
+                              size: 14.r,
+                              color: Colors.grey[600],
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(engineer.telephone),
+                          ],
+                        ),
+                        trailing: Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 18.r,
+                          color: const Color(0xFF20AAC9),
+                        ),
+                        onTap: () async {
+                          // إغلاق قائمة المهندسين
+                          Navigator.of(dialogContext).pop();
+
+                          // استخدام context الأصلي (من الويدجت الرئيسي)
+                          if (!context.mounted) return;
+
+                          // إظهار حوار التأكيد
+                          final confirmed = await _showConfirmationDialog(
+                            context,
+                            engineer,
+                          );
+
+                          // التحقق مرة أخرى بعد عودة الحوار
+                          if (!context.mounted) return;
+
+                          // إذا تم التأكيد، قم بالتحويل
+                          if (confirmed == true) {
+                            _assignProblem(context, engineer.id);
+                          }
+                        },
+                      ),
                     );
                   },
                 ),
@@ -180,35 +599,6 @@ class TechCardContent extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // أيقونة التحويل إلى مهندس في أعلى اليسار
-          Positioned(
-            top: 0,
-            left: 0,
-            child: GestureDetector(
-              onTap: () => _showEngineerSelectionDialog(context),
-              child: Container(
-                padding: EdgeInsets.all(8.r),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF20AAC9), // لون مناسب
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      offset: Offset(2.w, 3.h),
-                      blurRadius: 6.r,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.person_add_alt_1_rounded, // أيقونة مناسبة للتحويل لمهندس
-                  color: Colors.white,
-                  size: 28.r,
-                ),
-              ),
-            ),
-          ),
-
-          // الخلفية الزرقاء الخارجية
           // الخلفية الزرقاء الخارجية
           Positioned(
             left: 0,
@@ -244,8 +634,10 @@ class TechCardContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // الاسم + أيقونة العميل
+                  // الاسم + أيقونة العميل + أيقونة التحويل
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Image.asset(
                         'assets/images/pngs/new_person.png',
@@ -256,6 +648,7 @@ class TechCardContent extends StatelessWidget {
                       Expanded(
                         child: Text(
                           issue.customerName ?? 'غير معروف',
+                          textAlign: TextAlign.right,
                           style: TextStyle(
                             fontSize: 17.sp,
                             fontWeight: FontWeight.w900,
@@ -263,35 +656,64 @@ class TechCardContent extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ],
-                  ),
-
-                  // رقم الهاتف + أيقونة الاتصال
-                  Row(
-                    children: [
                       GestureDetector(
-                        onTap: () => _makePhoneCall(context),
-                        child: Image.asset(
-                          'assets/images/pngs/new_call.png',
-                          width: 34.w,
-                          height: 34.h,
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Text(
-                          issue.customerPhone ?? issue.phone ?? 'غير متوفر',
-                          style: TextStyle(
-                            fontSize: 19.sp,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.grey[850],
+                        onTap: () => _showEngineerSelectionDialog(context),
+                        child: Container(
+                          padding: EdgeInsets.all(6.r),
+                          margin: EdgeInsets.only(left: 8.w),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF20AAC9),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.12),
+                                offset: Offset(1.w, 2.h),
+                                blurRadius: 4.r,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.directions_outlined,
+                            color: Colors.white,
+                            size: 26.r,
                           ),
                         ),
                       ),
                     ],
                   ),
 
-                  // المنتجات أو نوع الحالة (الجزء المُعدّل)
+                  SizedBox(height: 8.h),
+
+                  // رقم الهاتف + أيقونة الاتصال
+                  GestureDetector(
+                    onTap: () => _makePhoneCall(context),
+                    child: Row(
+                      children: [
+                        Image.asset(
+                          'assets/images/pngs/new_call.png',
+                          width: 34.w,
+                          height: 34.h,
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: SelectableText(
+                            issue.customerPhone ?? issue.phone ?? 'غير متوفر',
+                            style: TextStyle(
+                              fontSize: 19.sp,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.grey[850],
+                            ),
+                            textDirection: TextDirection.rtl,
+                            onTap: () => _makePhoneCall(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 10.h),
+
+                  // المنتجات أو نوع الحالة
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -312,15 +734,13 @@ class TechCardContent extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // إذا كان فيه منتجات → نعرضها
                             if (issue.products != null &&
                                 issue.products!.isNotEmpty)
                               Wrap(
                                 spacing: 8.w,
                                 runSpacing: 6.h,
-                                children: issue.products!
-                                    .take(3) // أول 3 منتجات فقط
-                                    .map((product) {
+                                children:
+                                    issue.products!.take(3).map((product) {
                                   final String name = product is Map
                                       ? (product['name'] ??
                                           product['productName'] ??
@@ -349,7 +769,6 @@ class TechCardContent extends StatelessWidget {
                                 }).toList(),
                               )
                             else
-                              // إذا مفيش منتجات → نعرض نوع الحالة
                               Row(
                                 children: [
                                   Text(
@@ -372,8 +791,6 @@ class TechCardContent extends StatelessWidget {
                                   )
                                 ],
                               ),
-
-                            // إذا كان فيه أكتر من 3 منتجات → نعرض +عدد
                             if (issue.products != null &&
                                 issue.products!.length > 3)
                               Padding(
@@ -393,6 +810,8 @@ class TechCardContent extends StatelessWidget {
                     ],
                   ),
 
+                  SizedBox(height: 12.h),
+
                   // عنوان المشكلة أو تفاصيلها
                   Row(
                     children: [
@@ -404,9 +823,7 @@ class TechCardContent extends StatelessWidget {
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Text(
-                          issue.problemAddress ??
-                              issue.problemAddress ??
-                              'لا توجد تفاصيل',
+                          issue.problemAddress ?? 'لا توجد تفاصيل',
                           style: TextStyle(
                             fontSize: 17.sp,
                             fontWeight: FontWeight.w700,
@@ -426,7 +843,7 @@ class TechCardContent extends StatelessWidget {
           // زر "تفاصيل" في الأسفل
           Positioned(
             left: 110.w,
-            bottom: 10.h,
+            bottom: -5.h,
             child: Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -454,10 +871,7 @@ class TechCardContent extends StatelessWidget {
                         );
 
                         if (result == true && context.mounted) {
-                          context.read<CustomerCubit>().resetPagination();
-                          context
-                              .read<CustomerCubit>()
-                              .fetchTechSupportIssues();
+                          context.read<CustomerCubit>().refreshAllData();
                         }
                       },
                   child: Padding(

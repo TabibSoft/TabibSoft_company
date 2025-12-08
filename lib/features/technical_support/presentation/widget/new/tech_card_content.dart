@@ -24,7 +24,7 @@ class TechCardContent extends StatelessWidget {
   });
 
   void _makePhoneCall(BuildContext context) async {
-    final phone = issue.customerPhone ?? issue.phone;
+    final phone = issue.phone ?? issue.phone;
     if (phone != null && phone.isNotEmpty && phone != 'غير متوفر') {
       final Uri url = Uri(scheme: 'tel', path: phone);
       if (await canLaunchUrl(url)) {
@@ -33,7 +33,7 @@ class TechCardContent extends StatelessWidget {
     }
   }
 
- void _assignProblem(BuildContext context, String engineerId) async {
+  void _assignProblem(BuildContext context, String engineerId) async {
     final problemId = issue.id;
 
     final String? problemStatusIdFromIssue = (() {
@@ -56,7 +56,8 @@ class TechCardContent extends StatelessWidget {
     if (problemId == null ||
         engineerId.isEmpty ||
         issue.customerId == null ||
-        (problemStatusIdFromIssue == null || problemStatusIdFromIssue.isEmpty)) {
+        (problemStatusIdFromIssue == null ||
+            problemStatusIdFromIssue.isEmpty)) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -117,7 +118,8 @@ class TechCardContent extends StatelessWidget {
       if (context.mounted) {
         String errorMessage = 'حدث خطأ في الاتصال بالخادم';
         if (e.response != null) {
-          errorMessage = 'فشل تحويل المشكلة. رمز الخطأ: ${e.response!.statusCode}';
+          errorMessage =
+              'فشل تحويل المشكلة. رمز الخطأ: ${e.response!.statusCode}';
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -429,7 +431,7 @@ class TechCardContent extends StatelessWidget {
     );
   }
 
- void _showEngineerSelectionDialog(BuildContext context) {
+  void _showEngineerSelectionDialog(BuildContext context) {
     // تحميل المهندسين
     context.read<EngineerCubit>().fetchEngineers();
 
@@ -697,7 +699,7 @@ class TechCardContent extends StatelessWidget {
                         SizedBox(width: 12.w),
                         Expanded(
                           child: SelectableText(
-                            issue.customerPhone ?? issue.phone ?? 'غير متوفر',
+                            issue.phone ?? issue.phone ?? 'غير متوفر',
                             style: TextStyle(
                               fontSize: 19.sp,
                               fontWeight: FontWeight.w800,

@@ -26,6 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String token = '';
 
+  // password obscure toggle
+  bool _isPasswordObscure = true;
+
   static const Color teal1 = Color(0xff104D9D);
   static const Color teal2 = Color(0xff20AAC9);
 
@@ -41,18 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-  // void dispose() {
-  //   // NOTE: controllers are provided by cubit. If cubit owns them you might not dispose here.
-  //   // But original code disposed them so we keep it.
-  //   _emailController.dispose();
-  //   _passController.dispose();
-  //   super.dispose();
-  // }
-
-  @override
   Widget build(BuildContext context) {
-    // initialize ScreenUtil if not already in app
-    // (If ScreenUtil.init is done in higher level, this is safe to call too)
     ScreenUtil.init(
       context,
       designSize: const Size(430, 932),
@@ -135,12 +127,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     children: [
                       SizedBox(
-                        // width: 300.w,
                         height: 160.h,
                         child: Image.asset(
                           'assets/images/pngs/TS_Logo0.png',
                           fit: BoxFit.contain,
-                          // if you want a different big logo, replace the asset path
                         ),
                       ),
                       SizedBox(height: 8.h),
@@ -204,19 +194,59 @@ class _LoginScreenState extends State<LoginScreen> {
                               SizedBox(height: 14.h),
 
                               // Password field wrapped as white card
+                              // Using a native TextFormField here to ensure we can add the show/hide toggle easily.
                               _fieldCard(
-                                child: CustomTextFormField(
+                                child: SizedBox(
                                   height: 70.h,
-                                  controller: _passController,
-                                  textInputType: TextInputType.visiblePassword,
-                                  label: '',
-                                  prefixIcon: true,
-                                  prefixImage:
-                                      'assets/images/pngs/password.png',
-                                  hint: 'كلمة المرور',
-                                  isPassword: true,
-                                  validator: (value) =>
-                                      Validator.passwordValidator(value),
+                                  child: TextFormField(
+                                    controller: _passController,
+                                    keyboardType: TextInputType.visiblePassword,
+                                    obscureText: _isPasswordObscure,
+                                    validator: (value) =>
+                                        Validator.passwordValidator(value),
+                                    style: const TextStyle(
+                                      fontFamily: 'Cairo',
+                                    ),
+                                    decoration: InputDecoration(
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12.w, vertical: 18.h),
+                                      hintText: 'كلمة المرور',
+                                      hintStyle: TextStyle(
+                                        fontFamily: 'Cairo',
+                                        fontSize: 16.sp,
+                                      ),
+                                      border: InputBorder.none,
+                                      prefixIcon: Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 12.w),
+                                        child: SizedBox(
+                                          width: 30.w,
+                                          height: 30.h,
+                                          child: Image.asset(
+                                            'assets/images/pngs/password.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                      ),
+                                      prefixIconConstraints: BoxConstraints(
+                                        minWidth: 40.w,
+                                        minHeight: 40.h,
+                                      ),
+                                      suffixIcon: IconButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _isPasswordObscure =
+                                                !_isPasswordObscure;
+                                          });
+                                        },
+                                        icon: Icon(
+                                          _isPasswordObscure
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
 
@@ -226,14 +256,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  // If you had a saved value, you can init it; here it's static UI
-                                  // Switch(
-                                  //   value: context.read<LoginCubit>().rememberMe ?? false,
-                                  //   onChanged: (v) {
-                                  //     context.read<LoginCubit>().setRememberMe(v);
-                                  //   },
-                                  //   activeColor: teal2,
-                                  // ),
                                   SizedBox(width: 8.w),
                                 ],
                               ),
@@ -276,37 +298,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               SizedBox(height: 14.h),
 
-                              // GestureDetector(
-                              //   onTap: () {
-                              //     // TODO: استعادة كلمة السر
-                              //   },
-                              //   child: const Text(
-                              //     'نسيت كلمة السر؟ استعادة كلمة السر',
-                              //     style: TextStyle(
-                              //       fontFamily: 'Cairo',
-                              //       // decoration: TextDecoration.underline,
-                              //       color: Color(0xFF16A9B5),
-                              //     ),
-                              //   ),
-                              // ),
-
                               SizedBox(height: 18.h),
                               Container(height: 1.h, color: Colors.grey[300]),
                               SizedBox(height: 12.h),
-
-                              // GestureDetector(
-                              //   onTap: () {
-                              //     // TODO: انشاء حساب
-                              //   },
-                              //   child: const Text(
-                              //     'ليس لديك حساب؟ انشاء حساب',
-                              //     style: TextStyle(
-                              //       fontFamily: 'Cairo',
-                              //       color: Color(0xFF2A6C73),
-                              //       fontSize: 15,
-                              //     ),
-                              //   ),
-                              // ),
 
                               SizedBox(height: 100.h),
                             ],

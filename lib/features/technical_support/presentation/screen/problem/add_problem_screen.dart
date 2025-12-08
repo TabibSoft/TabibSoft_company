@@ -7,9 +7,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/add_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/add_cusomer_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/add_customer_state.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/product_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/product_state.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 
@@ -929,42 +934,46 @@ class AddCustomerBottomSheet extends StatefulWidget {
 }
 
 class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
-  final formKey = GlobalKey<FormState>();
-  final nameController = TextEditingController();
-  final phoneController = TextEditingController();
-  final locationController = TextEditingController();
-  final engineerController = TextEditingController();
-  final productController = TextEditingController();
-  bool showEngineerDropdown = false;
-  bool showProductDropdown = false;
-  String? selectedEngineerId;
-  String? selectedProductId;
-  bool isLoading = false;
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _engineerController = TextEditingController();
+  final _productController = TextEditingController();
+  
+  bool _showEngineerDropdown = false;
+  bool _showProductDropdown = false;
+  String? _selectedEngineerId;
+  String? _selectedProductId;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<EngineerCubit>().fetchEngineers();
+    context.read<ProductCubit>().fetchProducts();
+  }
 
   @override
   void dispose() {
-    nameController.dispose();
-    phoneController.dispose();
-    locationController.dispose();
-    engineerController.dispose();
-    productController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _locationController.dispose();
+    _engineerController.dispose();
+    _productController.dispose();
     super.dispose();
   }
 
-  void onSave() {
-    if (formKey.currentState!.validate()) {
-      setState(() {
-        isLoading = true;
-      });
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          setState(() {
-            isLoading = false;
-          });
-          Navigator.pop(context);
-          widget.onCustomerAdded();
-        }
-      });
+  void _onSave() {
+    if (_formKey.currentState!.validate()) {
+      final customer = AddCustomerModel(
+        name: _nameController.text,
+        telephone: _phoneController.text,
+        engineerId: _selectedEngineerId ?? '',
+        productId: _selectedProductId ?? '',
+        location: _locationController.text.isNotEmpty ? _locationController.text : null,
+        createdDate: DateTime.now(),
+      );
+      context.read<AddCustomerCubit>().addCustomer(customer);
     }
   }
 
@@ -1004,8 +1013,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
       child: TextFormField(
         controller: controller,
         keyboardType: type,
-        style:
-            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 15),
@@ -1016,11 +1024,12 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
     );
   }
 
-  Widget engineerDropdown() {
+  Widget _engineerDropdown() {
     return InkWell(
       onTap: () {
         setState(() {
-          showEngineerDropdown = !showEngineerDropdown;
+          _showEngineerDropdown = !_showEngineerDropdown;
+          _showProductDropdown = false;
         });
       },
       child: Container(
@@ -1035,11 +1044,11 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
           children: [
             Expanded(
               child: Text(
-                engineerController.text.isEmpty
-                    ? 'اختر مهندس'
-                    : engineerController.text,
+                _engineerController.text.isEmpty
+                    ? 'اختر المهندس'
+                    : _engineerController.text,
                 style: TextStyle(
-                  color: engineerController.text.isEmpty
+                  color: _engineerController.text.isEmpty
                       ? Colors.white70
                       : Colors.white,
                   fontWeight: FontWeight.bold,
@@ -1054,11 +1063,12 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
     );
   }
 
-  Widget productDropdown() {
+  Widget _productDropdown() {
     return InkWell(
       onTap: () {
         setState(() {
-          showProductDropdown = !showProductDropdown;
+          _showProductDropdown = !_showProductDropdown;
+          _showEngineerDropdown = false;
         });
       },
       child: Container(
@@ -1073,11 +1083,11 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
           children: [
             Expanded(
               child: Text(
-                productController.text.isEmpty
-                    ? 'اختر منتج'
-                    : productController.text,
+                _productController.text.isEmpty
+                    ? 'اختر التخصص'
+                    : _productController.text,
                 style: TextStyle(
-                  color: productController.text.isEmpty
+                  color: _productController.text.isEmpty
                       ? Colors.white70
                       : Colors.white,
                   fontWeight: FontWeight.bold,
@@ -1112,150 +1122,247 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
+        onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        child: isLoading
-            ? const SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 3),
-              )
-            : Text(
-                'حفظ',
-                style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-              ),
+        child: Text(
+          'حفظ',
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 24,
-          right: 24,
-          top: 16,
+    return BlocListener<AddCustomerCubit, AddCustomerState>(
+      listener: (context, state) {
+        if (state.status == AddCustomerStatus.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('تم إضافة العميل بنجاح')),
+          );
+          Navigator.pop(context);
+          widget.onCustomerAdded();
+        } else if (state.status == AddCustomerStatus.failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage ?? 'حدث خطأ أثناء الإضافة'),
+            ),
+          );
+        }
+      },
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         ),
-        child: SingleChildScrollView(
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 50,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 24,
+            right: 24,
+            top: 16,
+          ),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar
+                  Container(
+                    width: 50,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                ),
-                SizedBox(height: 20.h),
-                Text(
-                  'إضافة عميل جديد',
-                  style: TextStyle(
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF104084),
+                  SizedBox(height: 20.h),
+                  
+                  // Title
+                  Text(
+                    'إضافة عميل جديد',
+                    style: TextStyle(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF104084),
+                    ),
                   ),
-                ),
-                SizedBox(height: 24.h),
-                buildLabelledRow(
-                    label: 'الاسم', child: boxedText(nameController)),
-                buildLabelledRow(
+                  SizedBox(height: 24.h),
+                  
+                  // Name field
+                  buildLabelledRow(
+                    label: 'اسم العميل',
+                    child: boxedText(_nameController),
+                  ),
+                  
+                  // Phone field
+                  buildLabelledRow(
                     label: 'رقم التواصل',
-                    child:
-                        boxedText(phoneController, type: TextInputType.phone)),
-                buildLabelledRow(
-                    label: 'العنوان', child: boxedText(locationController)),
-                buildLabelledRow(label: 'المهندس', child: engineerDropdown()),
-                if (showEngineerDropdown)
-                  Container(
-                    height: 200.h,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: BlocBuilder<EngineerCubit, EngineerState>(
-                      builder: (context, state) {
-                        return state.status == EngineerStatus.success
-                            ? ListView.builder(
-                                itemCount: state.engineers.length,
-                                itemBuilder: (context, i) {
-                                  return ListTile(
-                                    title: Text(state.engineers[i].name),
-                                    onTap: () {
-                                      setState(() {
-                                        engineerController.text =
-                                            state.engineers[i].name;
-                                        selectedEngineerId =
-                                            state.engineers[i].id;
-                                        showEngineerDropdown = false;
-                                      });
-                                    },
-                                  );
-                                },
-                              )
-                            : const Center(child: Text('لا يوجد مهندسون'));
-                      },
-                    ),
+                    child: boxedText(_phoneController, type: TextInputType.phone),
                   ),
-                buildLabelledRow(label: 'المنتج', child: productDropdown()),
-                if (showProductDropdown)
-                  Container(
-                    height: 200.h,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: BlocBuilder<CustomerCubit, CustomerState>(
-                      builder: (context, state) {
-                        return state.problemCategories.isNotEmpty
-                            ? ListView.builder(
-                                itemCount: state.problemCategories.length,
-                                itemBuilder: (context, i) {
-                                  return ListTile(
-                                    title:
-                                        Text(state.problemCategories[i].name),
-                                    onTap: () {
-                                      setState(() {
-                                        productController.text =
-                                            state.problemCategories[i].name;
-                                        selectedProductId =
-                                            state.problemCategories[i].id;
-                                        showProductDropdown = false;
-                                      });
-                                    },
-                                  );
-                                },
-                              )
-                            : const Center(child: Text('لا توجد منتجات'));
-                      },
-                    ),
+                  
+                  // Location field
+                  buildLabelledRow(
+                    label: 'الموقع',
+                    child: boxedText(_locationController),
                   ),
-                SizedBox(height: 16.h),
-                saveButton(onPressed: onSave),
-                SizedBox(height: 20.h),
-              ],
+                  
+                  // Engineer dropdown
+                  buildLabelledRow(
+                    label: 'المهندس',
+                    child: _engineerDropdown(),
+                  ),
+                  
+                  // Engineer list
+                  if (_showEngineerDropdown)
+                    Container(
+                      height: 200.h,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: BlocBuilder<EngineerCubit, EngineerState>(
+                        builder: (context, state) {
+                          if (state.status == EngineerStatus.loading) {
+                            return const Center(child: CircularProgressIndicator());
+                          } else if (state.status == EngineerStatus.success) {
+                            return ListView.builder(
+                              itemCount: state.engineers.length,
+                              itemBuilder: (context, index) {
+                                final engineer = state.engineers[index];
+                                return ListTile(
+                                  title: Text(engineer.name),
+                                  onTap: () {
+                                    setState(() {
+                                      _engineerController.text = engineer.name;
+                                      _selectedEngineerId = engineer.id;
+                                      _showEngineerDropdown = false;
+                                    });
+                                  },
+                                );
+                              },
+                            );
+                          } else {
+                            return const Center(child: Text('خطأ في تحميل المهندسين'));
+                          }
+                        },
+                      ),
+                    ),
+                  
+                  // Product/Specialty dropdown
+                  buildLabelledRow(
+                    label: 'التخصص',
+                    child: _productDropdown(),
+                  ),
+                  
+                  // Product list
+                  if (_showProductDropdown)
+                    Container(
+                      height: 200.h,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: BlocBuilder<ProductCubit, ProductState>(
+                        builder: (context, state) {
+                          if (state.status == ProductStatus.loading) {
+                            return const Center(child: CircularProgressIndicator());
+                          } else if (state.status == ProductStatus.success) {
+                            return ListView.builder(
+                              itemCount: state.products.length,
+                              itemBuilder: (context, index) {
+                                final product = state.products[index];
+                                return ListTile(
+                                  title: Text(product.name),
+                                  onTap: () {
+                                    setState(() {
+                                      _productController.text = product.name;
+                                      _selectedProductId = product.id;
+                                      _showProductDropdown = false;
+                                    });
+                                  },
+                                );
+                              },
+                            );
+                          } else {
+                            return const Center(child: Text('خطأ في تحميل التخصصات'));
+                          }
+                        },
+                      ),
+                    ),
+                  
+                  SizedBox(height: 16.h),
+                  
+                  // Save button with loading state
+                  BlocBuilder<AddCustomerCubit, AddCustomerState>(
+                    builder: (context, state) {
+                      final isLoading = state.status == AddCustomerStatus.loading;
+                      
+                      return Container(
+                        width: double.infinity,
+                        height: 54.h,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF28B5E1), Color(0xFF20AAC9)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF28B5E1).withOpacity(0.4),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _onSave,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 3,
+                                  ),
+                                )
+                              : Text(
+                                  'حفظ',
+                                  style: TextStyle(
+                                    fontSize: 20.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  SizedBox(height: 20.h),
+                ],
+              ),
             ),
           ),
         ),

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/features/modirator/export.dart';
 
 class AddIssueForm extends StatefulWidget {
@@ -11,6 +13,7 @@ class AddIssueForm extends StatefulWidget {
     required this.onSaved,
     this.onClientTap,
   });
+
   final VoidCallback onSaved;
   final VoidCallback? onClientTap;
 
@@ -19,33 +22,40 @@ class AddIssueForm extends StatefulWidget {
 }
 
 class _AddIssueFormState extends State<AddIssueForm> {
-  final _formKey = GlobalKey<FormState>();
   final _clientNameController = TextEditingController();
   final _problemTypeController = TextEditingController();
-  final _phoneNumberController = TextEditingController();
-  final _directionController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _problemTitleController = TextEditingController();
   final _detailsController = TextEditingController();
-  final _statusController = TextEditingController();
-  static const Color primaryColor = Color(0xff104D9D);
-  CustomerModel? _selectedCustomer;
-  final List<File> _selectedImages = [];
-  ProblemStatusModel? _selectedStatus;
-    final TextEditingController _problemTitleController = TextEditingController();
+  final _engineerController = TextEditingController();
 
-  ProblemCategoryModel? _selectedCategory;
-  EngineerModel? _selectedEngineer;
-  bool _isClientDropdownVisible = false;
-  bool _isTypeDropdownVisible = false;
-  bool _isDirectionDropdownVisible = false;
-  bool _isStatusDropdownVisible = false;
+  static const Color headerColor = Color(0xFF0B4C99);
+  static const Color fieldColor = Color(0xFF104084);
+  static const Color primaryBtnColor = Color(0xFF28B5E1);
+  static const Color backgroundColor = Color(0xFFF5F6FA);
+
+  CustomerModel? selectedCustomer;
+  ProblemCategoryModel? selectedCategory;
+  ProblemStatusModel? selectedStatus;
+  EngineerModel? selectedEngineer;
+
+  final List<File> images = [];
+  bool isUrgent = false;
+  bool isClientDropdownVisible = false;
+  bool isTypeDropdownVisible = false;
+  bool isEngineerDropdownVisible = false;
+  bool isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    context.read<CustomerCubit>().fetchCustomers();
-    context.read<CustomerCubit>().fetchProblemCategories();
-    context.read<CustomerCubit>().fetchProblemStatus();
-    context.read<EngineerCubit>().fetchEngineers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CustomerCubit>().resetProblemAddedFlag();
+      context.read<CustomerCubit>().fetchCustomers();
+      context.read<CustomerCubit>().fetchProblemCategories();
+      context.read<CustomerCubit>().fetchProblemStatus();
+      context.read<EngineerCubit>().fetchEngineers();
+    });
     _clientNameController.addListener(_onClientNameChanged);
   }
 
@@ -53,11 +63,11 @@ class _AddIssueFormState extends State<AddIssueForm> {
     final query = _clientNameController.text;
     if (query.isNotEmpty) {
       context.read<CustomerCubit>().searchCustomers(query);
-      setState(() => _isClientDropdownVisible = true);
+      setState(() => isClientDropdownVisible = true);
     } else {
       setState(() {
-        _isClientDropdownVisible = false;
-        _selectedCustomer = null;
+        isClientDropdownVisible = false;
+        selectedCustomer = null;
       });
     }
   }
@@ -67,121 +77,175 @@ class _AddIssueFormState extends State<AddIssueForm> {
     _clientNameController.removeListener(_onClientNameChanged);
     _clientNameController.dispose();
     _problemTypeController.dispose();
-    _phoneNumberController.dispose();
-    _directionController.dispose();
+    _phoneController.dispose();
+    _problemTitleController.dispose();
     _detailsController.dispose();
-    _statusController.dispose();
+    _engineerController.dispose();
     super.dispose();
   }
 
-  void _onCustomerSelected(CustomerModel customer) {
-    setState(() {
-      _selectedCustomer = customer;
-      _clientNameController.text = customer.name ?? '';
-      _phoneNumberController.text = customer.phone ?? '';
-      _isClientDropdownVisible = false;
-    });
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await showModalBottomSheet<XFile?>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+                width: 50,
+                height: 5,
+                color: Colors.grey[300],
+                margin: const EdgeInsets.only(bottom: 20)),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                    color: primaryBtnColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.camera_alt, color: primaryBtnColor),
+              ),
+              title: const Text('الكاميرا',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () async => Navigator.pop(
+                  context, await picker.pickImage(source: ImageSource.camera)),
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                    color: primaryBtnColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.photo_library, color: primaryBtnColor),
+              ),
+              title: const Text('المعرض',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () async => Navigator.pop(
+                  context, await picker.pickImage(source: ImageSource.gallery)),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+
+    if (pickedFile != null) {
+      setState(() => images.add(File(pickedFile.path)));
+    }
   }
 
-  void _onImagePicked(File image) {
-    setState(() {
-      _selectedImages.add(image);
-    });
+  void _showFullScreenImage(File imageFile, int index) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.file(imageFile, fit: BoxFit.contain),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: Container(
+                decoration: const BoxDecoration(
+                    color: Colors.black54, shape: BoxShape.circle),
+                child: IconButton(
+                    icon:
+                        const Icon(Icons.close, color: Colors.white, size: 30),
+                    onPressed: () => Navigator.pop(context)),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              left: 20,
+              child: Container(
+                decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.8), shape: BoxShape.circle),
+                child: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.white, size: 30),
+                  onPressed: () {
+                    setState(() => images.removeAt(index));
+                    Navigator.pop(context);
+                    Fluttertoast.showToast(
+                        msg: 'تم حذف الصورة',
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white);
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 20,
+              left: 0,
+              right: 0,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(12)),
+                child: Text('صورة ${index + 1} من ${images.length}',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.center),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _onImageRemoved(File image) {
-    setState(() {
-      _selectedImages.remove(image);
-    });
-  }
-
-  void _onSave() {
-    if (_selectedCustomer == null ||
-        _problemTypeController.text.isEmpty ||
-        _phoneNumberController.text.isEmpty ||
-        _directionController.text.isEmpty ||
-        _selectedStatus == null) {
+  void _saveProblem() {
+    if (selectedCustomer == null ||
+        selectedCategory == null ||
+        selectedEngineer == null ||
+        _problemTitleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى ملء جميع الحقول المطلوبة')),
+        const SnackBar(
+            content: Text('يرجى ملء جميع الحقول المطلوبة'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating),
       );
       return;
     }
-    bool hasValidImages = true;
-    for (var image in _selectedImages) {
-      if (!image.existsSync() || image.lengthSync() == 0) {
-        hasValidImages = false;
-        print('Invalid image: ${image.path}');
-      }
-    }
-    if (!hasValidImages) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم اختيار صورة غير صالحة')),
-      );
-      return;
-    }
+
     final customerState = context.read<CustomerCubit>().state;
-    final engineerState = context.read<EngineerCubit>().state;
-    final selectedCategory = customerState.problemCategories.firstWhere(
-      (c) => c.name == _problemTypeController.text,
-      orElse: () => ProblemCategoryModel(id: '', name: ''),
-    );
-    if (selectedCategory.id.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('فئة المشكلة غير صالحة')),
-      );
-      return;
-    }
-    final selectedEngineer = engineerState.engineers.firstWhere(
-      (e) => e.name == _directionController.text,
-      orElse: () => EngineerModel(id: '', name: '', address: '', telephone: ''),
-    );
-    if (_selectedCustomer!.id == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('معرف العميل غير متاح')),
-      );
-      return;
-    }
-    if (!RegExp(
-            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-        .hasMatch(_selectedCustomer!.id!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('معرف العميل غير صالح')),
-      );
-      return;
-    }
-    if (!RegExp(
-            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-        .hasMatch(selectedCategory.id)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('معرف فئة المشكلة غير صالح')),
-      );
-      return;
-    }
-    if (selectedEngineer.id.isNotEmpty &&
-        !RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-            .hasMatch(selectedEngineer.id)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('معرف المهندس غير صالح')),
-      );
-      return;
-    }
-    context.read<CustomerCubit>().createProblem(
-          customerId: _selectedCustomer!.id!,
-          dateTime: DateTime.now(),
-          problemStatusId: _selectedStatus!.id,
-                    problemAddress: _problemTitleController.text,
+    final statusId = selectedStatus?.id ??
+        customerState.problemStatusList
+            .firstWhere((s) => s.name.toLowerCase().contains('جديد'),
+                orElse: () => customerState.problemStatusList.first)
+            .id;
 
-          problemCategoryId: selectedCategory.id,
-          note: _detailsController.text.isNotEmpty
-              ? _detailsController.text
+    setState(() => isSaving = true);
+
+    context.read<CustomerCubit>().createProblem(
+          customerId: selectedCustomer!.id!,
+          dateTime: DateTime.now(),
+          problemStatusId: statusId,
+          problemCategoryId: selectedCategory!.id,
+          problemAddress: _problemTitleController.text.trim(),
+          note: _detailsController.text.trim(),
+          details: _detailsController.text.trim(),
+          phone: _phoneController.text.isNotEmpty
+              ? _phoneController.text.trim()
               : null,
-          engineerId:
-              selectedEngineer.id.isNotEmpty ? selectedEngineer.id : null,
-          details: _detailsController.text.isNotEmpty
-              ? _detailsController.text
-              : null,
-          phone: _phoneNumberController.text,
-          images: _selectedImages.isNotEmpty ? _selectedImages : null,
+          engineerId: selectedEngineer!.id,
+          isUrgent: isUrgent,
+          images: images.isNotEmpty ? images : null,
         );
   }
 
@@ -189,136 +253,414 @@ class _AddIssueFormState extends State<AddIssueForm> {
   Widget build(BuildContext context) {
     return BlocListener<CustomerCubit, CustomerState>(
       listener: (context, state) {
-        if (state.status == CustomerStatus.success && state.isProblemAdded) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم إضافة المشكلة بنجاح')),
-          );
-          widget.onSaved();
-        } else if (state.status == CustomerStatus.failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(state.errorMessage ?? 'حدث خطأ أثناء الإضافة')),
-          );
+        if (isSaving) {
+          if (state.isProblemAdded) {
+            setState(() => isSaving = false);
+            Fluttertoast.showToast(
+                msg: 'تم إضافة المشكلة بنجاح',
+                backgroundColor: Colors.green,
+                textColor: Colors.white);
+            context.read<CustomerCubit>().resetProblemAddedFlag();
+            widget.onSaved();
+          } else if (state.status == CustomerStatus.failure) {
+            setState(() => isSaving = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text(state.errorMessage ?? 'حدث خطأ أثناء الإضافة'),
+                  backgroundColor: Colors.red),
+            );
+          }
         }
       },
-      child: Form(
-        key: _formKey,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
         child: Column(
           children: [
-            RowField(
-              label: 'اسم العميل',
-              child: ClientNameField(
-                controller: _clientNameController,
-                isDropdownVisible: _isClientDropdownVisible,
-                onToggleDropdown: () {
-                  setState(() {
-                    _isClientDropdownVisible = !_isClientDropdownVisible;
-                    if (_isClientDropdownVisible) {
-                      context.read<CustomerCubit>().fetchCustomers();
+            _buildLabelledRow(
+                label: 'اسم العميل',
+                child: _buildAutocompleteDropdown(
+                  controller: _clientNameController,
+                  hint: 'ابحث عن عميل',
+                  isVisible: isClientDropdownVisible,
+                  onTap: () => setState(
+                      () => isClientDropdownVisible = !isClientDropdownVisible),
+                  child: BlocBuilder<CustomerCubit, CustomerState>(
+                      builder: (context, state) {
+                    if (state.customers.isEmpty) {
+                      return SizedBox(
+                        height: 150.h,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation(primaryBtnColor),
+                          ),
+                        ),
+                      );
                     }
-                  });
-                },
-                onCustomerSelected: _onCustomerSelected,
-              ),
-            ),
-            RowField(
-              label: 'رقم التواصل',
-              child:
-                  boxedText(_phoneNumberController, type: TextInputType.phone),
-            ),
-            RowField(
-              label: 'نوع المشكلة',
-              child: ProblemTypeDropdown(
-                controller: _problemTypeController,
-                isDropdownVisible: _isTypeDropdownVisible,
-                onToggleDropdown: () {
-                  setState(() {
-                    _isTypeDropdownVisible = !_isTypeDropdownVisible;
-                  });
-                },
-              ),
-            ),
-            RowField(
-              label: 'توجيه إلى',
-              child: DirectionDropdown(
-                controller: _directionController,
-                isDropdownVisible: _isDirectionDropdownVisible,
-                onToggleDropdown: () {
-                  setState(() {
-                    _isDirectionDropdownVisible = !_isDirectionDropdownVisible;
-                  });
-                },
-              ),
-            ),
-            RowField(
-              label: 'حالة المشكلة',
-              child: StatusDropdown(
-                controller: _statusController,
-                isDropdownVisible: _isStatusDropdownVisible,
-                onToggleDropdown: () {
-                  setState(() {
-                    _isStatusDropdownVisible = !_isStatusDropdownVisible;
-                  });
-                },
-                onStatusSelected: (status) {
-                  setState(() {
-                    _selectedStatus = status;
-                  });
-                },
-              ),
-            ),
-            RowField(
-              label: 'التفاصيل',
-              child: boxedMultiline(_detailsController),
-            ),
-            RowField(
-              label: 'الصور',
-              child: ImagePickerWidget(
-                onImagePicked: _onImagePicked,
-              ),
-            ),
-            if (_selectedImages.isNotEmpty)
-              SizedBox(
-                height: 100.h,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _selectedImages.length,
-                  itemBuilder: (context, index) {
-                    final image = _selectedImages[index];
-                    return Padding(
-                      padding: EdgeInsets.all(8.w),
-                      child: Stack(
+                    // Make the inner list scrollable by removing the 'NeverScrollableScrollPhysics'
+                    return ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      primary: false,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: state.customers.length,
+                      itemBuilder: (context, i) {
+                        final c = state.customers[i];
+                        return ListTile(
+                          title: Text(c.name ?? '',
+                              style: const TextStyle(fontSize: 14)),
+                          subtitle: Text(c.phone?.toString() ?? '',
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.grey)),
+                          onTap: () {
+                            setState(() {
+                              selectedCustomer = c;
+                              _clientNameController.text = c.name ?? '';
+                              _phoneController.text = c.phone?.toString() ?? '';
+                              isClientDropdownVisible = false;
+                            });
+                          },
+                        );
+                      },
+                    );
+                  }),
+                )),
+            SizedBox(height: 16.h),
+            _buildLabelledRow(
+                label: 'رقم التواصل',
+                child: _buildTextField(_phoneController,
+                    hint: 'رقم الهاتف', keyboardType: TextInputType.phone)),
+            SizedBox(height: 16.h),
+            _buildLabelledRow(
+                label: 'نوع المشكلة',
+                child: _buildAutocompleteDropdown(
+                  controller: _problemTypeController,
+                  hint: 'اختر نوع المشكلة',
+                  isVisible: isTypeDropdownVisible,
+                  onTap: () => setState(
+                      () => isTypeDropdownVisible = !isTypeDropdownVisible),
+                  child: BlocBuilder<CustomerCubit, CustomerState>(
+                      builder: (context, state) {
+                    if (state.problemCategories.isEmpty) {
+                      return SizedBox(
+                        height: 150.h,
+                        child: Center(
+                          child: Text('لا توجد فئات',
+                              style: TextStyle(color: Colors.grey[600])),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      primary: false,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: state.problemCategories.length,
+                      itemBuilder: (context, i) {
+                        final cat = state.problemCategories[i];
+                        return ListTile(
+                          title: Text(cat.name,
+                              style: const TextStyle(fontSize: 14)),
+                          onTap: () {
+                            setState(() {
+                              selectedCategory = cat;
+                              _problemTypeController.text = cat.name;
+                              isTypeDropdownVisible = false;
+                            });
+                          },
+                        );
+                      },
+                    );
+                  }),
+                )),
+            SizedBox(height: 16.h),
+            _buildLabelledRow(
+                label: 'عنوان المشكلة',
+                child: _buildTextField(_problemTitleController,
+                    hint: 'عنوان المشكلة')),
+            SizedBox(height: 16.h),
+            _buildLabelledRow(
+                label: 'تفاصيل المشكلة',
+                child: SizedBox(
+                  height: 100.h,
+                  child: _buildTextField(_detailsController,
+                      hint: 'اكتب التفاصيل', maxLines: 5),
+                )),
+            SizedBox(height: 16.h),
+            _buildLabelledRow(
+                label: 'اسم المهندس',
+                child: _buildAutocompleteDropdown(
+                  controller: _engineerController,
+                  hint: 'اختر مهندس',
+                  isVisible: isEngineerDropdownVisible,
+                  onTap: () => setState(() =>
+                      isEngineerDropdownVisible = !isEngineerDropdownVisible),
+                  child: BlocBuilder<EngineerCubit, EngineerState>(
+                      builder: (context, state) {
+                    if (state.engineers.isEmpty) {
+                      return SizedBox(
+                        height: 150.h,
+                        child: Center(
+                          child: Text('لا يوجد مهندسين',
+                              style: TextStyle(color: Colors.grey[600])),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      primary: false,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: state.engineers.length,
+                      itemBuilder: (context, i) {
+                        final eng = state.engineers[i];
+                        return ListTile(
+                          leading: CircleAvatar(
+                              backgroundColor: primaryBtnColor,
+                              radius: 18,
+                              child: Text(
+                                  eng.name.isNotEmpty
+                                      ? eng.name[0].toUpperCase()
+                                      : '',
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold))),
+                          title: Text(eng.name,
+                              style: const TextStyle(fontSize: 14)),
+                          onTap: () {
+                            setState(() {
+                              selectedEngineer = eng;
+                              _engineerController.text = eng.name;
+                              isEngineerDropdownVisible = false;
+                            });
+                          },
+                        );
+                      },
+                    );
+                  }),
+                )),
+            SizedBox(height: 20.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Column(
+                    children: [
+                      Text('رفع صور',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14.sp)),
+                      SizedBox(height: 4.h),
+                      Stack(
+                        alignment: Alignment.center,
                         children: [
-                          Image.file(
-                            image,
-                            width: 80.w,
-                            height: 80.h,
-                            fit: BoxFit.cover,
-                          ),
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: () => _onImageRemoved(image),
-                              child: const Icon(
-                                Icons.remove_circle,
-                                color: Colors.red,
-                              ),
-                            ),
-                          ),
+                          Image.asset('assets/images/pngs/upload_pic.png',
+                              width: 50, height: 50),
+                          if (images.isNotEmpty)
+                            Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle),
+                                    child: const Icon(Icons.check_circle,
+                                        color: Colors.green, size: 14))),
                         ],
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
+                Column(
+                  children: [
+                    Text('URGENT',
+                        style: TextStyle(
+                            fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                    Switch(
+                        value: isUrgent,
+                        activeThumbColor: Colors.red,
+                        onChanged: (v) => setState(() => isUrgent = v)),
+                  ],
+                ),
+              ],
+            ),
+            if (images.isNotEmpty) ...[
+              SizedBox(height: 20.h),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: images
+                    .asMap()
+                    .entries
+                    .map((e) => GestureDetector(
+                          onTap: () => _showFullScreenImage(e.value, e.key),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(e.value,
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover)),
+                              Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: () =>
+                                        setState(() => images.removeAt(e.key)),
+                                    child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: const BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle),
+                                        child: const Icon(Icons.close,
+                                            color: Colors.white, size: 16)),
+                                  )),
+                            ],
+                          ),
+                        ))
+                    .toList(),
               ),
-            SizedBox(height: 16.h),
-            saveButton(onPressed: _onSave),
+            ],
+            SizedBox(height: 40.h),
+            Container(
+              width: 160.w,
+              height: 50.h,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                    colors: [Color(0xFF28B5E1), Color(0xFF20AAC9)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight),
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                      color: primaryBtnColor.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5))
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: isSaving ? null : _saveProblem,
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30))),
+                child: isSaving
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 3))
+                    : Text('حفظ',
+                        style: TextStyle(
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white)),
+              ),
+            ),
+            SizedBox(height: 20.h),
           ],
         ),
       ),
     );
   }
-}
 
-// ... (ClientNameField, ProblemTypeDropdown, DirectionDropdown, StatusDropdown, ImagePickerWidget, ImagePickerBottomSheet كما هي في الكود الأصلي، لكن نقلها إلى هذا الملف أو shared إذا كانت مشتركة. هنا نفترض نقلها إلى shared_widgets.dart للاختصار، لكن إذا كانت خاصة، ابقها هنا)
+  Widget _buildLabelledRow({required String label, required Widget child}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+            width: 100.w,
+            child: Text(label,
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black))),
+        SizedBox(width: 12.w),
+        Expanded(child: child),
+      ],
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller,
+      {String? hint, int maxLines = 1, TextInputType? keyboardType}) {
+    return Container(
+      decoration: BoxDecoration(
+          color: fieldColor, borderRadius: BorderRadius.circular(12)),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        style:
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.white38),
+            border: InputBorder.none,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 15, vertical: 12)),
+      ),
+    );
+  }
+
+  Widget _buildAutocompleteDropdown({
+    required TextEditingController controller,
+    required String hint,
+    required bool isVisible,
+    required VoidCallback onTap,
+    required Widget child,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 50),
+            decoration: BoxDecoration(
+                color: fieldColor, borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    enabled: true,
+                    onTap: onTap,
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                        hintText: hint,
+                        hintStyle: const TextStyle(color: Colors.white38),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.only(right: 5)),
+                  ),
+                ),
+                Icon(Icons.keyboard_arrow_down,
+                    color: primaryBtnColor, size: 35.sp),
+              ],
+            ),
+          ),
+        ),
+        if (isVisible)
+          Container(
+            margin: const EdgeInsets.only(top: 5),
+            height: 150.h,
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3))
+                ]),
+            child: child,
+          ),
+      ],
+    );
+  }
+}

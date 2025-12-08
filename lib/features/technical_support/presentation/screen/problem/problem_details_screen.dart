@@ -28,12 +28,14 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
   late TextEditingController issueDetailsCtl;
   late TextEditingController contactCtl;
   late TextEditingController solutionCtl;
-
+  
+  // إضافة controller للتخصص
+  late TextEditingController specialtyCtl;
+  
   ProblemStatusModel? selectedSpecialty;
   EngineerModel? selectedEngineer;
   final List<File> selectedImages = [];
   bool isLoading = false;
-
   final GlobalKey engineerKey = GlobalKey();
 
   static const Color gradientTop = Color(0xFF104D9D);
@@ -45,13 +47,18 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     super.initState();
     nameCtl = TextEditingController(text: widget.issue.customerName ?? '');
     addressCtl = TextEditingController(text: widget.issue.adderss ?? '');
-    issueTitleCtl =
-        TextEditingController(text: widget.issue.problemAddress ?? '');
-    issueDetailsCtl =
-        TextEditingController(text: widget.issue.problemDetails ?? '');
+    issueTitleCtl = TextEditingController(text: widget.issue.problemAddress ?? '');
+    issueDetailsCtl = TextEditingController(text: widget.issue.problemDetails ?? '');
     contactCtl = TextEditingController(text: widget.issue.customerPhone ?? '');
     solutionCtl = TextEditingController();
-
+    
+    // تهيئة التخصص من المنتجات
+    specialtyCtl = TextEditingController(
+      text: (widget.issue.products != null && widget.issue.products!.isNotEmpty) 
+        ? widget.issue.products!.join(', ') 
+        : ''
+    );
+    
     context.read<CustomerCubit>().fetchProblemStatus();
     context.read<EngineerCubit>().fetchEngineers();
   }
@@ -64,6 +71,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     issueDetailsCtl.dispose();
     contactCtl.dispose();
     solutionCtl.dispose();
+    specialtyCtl.dispose();
     super.dispose();
   }
 
@@ -102,18 +110,11 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                     color: checkColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
-                    Icons.camera_alt,
-                    color: checkColor,
-                  ),
+                  child: const Icon(Icons.camera_alt, color: checkColor),
                 ),
-                title: const Text(
-                  'التقاط صورة',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
+                title: const Text('التقاط صورة', style: TextStyle(fontWeight: FontWeight.w600)),
                 onTap: () async {
-                  Navigator.pop(context,
-                      await picker.pickImage(source: ImageSource.camera));
+                  Navigator.pop(context, await picker.pickImage(source: ImageSource.camera));
                 },
               ),
               ListTile(
@@ -123,18 +124,11 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                     color: checkColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
-                    Icons.photo_library,
-                    color: checkColor,
-                  ),
+                  child: const Icon(Icons.photo_library, color: checkColor),
                 ),
-                title: const Text(
-                  'اختيار من المعرض',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
+                title: const Text('اختيار من المعرض', style: TextStyle(fontWeight: FontWeight.w600)),
                 onTap: () async {
-                  Navigator.pop(context,
-                      await picker.pickImage(source: ImageSource.gallery));
+                  Navigator.pop(context, await picker.pickImage(source: ImageSource.gallery));
                 },
               ),
               const SizedBox(height: 10),
@@ -165,10 +159,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                 child: InteractiveViewer(
                   minScale: 0.5,
                   maxScale: 4.0,
-                  child: Image.file(
-                    imageFile,
-                    fit: BoxFit.contain,
-                  ),
+                  child: Image.file(imageFile, fit: BoxFit.contain),
                 ),
               ),
               Positioned(
@@ -242,7 +233,341 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     );
   }
 
-  /// هنا التعديل المهم: بعد نجاح الأرشفة نرجع true لـ Navigator.pop
+  // عرض السجل التاريخي في Bottom Sheet
+  void showHistoryBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+              ),
+              child: Column(
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 50,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Tabs
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: fieldBlue,
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            child: const Text(
+                              'دعم العملاء',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              // Switch to transactions tab
+                              Navigator.pop(context);
+                              showTransactionsBottomSheet();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: const Text(
+                                'المعاملات الجارية',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Customer Support List
+                  Expanded(
+                    child: widget.issue.customerSupport == null || 
+                           widget.issue.customerSupport!.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'لا توجد سجلات دعم عملاء',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: widget.issue.customerSupport!.length,
+                          itemBuilder: (context, index) {
+                            final support = widget.issue.customerSupport![index];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            support['problemAddress'] ?? 'غير محدد',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: fieldBlue,
+                                            ),
+                                          ),
+                                        ),
+                                        Icon(Icons.support_agent, color: checkColor, size: 24),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      support['details'] ?? 'لا توجد تفاصيل',
+                                      style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.person, size: 16, color: Colors.grey),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          support['engName'] ?? 'غير محدد',
+                                          style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                        ),
+                                        const Spacer(),
+                                        const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _formatDate(support['dateTime']),
+                                          style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                        ),
+                                      ],
+                                    ),
+                                    if (support['createdUser'] != null) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'بواسطة: ${support['createdUser']}',
+                                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // عرض المعاملات الجارية في Bottom Sheet
+  void showTransactionsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+              ),
+              child: Column(
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 50,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Tabs
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              // Switch to customer support tab
+                              Navigator.pop(context);
+                              showHistoryBottomSheet();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: const Text(
+                                'دعم العملاء',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: fieldBlue,
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            child: const Text(
+                              'المعاملات الجارية',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Under Transactions List
+                  Expanded(
+                    child: widget.issue.underTransactions == null || 
+                           widget.issue.underTransactions!.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'لا توجد معاملات جارية',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: widget.issue.underTransactions!.length,
+                          itemBuilder: (context, index) {
+                            final transaction = widget.issue.underTransactions![index];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            transaction['note'] ?? 'غير محدد',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: fieldBlue,
+                                            ),
+                                          ),
+                                        ),
+                                        Icon(Icons.pending_actions, color: Colors.orange, size: 24),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    if (transaction['dateTime'] != null)
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _formatDate(transaction['dateTime']),
+                                            style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                          ),
+                                        ],
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Helper function to format date
+  String _formatDate(dynamic dateString) {
+    if (dateString == null) return 'غير محدد';
+    try {
+      final date = DateTime.parse(dateString.toString());
+      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateString.toString();
+    }
+  }
+
   Future<void> toggleArchiveStatus() async {
     if (widget.issue.id == null) {
       Fluttertoast.showToast(
@@ -261,16 +586,13 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
       isArchive: newArchiveStatus,
     );
 
-    // لو العملية نجحت، حالة الـ Cubit هتكون success
     if (mounted && cubit.state.status == CustomerStatus.success) {
       Fluttertoast.showToast(
-        msg: newArchiveStatus
-            ? 'تم أرشفة المشكلة بنجاح'
-            : 'تم إلغاء الأرشفة بنجاح',
+        msg: newArchiveStatus ? 'تم أرشفة المشكلة بنجاح' : 'تم إلغاء الأرشفة بنجاح',
         backgroundColor: Colors.green,
         textColor: Colors.white,
       );
-      // إرجاع true حتى تلتقطها TechnicalSupportScreen وتعمل refreshAllData
+      // إرجاع true للعودة إلى TechnicalSupportScreen
       Navigator.pop(context, true);
     } else if (mounted && cubit.state.status == CustomerStatus.failure) {
       Fluttertoast.showToast(
@@ -284,9 +606,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
   Future<void> saveChanges() async {
     if (solutionCtl.text.trim().isEmpty && selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('من فضلك أدخل الحل أو أرفق صوراً قبل الحفظ'),
-        ),
+        const SnackBar(content: Text('من فضلك أدخل الحل أو أرفق صوراً قبل الحفظ')),
       );
       return;
     }
@@ -317,12 +637,12 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
       );
 
       if (mounted && cubit.state.status == CustomerStatus.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم حفظ التعديلات بنجاح'),
-            backgroundColor: Colors.green,
-          ),
+        Fluttertoast.showToast(
+          msg: 'تم حفظ التعديلات بنجاح',
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
         );
+        // العودة إلى TechnicalSupportScreen مع true لتحديث البيانات
         Navigator.pop(context, true);
       } else if (mounted && cubit.state.status == CustomerStatus.failure) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -350,15 +670,14 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
 
   void showEngineersMenu(List<EngineerModel> engineers) async {
     if (engineerKey.currentContext == null) return;
-    final RenderBox button =
-        engineerKey.currentContext!.findRenderObject()! as RenderBox;
-    final RenderBox overlay =
-        Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+
+    final RenderBox button = engineerKey.currentContext!.findRenderObject()! as RenderBox;
+    final RenderBox overlay = Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+
     final RelativeRect position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(button.size.bottomRight(Offset.zero),
-            ancestor: overlay),
+        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
       ),
       Offset.zero & overlay.size,
     );
@@ -490,7 +809,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
         children: [
           Expanded(
             child: Text(
-              trailingText != null ? '$value  -  $trailingText' : value,
+              trailingText != null ? '$value - $trailingText' : value,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.7),
                 fontSize: 16,
@@ -551,9 +870,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
           children: [
             Expanded(
               child: Text(
-                trailingText != null
-                    ? '$displayValue  -  $trailingText'
-                    : displayValue,
+                trailingText != null ? '$displayValue - $trailingText' : displayValue,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -627,6 +944,20 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
+              
+              // أيقونة عرض السجل التاريخي
+              Positioned(
+                top: 10.h,
+                left: 10.w,
+                child: IconButton(
+                  icon: const Icon(Icons.history),
+                  color: Colors.white,
+                  iconSize: 28,
+                  tooltip: 'عرض السجل التاريخي',
+                  onPressed: showHistoryBottomSheet,
+                ),
+              ),
+              
               Positioned.fill(
                 top: 120.h,
                 child: Container(
@@ -642,8 +973,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                       const SizedBox(height: 24),
                       Expanded(
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -655,45 +985,44 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                 label: 'رقم التواصل',
                                 controller: contactCtl,
                               ),
+                              
+                              // إضافة حقل التخصص
+                              buildReadOnlyField(
+                                label: 'التخصص',
+                                controller: specialtyCtl,
+                              ),
+                              
                               BlocBuilder<CustomerCubit, CustomerState>(
                                 builder: (context, state) {
                                   if (state.problemStatusList.isEmpty) {
                                     return buildLabeledField(
-                                      field: buildDisabledDropdown(
-                                          value: 'لا توجد حالات متاحة'),
+                                      field: buildDisabledDropdown(value: 'لا توجد حالات متاحة'),
                                       label: 'حالة المشكلة',
                                     );
                                   }
 
-                                  final filteredStatuses = state
-                                      .problemStatusList
+                                  final filteredStatuses = state.problemStatusList
                                       .where((s) => s.name.isNotEmpty)
                                       .toList();
 
                                   if (filteredStatuses.isEmpty) {
                                     return buildLabeledField(
-                                      field: buildDisabledDropdown(
-                                          value: 'لا توجد حالات متاحة'),
+                                      field: buildDisabledDropdown(value: 'لا توجد حالات متاحة'),
                                       label: 'حالة المشكلة',
                                     );
                                   }
 
                                   if (selectedSpecialty == null ||
-                                      !filteredStatuses.any((s) =>
-                                          s.id == selectedSpecialty!.id)) {
-                                    selectedSpecialty =
-                                        filteredStatuses.firstWhere(
-                                      (s) =>
-                                          s.id == widget.issue.problemStatusId,
+                                      !filteredStatuses.any((s) => s.id == selectedSpecialty!.id)) {
+                                    selectedSpecialty = filteredStatuses.firstWhere(
+                                      (s) => s.id == widget.issue.problemStatusId,
                                       orElse: () => filteredStatuses.first,
                                     );
                                   }
 
                                   return buildLabeledField(
-                                    field:
-                                        buildDropdownButton<ProblemStatusModel>(
-                                      displayValue:
-                                          selectedSpecialty!.name ?? '',
+                                    field: buildDropdownButton<ProblemStatusModel>(
+                                      displayValue: selectedSpecialty!.name ?? '',
                                       trailingText: null,
                                       items: filteredStatuses,
                                       onSelected: (status) {
@@ -739,7 +1068,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                               Column(
                                 children: [
                                   const Text(
-                                    ' رفع ملفات',
+                                    'رفع ملفات',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -786,14 +1115,11 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                           .entries
                                           .map(
                                             (entry) => GestureDetector(
-                                              onTap: () => showFullScreenImage(
-                                                  entry.value, entry.key),
+                                              onTap: () => showFullScreenImage(entry.value, entry.key),
                                               child: Stack(
                                                 children: [
                                                   ClipRRect(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
+                                                    borderRadius: BorderRadius.circular(8),
                                                     child: Image.file(
                                                       entry.value,
                                                       width: 60,
@@ -807,20 +1133,14 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                                     child: GestureDetector(
                                                       onTap: () {
                                                         setState(() {
-                                                          selectedImages
-                                                              .removeAt(
-                                                                  entry.key);
+                                                          selectedImages.removeAt(entry.key);
                                                         });
                                                       },
                                                       child: Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(2),
-                                                        decoration:
-                                                            const BoxDecoration(
+                                                        padding: const EdgeInsets.all(2),
+                                                        decoration: const BoxDecoration(
                                                           color: Colors.red,
-                                                          shape:
-                                                              BoxShape.circle,
+                                                          shape: BoxShape.circle,
                                                         ),
                                                         child: const Icon(
                                                           Icons.close,
@@ -845,15 +1165,12 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         child: Row(
                           children: [
                             Expanded(
                               child: buildBottomButton(
-                                label: (widget.issue.isArchive ?? false)
-                                    ? 'إلغاء الأرشفة'
-                                    : 'أرشيف',
+                                label: (widget.issue.isArchive ?? false) ? 'إلغاء الأرشفة' : 'أرشيف',
                                 color: fieldBlue,
                                 onTap: toggleArchiveStatus,
                               ),
@@ -918,9 +1235,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
-        crossAxisAlignment: maxLines == 1
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.start,
+        crossAxisAlignment: maxLines == 1 ? CrossAxisAlignment.center : CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Container(

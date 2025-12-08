@@ -24,8 +24,14 @@ class ProblemModel {
   final bool? isUrgent;
   final bool? isArchive;
 
-  // جديد: قائمة المنتجات
+  // قائمة المنتجات
   final List<dynamic>? products;
+
+  // السجل التاريخي - دعم العملاء
+  final List<Map<String, dynamic>>? customerSupport;
+
+  // المعاملات الجارية
+  final List<Map<String, dynamic>>? underTransactions;
 
   ProblemModel({
     this.id,
@@ -47,7 +53,9 @@ class ProblemModel {
     this.statusColor,
     this.isUrgent,
     this.isArchive,
-    this.products, // أضفناه
+    this.products,
+    this.customerSupport,
+    this.underTransactions,
   });
 
   factory ProblemModel.fromJson(Map<String, dynamic> json) =>
@@ -76,6 +84,8 @@ class ProblemModel {
     bool? isUrgent,
     bool? isArchive,
     List<dynamic>? products,
+    List<Map<String, dynamic>>? customerSupport,
+    List<Map<String, dynamic>>? underTransactions,
   }) {
     return ProblemModel(
       id: id ?? this.id,
@@ -98,6 +108,8 @@ class ProblemModel {
       isUrgent: isUrgent ?? this.isUrgent,
       isArchive: isArchive ?? this.isArchive,
       products: products ?? this.products,
+      customerSupport: customerSupport ?? this.customerSupport,
+      underTransactions: underTransactions ?? this.underTransactions,
     );
   }
 }

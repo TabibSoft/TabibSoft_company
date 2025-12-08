@@ -1,32 +1,45 @@
-// features/visits/presentation/cubit/visit_state.dart
-
-
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/visit_model.dart';
 
-enum VisitStatus { initial, loading, loaded, error }
+// تعريف VisitStatus enum
+enum VisitStatus {
+  initial,
+  loading,
+  loaded,
+  error,
+}
 
 class VisitState {
   final VisitStatus status;
   final List<VisitModel> visits;
   final String? errorMessage;
+  final int currentPage;
+  final int totalPages;
+  final bool hasMore;
 
-  VisitState({required this.status, this.visits = const [], this.errorMessage});
-}
+  const VisitState({
+    this.status = VisitStatus.initial,
+    this.visits = const [],
+    this.errorMessage,
+    this.currentPage = 1,
+    this.totalPages = 1,
+    this.hasMore = true,
+  });
 
-class VisitInitial extends VisitState {
-  VisitInitial() : super(status: VisitStatus.initial);
-}
-
-class VisitLoading extends VisitState {
-  VisitLoading() : super(status: VisitStatus.loading);
-}
-
-class VisitLoaded extends VisitState {
-  VisitLoaded(List<VisitModel> visits)
-      : super(status: VisitStatus.loaded, visits: visits);
-}
-
-class VisitError extends VisitState {
-  VisitError(String message)
-      : super(status: VisitStatus.error, errorMessage: message);
+  VisitState copyWith({
+    VisitStatus? status,
+    List<VisitModel>? visits,
+    String? errorMessage,
+    int? currentPage,
+    int? totalPages,
+    bool? hasMore,
+  }) {
+    return VisitState(
+      status: status ?? this.status,
+      visits: visits ?? this.visits,
+      errorMessage: errorMessage ?? this.errorMessage,
+      currentPage: currentPage ?? this.currentPage,
+      totalPages: totalPages ?? this.totalPages,
+      hasMore: hasMore ?? this.hasMore,
+    );
+  }
 }

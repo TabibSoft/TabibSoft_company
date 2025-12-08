@@ -32,8 +32,6 @@ import 'package:tabib_soft_company/features/technical_support/presentation/cubit
 import 'package:tabib_soft_company/features/technical_support/visits/data/repo/visit_repository.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
 
-// ==================== جديد: إضافة اشتراك ====================
-
 class ServicesLocator {
   static final GetIt locator = GetIt.instance;
 
@@ -92,7 +90,7 @@ class ServicesLocator {
     locator.registerLazySingleton<TodayCallsRepository>(() => TodayCallsRepository(locator<ApiService>()));
     locator.registerFactory<TodayCallsCubit>(() => TodayCallsCubit(locator<TodayCallsRepository>()));
 
-    // ==================== جديد: Subscription (إضافة اشتراك) ====================
+    // Subscription
     locator.registerLazySingleton<SubscriptionRepository>(
       () => SubscriptionRepository(locator<ApiService>()),
     );
@@ -101,18 +99,20 @@ class ServicesLocator {
     );
 
     // Payment Methods
-locator.registerLazySingleton<PaymentMethodRepository>(
-  () => PaymentMethodRepository(locator<ApiService>()),
-);
-locator.registerFactory<PaymentMethodCubit>(
-  () => PaymentMethodCubit(locator<PaymentMethodRepository>()),
-);
+    locator.registerLazySingleton<PaymentMethodRepository>(
+      () => PaymentMethodRepository(locator<ApiService>()),
+    );
+    locator.registerFactory<PaymentMethodCubit>(
+      () => PaymentMethodCubit(locator<PaymentMethodRepository>()),
+    );
 
-// داخل setup()
-locator.registerLazySingleton<VisitRepository>(() => VisitRepository());
-locator.registerFactory<VisitCubit>(() => VisitCubit(locator<VisitRepository>()));
-
-// في Getters
+    // Visit Repository & Cubit
+    locator.registerLazySingleton<VisitRepository>(
+      () => VisitRepository(locator<ApiService>()),
+    );
+    locator.registerFactory<VisitCubit>(
+      () => VisitCubit(locator<VisitRepository>()),
+    );
   }
 
   // Getters
@@ -128,12 +128,7 @@ locator.registerFactory<VisitCubit>(() => VisitCubit(locator<VisitRepository>())
   static AddNoteCubit get addNoteCubit => locator<AddNoteCubit>();
   static NotificationCubit get notificationCubit => locator<NotificationCubit>();
   static TodayCallsCubit get todayCallsCubit => locator<TodayCallsCubit>();
-
-  // جديد: getter للـ AddSubscriptionCubit
   static AddSubscriptionCubit get addSubscriptionCubit => locator<AddSubscriptionCubit>();
-
   static PaymentMethodCubit get paymentMethodCubit => locator<PaymentMethodCubit>();
-
   static VisitCubit get visitCubit => locator<VisitCubit>();
-
 }

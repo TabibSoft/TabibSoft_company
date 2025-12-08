@@ -69,17 +69,19 @@ class ApiConstants {
 
   static const String changeStatus = 'Sales/UpdateMeasurementStatus';
 
-    static const String getAllStatuses = 'Sales/GetAllStatus';
+  static const String getAllStatuses = 'Sales/GetAllStatus';
 
+  static const String addSubscription = 'Sales/AddSubscription';
 
-    static const String addSubscription = 'Sales/AddSubscription';
+//زيارات وتسطيبات
+  static const String getAllVisits = 'Problem/GetAllVisits';
+  static const String addVisitDetail = 'Problem/AddVisitDetail';
+  static const String editVisitDetail = 'Problem/EditVisitDetail';
+  static const String makeVisitDone = 'Problem/MakeVisitDone';
 
+  static const String addNote = 'Problem/AddNote';
+  static const String deleteNote = 'Problem/DeleteNote';
+  static const String makeNoteRead = 'Problem/MakeNoteRead';
 
-//زيارات وتسطيبات 
-static const String getAllVisits = 'Problem/GetAllVisits';
-static const String addVisitDetail = 'Problem/AddVisitDetail';
-static const String editVisitDetail = 'Problem/EditVisitDetail';
-static const String makeVisitDone = 'Problem/MakeVisitDone';
-
-
+  static const String isArchive = 'Problem/IsArchive';
 }

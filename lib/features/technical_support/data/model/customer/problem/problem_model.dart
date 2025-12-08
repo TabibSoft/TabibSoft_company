@@ -22,6 +22,7 @@ class ProblemModel {
   final int? problemStatusId;
   final String? statusColor;
   final bool? isUrgent;
+  final bool? isArchive;
 
   // جديد: قائمة المنتجات
   final List<dynamic>? products;
@@ -45,6 +46,7 @@ class ProblemModel {
     this.problemStatusId,
     this.statusColor,
     this.isUrgent,
+    this.isArchive,
     this.products, // أضفناه
   });
 
@@ -52,4 +54,50 @@ class ProblemModel {
       _$ProblemModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$ProblemModelToJson(this);
+
+  ProblemModel copyWith({
+    String? id,
+    String? customerId,
+    String? customerName,
+    String? customerPhone,
+    String? adderss,
+    String? problemtype,
+    String? problemAddress,
+    String? problemDetails,
+    String? phone,
+    String? problemDate,
+    String? porblemColor,
+    String? enginnerName,
+    String? details,
+    String? image,
+    String? imageUrl,
+    int? problemStatusId,
+    String? statusColor,
+    bool? isUrgent,
+    bool? isArchive,
+    List<dynamic>? products,
+  }) {
+    return ProblemModel(
+      id: id ?? this.id,
+      customerId: customerId ?? this.customerId,
+      customerName: customerName ?? this.customerName,
+      customerPhone: customerPhone ?? this.customerPhone,
+      adderss: adderss ?? this.adderss,
+      problemtype: problemtype ?? this.problemtype,
+      problemAddress: problemAddress ?? this.problemAddress,
+      problemDetails: problemDetails ?? this.problemDetails,
+      phone: phone ?? this.phone,
+      problemDate: problemDate ?? this.problemDate,
+      porblemColor: porblemColor ?? this.porblemColor,
+      enginnerName: enginnerName ?? this.enginnerName,
+      details: details ?? this.details,
+      image: image ?? this.image,
+      imageUrl: imageUrl ?? this.imageUrl,
+      problemStatusId: problemStatusId ?? this.problemStatusId,
+      statusColor: statusColor ?? this.statusColor,
+      isUrgent: isUrgent ?? this.isUrgent,
+      isArchive: isArchive ?? this.isArchive,
+      products: products ?? this.products,
+    );
+  }
 }

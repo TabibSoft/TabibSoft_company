@@ -33,11 +33,14 @@ Customization _$CustomizationFromJson(Map<String, dynamic> json) =>
       deadLine: json['deadLine'] as String?,
       testEngName: json['testEngName'] as String? ?? '',
       testNotes: json['testNotes'] as String? ?? '',
-      reports: (json['reports'] as List<dynamic>)
-          .map((e) => Report.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      situationStatus: SituationStatus.fromJson(
-          json['sitiouationStatus'] as Map<String, dynamic>),
+      reports: (json['reports'] as List<dynamic>?)
+              ?.map((e) => Report.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      situationStatus: json['sitiouationStatus'] == null
+          ? null
+          : SituationStatus.fromJson(
+              json['sitiouationStatus'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$CustomizationToJson(Customization instance) =>
@@ -55,11 +58,11 @@ Map<String, dynamic> _$CustomizationToJson(Customization instance) =>
 
 Report _$ReportFromJson(Map<String, dynamic> json) => Report(
       id: json['id'] as String?,
-      name: json['name'] as String,
+      name: json['name'] as String? ?? '',
       notes: json['note'] as String? ?? '',
-      finished: json['finshed'] as bool,
+      finished: json['finshed'] as bool? ?? false,
       isTested: json['isTested'] as bool? ?? false,
-      time: (json['time'] as num).toInt(),
+      time: (json['time'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$ReportToJson(Report instance) => <String, dynamic>{
@@ -73,9 +76,9 @@ Map<String, dynamic> _$ReportToJson(Report instance) => <String, dynamic>{
 
 SituationStatus _$SituationStatusFromJson(Map<String, dynamic> json) =>
     SituationStatus(
-      color: json['color'] as String,
-      name: json['name'] as String,
-      id: json['id'] as String,
+      color: json['color'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      id: json['id'] as String? ?? '',
       createdUser: json['createdUser'] as String?,
       lastEditUser: json['lastEditUser'] as String?,
       createdDate: json['createdDate'] as String? ?? '0001-01-01T00:00:00',

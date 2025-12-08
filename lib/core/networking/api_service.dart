@@ -20,7 +20,9 @@ import 'package:tabib_soft_company/features/technical_support/data/model/custome
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/create_under_transaction.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/data/models/note_model.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/paginated_visit_response.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/data/models/success_response_model.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/visit_model.dart';
 import 'api_constants.dart';
 
@@ -166,19 +168,19 @@ abstract class ApiService {
   @POST(ApiConstants.addSubscription)
   @MultiPart()
   Future<void> addSubscription(@Body() FormData formData);
-@POST(ApiConstants.getAllVisits)
+
+  @POST(ApiConstants.getAllVisits)
   Future<PaginatedVisitResponse> getAllVisits(
     @Body() Map<String, dynamic> body,
   );
 
-  // تم التعديل الكامل هنا
-@POST(ApiConstants.addVisitDetail)
-@MultiPart()
-Future<void> addVisitDetail(
-  @Part(name: "VisitInstallDetailId") String visitInstallDetailId,
-  @Part(name: "Note") String note,
-  @Part(name: "Images") List<MultipartFile>? images,
-);
+  @POST(ApiConstants.addVisitDetail)
+  @MultiPart()
+  Future<void> addVisitDetail(
+    @Part(name: "VisitInstallDetailId") String visitInstallDetailId,
+    @Part(name: "Note") String note,
+    @Part(name: "Images") List<MultipartFile>? images,
+  );
 
   @POST(ApiConstants.editVisitDetail)
   @MultiPart()
@@ -187,5 +189,23 @@ Future<void> addVisitDetail(
   @POST(ApiConstants.makeVisitDone)
   Future<void> makeVisitDone({
     @Query("visitId") required String visitId,
+  });
+
+  @POST(ApiConstants.addNote)
+  Future<NoteModel> addNote(@Body() AddNoteRequest request);
+
+  @DELETE(ApiConstants.deleteNote)
+  Future<void> deleteNote({
+    @Query("Id") required String id,
+  });
+  @POST(ApiConstants.makeNoteRead)
+  Future<SuccessResponse> makeNoteRead({
+    @Query("Id") required String id,
+  });
+
+  @POST(ApiConstants.isArchive)
+  Future<void> isArchive({
+    @Query("ProblemId") required String problemId,
+    // @Query("IsArchive") required bool isArchive,
   });
 }

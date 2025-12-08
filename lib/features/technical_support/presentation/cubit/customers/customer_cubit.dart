@@ -47,7 +47,8 @@ class CustomerCubit extends Cubit<CustomerState> {
 
   Future<void> fetchTechnicalSupportData(int customerId) async {
     emit(state.copyWith(status: CustomerStatus.loading));
-    final result = await _customerRepository.getTechnicalSupportData(customerId);
+    final result =
+        await _customerRepository.getTechnicalSupportData(customerId);
     result.when(
       success: (problem) {
         emit(state.copyWith(
@@ -112,8 +113,10 @@ class CustomerCubit extends Cubit<CustomerState> {
 
         final sortedIssues = List<ProblemModel>.from(issues);
         sortedIssues.sort((a, b) {
-          final dateA = DateTime.tryParse(a.problemDate ?? '') ?? DateTime(1970);
-          final dateB = DateTime.tryParse(b.problemDate ?? '') ?? DateTime(1970);
+          final dateA =
+              DateTime.tryParse(a.problemDate ?? '') ?? DateTime(1970);
+          final dateB =
+              DateTime.tryParse(b.problemDate ?? '') ?? DateTime(1970);
           return dateB.compareTo(dateA);
         });
 
@@ -209,10 +212,15 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
     final result = await _customerRepository.createUnderTransaction(dto);
     result.when(
-      success: (_) {
-        // إعادة تحميل البيانات من الصفر
+      success: (_) async {
+        // ✅ استخدم await لضمان اكتمال التحميل
         resetPagination();
-        fetchTechSupportIssues();
+        await fetchTechSupportIssues();
+
+        // ✅ أضف emit للنجاح بعد اكتمال التحديث
+        emit(state.copyWith(
+          status: CustomerStatus.success,
+        ));
       },
       failure: (error) {
         emit(state.copyWith(
@@ -261,7 +269,8 @@ class CustomerCubit extends Cubit<CustomerState> {
     if (state.problemCategories.isEmpty) await fetchProblemCategories();
 
     // التحقق من صحة الحالة
-    final statusValid = state.problemStatusList.any((s) => s.id == problemStatusId);
+    final statusValid =
+        state.problemStatusList.any((s) => s.id == problemStatusId);
     if (!statusValid) {
       emit(state.copyWith(
         status: CustomerStatus.failure,
@@ -272,7 +281,8 @@ class CustomerCubit extends Cubit<CustomerState> {
     }
 
     // التحقق من صحة الفئة
-    final categoryValid = state.problemCategories.any((c) => c.id == problemCategoryId);
+    final categoryValid =
+        state.problemCategories.any((c) => c.id == problemCategoryId);
     if (!categoryValid) {
       emit(state.copyWith(
         status: CustomerStatus.failure,
@@ -310,10 +320,10 @@ class CustomerCubit extends Cubit<CustomerState> {
     result.when(
       success: (createdProblem) {
         print('تم إنشاء المشكلة بنجاح: ${createdProblem.problemAddress}');
-        
+
         // إعادة تعيين الصفحات وتحميل البيانات من جديد
         resetPagination();
-        
+
         emit(state.copyWith(
           status: CustomerStatus.success,
           isProblemAdded: true,
@@ -347,12 +357,45 @@ class CustomerCubit extends Cubit<CustomerState> {
     await fetchTechSupportIssues();
   }
 
+  Future<void> isArchiveProblem({
+    required String problemId,
+    required bool isArchive,
+  }) async {
+    emit(state.copyWith(status: CustomerStatus.loading));
+    final result = await _customerRepository.isArchiveProblem(
+      problemId: problemId,
+      isArchive: isArchive,
+    );
+    result.when(
+      success: (_) {
+        // تحديث حالة المشكلة في القائمة المحلية
+        final updatedIssues = state.techSupportIssues.map((issue) {
+          if (issue.id == problemId) {
+            return issue.copyWith(isArchive: isArchive);
+          }
+          return issue;
+        }).toList();
+
+        emit(state.copyWith(
+          status: CustomerStatus.success,
+          techSupportIssues: updatedIssues,
+        ));
+      },
+      failure: (error) {
+        emit(state.copyWith(
+          status: CustomerStatus.failure,
+          errorMessage: error.errMessages,
+        ));
+      },
+    );
+  }
+
   // دالة البحث المحلي - للاستخدام في الواجهة
   List<ProblemModel> searchIssuesLocally(String query) {
     if (query.isEmpty) return state.techSupportIssues;
 
     final lowerQuery = query.toLowerCase().trim();
-    
+
     return state.techSupportIssues.where((issue) {
       // البحث في اسم العميل
       final customerName = (issue.customerName ?? '').toLowerCase();

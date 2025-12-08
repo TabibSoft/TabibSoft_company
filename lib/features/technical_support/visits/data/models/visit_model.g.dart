@@ -23,6 +23,8 @@ VisitModel _$VisitModelFromJson(Map<String, dynamic> json) => VisitModel(
       statusColor: json['statusColor'] as String? ?? '#808080',
       isInstallDone: json['isInstall'] as bool,
       totalRate: (json['totalRate'] as num).toDouble(),
+      isArchive: json['isArchive'] as bool?,
+      visitInstallDetails: json['visitInstallDetails'] as List<dynamic>? ?? [],
     );
 
 Map<String, dynamic> _$VisitModelToJson(VisitModel instance) =>
@@ -43,4 +45,6 @@ Map<String, dynamic> _$VisitModelToJson(VisitModel instance) =>
       'statusColor': instance.statusColor,
       'isInstall': instance.isInstallDone,
       'totalRate': instance.totalRate,
+      'isArchive': instance.isArchive,
+      'visitInstallDetails': instance.visitInstallDetails,
     };

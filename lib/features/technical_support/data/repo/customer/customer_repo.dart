@@ -98,7 +98,7 @@ class CustomerRepository {
     }
   }
 
- Future<ApiResult<ProblemModel>> createProblem({
+  Future<ApiResult<ProblemModel>> createProblem({
   required String customerId,
   required DateTime dateTime,
   required int problemStatusId,
@@ -171,4 +171,19 @@ class CustomerRepository {
     print('Unexpected error: $e');
     return ApiResult.failure(ServerFailure('خطأ غير متوقع: $e'));
   }
-}}
+}
+
+  Future<ApiResult<void>> isArchiveProblem({
+    required String problemId,
+    required bool isArchive,
+  }) async {
+    try {
+      await _apiService.isArchive(
+        problemId: problemId,
+        // isArchive: isArchive,
+      );
+      return const ApiResult.success(null);
+    } on DioException catch (e) {
+      return ApiResult.failure(ServerFailure.fromDioError(e));
+    }
+  }}

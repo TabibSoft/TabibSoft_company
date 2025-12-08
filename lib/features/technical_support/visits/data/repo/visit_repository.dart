@@ -1,27 +1,30 @@
-// features/visits/data/repo/visit_repository.dart
-
 import 'package:dio/dio.dart';
 import 'package:tabib_soft_company/core/networking/api_service.dart';
-import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
-import 'package:tabib_soft_company/features/technical_support/visits/data/models/visit_model.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/data/models/paginated_visit_response.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/data/models/note_model.dart';
 
 class VisitRepository {
-  final ApiService _apiService = ServicesLocator.locator<ApiService>();
+  final ApiService _apiService;
 
-  Future<List<VisitModel>> getAllVisits({
+  VisitRepository(this._apiService);
+
+  Future<PaginatedVisitResponse> getAllVisits({
     int pageNumber = 1,
     int pageSize = 20,
-    String searchValue = "",
+    String? customerId,
+    DateTime? date,
+    String? searchValue,
   }) async {
-    final response = await _apiService.getAllVisits({
-      "pageNumber": pageNumber,
-      "pageSize": pageSize,
-      "searchValue": searchValue,
-    });
-    return response.data;
+    final body = {
+      'pageNumber': pageNumber,
+      'pageSize': pageSize,
+      if (customerId != null) 'customerId': customerId,
+      if (date != null) 'date': date.toIso8601String(),
+      if (searchValue != null) 'searchValue': searchValue,
+    };
+    return await _apiService.getAllVisits(body);
   }
 
-  // فقط الثلاث حقول المطلوبة
   Future<void> addVisitDetail({
     required String visitInstallDetailId,
     required String note,
@@ -30,11 +33,47 @@ class VisitRepository {
     await _apiService.addVisitDetail(
       visitInstallDetailId,
       note,
-       images,
+      images,
     );
   }
 
-  Future<void> makeVisitDone(String visitId) async {
+  Future<void> editVisitDetail({
+    required String visitInstallDetailId,
+    required String note,
+    List<MultipartFile>? images,
+    List<String>? existingImageUrls,
+  }) async {
+    final formData = FormData.fromMap({
+      'VisitInstallDetailId': visitInstallDetailId,
+      'Note': note,
+      if (images != null && images.isNotEmpty) 'Images': images,
+      if (existingImageUrls != null && existingImageUrls.isNotEmpty)
+        'ExistingImageUrls': existingImageUrls,
+    });
+    await _apiService.editVisitDetail(formData);
+  }
+
+  Future<void> makeVisitDone({required String visitId}) async {
     await _apiService.makeVisitDone(visitId: visitId);
+  }
+
+  // إضافة دوال الملاحظات
+  Future<NoteModel> addNote({
+    required String visitInstallId,
+    required String note,
+  }) async {
+    final request = AddNoteRequest(
+      visitInstallId: visitInstallId,
+      note: note,
+    );
+    return await _apiService.addNote(request);
+  }
+
+  Future<void> deleteNote({required String noteId}) async {
+    await _apiService.deleteNote(id: noteId);
+  }
+
+  Future<void> makeNoteRead({required String noteId}) async {
+    await _apiService.makeNoteRead(id: noteId);
   }
 }

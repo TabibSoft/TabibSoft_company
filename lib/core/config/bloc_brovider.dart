@@ -18,13 +18,10 @@ import 'package:tabib_soft_company/features/technical_support/presentation/cubit
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
 
-// جديد: استيراد AddSubscriptionCubit
-
 Widget buildAppWithProviders({required Widget child}) {
   return MultiBlocProvider(
     providers: [
       BlocProvider(create: (_) => InternetCubit()..checkStreamConnection()),
-
       BlocProvider<CustomerCubit>(create: (_) => ServicesLocator.customerCubit),
       BlocProvider<EngineerCubit>(create: (_) => ServicesLocator.engineerCubit),
       BlocProvider<TaskCubit>(create: (_) => ServicesLocator.taskCubit),
@@ -33,24 +30,19 @@ Widget buildAppWithProviders({required Widget child}) {
       BlocProvider<AddCustomerCubit>(create: (_) => ServicesLocator.addCustomerCubit),
       BlocProvider<ProductCubit>(create: (_) => ServicesLocator.productCubit),
       BlocProvider<LoginCubit>(create: (_) => ServicesLocator.loginCubit),
-
       BlocProvider<SalesDetailsCubit>(create: (_) => ServicesLocator.locator<SalesDetailsCubit>()),
       BlocProvider<AddNoteCubit>(create: (_) => ServicesLocator.addNoteCubit),
       BlocProvider<NotificationCubit>(create: (_) => ServicesLocator.notificationCubit),
       BlocProvider<TodayCallsCubit>(create: (_) => ServicesLocator.todayCallsCubit),
-
-      // ==================== جديد: إضافة AddSubscriptionCubit ====================
       BlocProvider<AddSubscriptionCubit>(
         create: (_) => ServicesLocator.addSubscriptionCubit,
       ),
-
       BlocProvider<PaymentMethodCubit>(
-  create: (_) => ServicesLocator.paymentMethodCubit,
-),
-
-BlocProvider<VisitCubit>(
-  create: (_) => ServicesLocator.visitCubit..loadVisits(),
-),
+        create: (_) => ServicesLocator.paymentMethodCubit,
+      ),
+      BlocProvider<VisitCubit>(
+        create: (_) => ServicesLocator.visitCubit..fetchVisits(),
+      ),
     ],
     child: child,
   );

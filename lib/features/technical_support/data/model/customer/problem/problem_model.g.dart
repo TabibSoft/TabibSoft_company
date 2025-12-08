@@ -25,6 +25,7 @@ ProblemModel _$ProblemModelFromJson(Map<String, dynamic> json) => ProblemModel(
       problemStatusId: (json['problemStatusId'] as num?)?.toInt(),
       statusColor: json['statusColor'] as String?,
       isUrgent: json['isUrgent'] as bool?,
+      isArchive: json['isArchive'] as bool?,
       products: json['products'] as List<dynamic>?,
     );
 
@@ -48,5 +49,6 @@ Map<String, dynamic> _$ProblemModelToJson(ProblemModel instance) =>
       'problemStatusId': instance.problemStatusId,
       'statusColor': instance.statusColor,
       'isUrgent': instance.isUrgent,
+      'isArchive': instance.isArchive,
       'products': instance.products,
     };

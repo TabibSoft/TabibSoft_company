@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,7 +7,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
-import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
@@ -18,23 +18,23 @@ class ProblemDetailsScreen extends StatefulWidget {
   const ProblemDetailsScreen({super.key, required this.issue});
 
   @override
-  State<ProblemDetailsScreen> createState() => _ProblemDetailsScreenState();
+  State<ProblemDetailsScreen> createState() => ProblemDetailsScreenState();
 }
 
-class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
-  late TextEditingController _nameCtl;
-  late TextEditingController _addressCtl;
-  late TextEditingController _issueTitleCtl;
-  late TextEditingController _issueDetailsCtl;
-  late TextEditingController _contactCtl;
-  late TextEditingController _solutionCtl;
+class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
+  late TextEditingController nameCtl;
+  late TextEditingController addressCtl;
+  late TextEditingController issueTitleCtl;
+  late TextEditingController issueDetailsCtl;
+  late TextEditingController contactCtl;
+  late TextEditingController solutionCtl;
 
-  ProblemStatusModel? _selectedSpecialty;
-  EngineerModel? _selectedEngineer;
-  final List<File> _selectedImages = [];
-  bool _isLoading = false;
+  ProblemStatusModel? selectedSpecialty;
+  EngineerModel? selectedEngineer;
+  final List<File> selectedImages = [];
+  bool isLoading = false;
 
-  final GlobalKey _engineerKey = GlobalKey();
+  final GlobalKey engineerKey = GlobalKey();
 
   static const Color gradientTop = Color(0xFF104D9D);
   static const Color fieldBlue = Color(0xFF0B4C99);
@@ -43,233 +43,315 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _nameCtl = TextEditingController(text: widget.issue.customerName ?? '');
-    _addressCtl = TextEditingController(text: widget.issue.adderss ?? '');
-    _issueTitleCtl =
+    nameCtl = TextEditingController(text: widget.issue.customerName ?? '');
+    addressCtl = TextEditingController(text: widget.issue.adderss ?? '');
+    issueTitleCtl =
         TextEditingController(text: widget.issue.problemAddress ?? '');
-    _issueDetailsCtl =
+    issueDetailsCtl =
         TextEditingController(text: widget.issue.problemDetails ?? '');
-    _contactCtl = TextEditingController(text: widget.issue.customerPhone ?? '');
-    _solutionCtl = TextEditingController(text: widget.issue.details ?? '');
+    contactCtl = TextEditingController(text: widget.issue.customerPhone ?? '');
+    solutionCtl = TextEditingController();
 
-    // جلب البيانات المطلوبة
     context.read<CustomerCubit>().fetchProblemStatus();
     context.read<EngineerCubit>().fetchEngineers();
   }
 
   @override
   void dispose() {
-    _nameCtl.dispose();
-    _addressCtl.dispose();
-    _issueTitleCtl.dispose();
-    _issueDetailsCtl.dispose();
-    _contactCtl.dispose();
-    _solutionCtl.dispose();
+    nameCtl.dispose();
+    addressCtl.dispose();
+    issueTitleCtl.dispose();
+    issueDetailsCtl.dispose();
+    contactCtl.dispose();
+    solutionCtl.dispose();
     super.dispose();
   }
 
-  Color _parseHexColor(String hex) {
+  Color parseHexColor(String hex) {
     hex = hex.replaceFirst('#', '');
-    if (hex.length == 6) {
-      hex = 'ff$hex';
-    }
+    if (hex.length == 6) hex = 'ff$hex';
     return Color(int.parse(hex, radix: 16));
   }
 
-  Future<void> _pickImage() async {
+  Future<void> pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await showModalBottomSheet<XFile?>(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 50,
+                height: 5,
                 decoration: BoxDecoration(
-                  color: checkColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.camera_alt, color: checkColor),
               ),
-              title: const Text(
-                'الكاميرا',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              onTap: () async {
-                Navigator.pop(
-                    context, await picker.pickImage(source: ImageSource.camera));
-              },
-            ),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: checkColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: checkColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    color: checkColor,
+                  ),
                 ),
-                child: const Icon(Icons.photo_library, color: checkColor),
+                title: const Text(
+                  'التقاط صورة',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                onTap: () async {
+                  Navigator.pop(context,
+                      await picker.pickImage(source: ImageSource.camera));
+                },
               ),
-              title: const Text(
-                'المعرض',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: checkColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.photo_library,
+                    color: checkColor,
+                  ),
+                ),
+                title: const Text(
+                  'اختيار من المعرض',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                onTap: () async {
+                  Navigator.pop(context,
+                      await picker.pickImage(source: ImageSource.gallery));
+                },
               ),
-              onTap: () async {
-                Navigator.pop(
-                    context, await picker.pickImage(source: ImageSource.gallery));
-              },
-            ),
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
     );
 
     if (pickedFile != null) {
-      setState(() => _selectedImages.add(File(pickedFile.path)));
+      setState(() {
+        selectedImages.add(File(pickedFile.path));
+      });
     }
   }
 
-  // دالة عرض الصورة بشكل كامل
-  void _showFullScreenImage(File imageFile, int index) {
+  void showFullScreenImage(File imageFile, int index) {
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.zero,
-        child: Stack(
-          children: [
-            // الصورة بالحجم الكامل
-            Center(
-              child: InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 4.0,
-                child: Image.file(
-                  imageFile,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            // زر الإغلاق
-            Positioned(
-              top: 40,
-              right: 20,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ),
-            // زر الحذف
-            Positioned(
-              top: 40,
-              left: 20,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.white, size: 30),
-                  onPressed: () {
-                    setState(() {
-                      _selectedImages.removeAt(index);
-                    });
-                    Navigator.pop(context);
-                    Fluttertoast.showToast(
-                      msg: 'تم حذف الصورة',
-                      backgroundColor: Colors.red,
-                      textColor: Colors.white,
-                    );
-                  },
-                ),
-              ),
-            ),
-            // معلومات الصورة
-            Positioned(
-              bottom: 20,
-              left: 0,
-              right: 0,
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'صورة ${index + 1} من ${_selectedImages.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Stack(
+            children: [
+              Center(
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: Image.file(
+                    imageFile,
+                    fit: BoxFit.contain,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
+              Positioned(
+                top: 40,
+                right: 20,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.close),
+                    color: Colors.white,
+                    iconSize: 30,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 40,
+                left: 20,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.delete),
+                    color: Colors.white,
+                    iconSize: 30,
+                    onPressed: () {
+                      setState(() {
+                        selectedImages.removeAt(index);
+                      });
+                      Navigator.pop(context);
+                      Fluttertoast.showToast(
+                        msg: 'تم حذف الصورة',
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white,
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 20,
+                left: 0,
+                right: 0,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${index + 1} / ${selectedImages.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Future<void> _saveChanges() async {
-    if (_selectedSpecialty == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى اختيار حالة المشكلة')),
+  /// هنا التعديل المهم: بعد نجاح الأرشفة نرجع true لـ Navigator.pop
+  Future<void> toggleArchiveStatus() async {
+    if (widget.issue.id == null) {
+      Fluttertoast.showToast(
+        msg: 'رقم المشكلة غير متوفر',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
       );
       return;
     }
-
-    if (_solutionCtl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى إدخال تفاصيل الحل')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
 
     final cubit = context.read<CustomerCubit>();
+    final newArchiveStatus = !(widget.issue.isArchive ?? false);
 
-    cubit.resetPagination();
-    await cubit.createUnderTransaction(
-      customerSupportId: widget.issue.id!,
-      customerId: widget.issue.customerId!,
-      note: _solutionCtl.text,
-      problemStatusId: _selectedSpecialty!.id,
+    await cubit.isArchiveProblem(
+      problemId: widget.issue.id!,
+      isArchive: newArchiveStatus,
     );
 
-    // لا حاجة للتحقق هنا، BlocListener سيتولى الأمر
-    await cubit.fetchTechSupportIssues();
+    // لو العملية نجحت، حالة الـ Cubit هتكون success
+    if (mounted && cubit.state.status == CustomerStatus.success) {
+      Fluttertoast.showToast(
+        msg: newArchiveStatus
+            ? 'تم أرشفة المشكلة بنجاح'
+            : 'تم إلغاء الأرشفة بنجاح',
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+      );
+      // إرجاع true حتى تلتقطها TechnicalSupportScreen وتعمل refreshAllData
+      Navigator.pop(context, true);
+    } else if (mounted && cubit.state.status == CustomerStatus.failure) {
+      Fluttertoast.showToast(
+        msg: cubit.state.errorMessage ?? 'فشل تغيير حالة الأرشفة',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
   }
 
-  void _showEngineersMenu(List<EngineerModel> engineers) async {
-    if (_engineerKey.currentContext == null) return;
+  Future<void> saveChanges() async {
+    if (solutionCtl.text.trim().isEmpty && selectedImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('من فضلك أدخل الحل أو أرفق صوراً قبل الحفظ'),
+        ),
+      );
+      return;
+    }
 
+    String finalNote = solutionCtl.text.trim();
+    if (finalNote.isEmpty) finalNote = '';
+
+    List<MultipartFile> imageFiles = [];
+    for (var image in selectedImages) {
+      final fileName = image.path.split('/').last;
+      imageFiles.add(
+        await MultipartFile.fromFile(
+          image.path,
+          filename: fileName,
+        ),
+      );
+    }
+
+    try {
+      setState(() => isLoading = true);
+      final cubit = context.read<CustomerCubit>();
+
+      await cubit.createUnderTransaction(
+        customerSupportId: widget.issue.id!,
+        customerId: widget.issue.customerId!,
+        note: finalNote,
+        problemStatusId: selectedSpecialty?.id ?? widget.issue.problemStatusId!,
+      );
+
+      if (mounted && cubit.state.status == CustomerStatus.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم حفظ التعديلات بنجاح'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true);
+      } else if (mounted && cubit.state.status == CustomerStatus.failure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(cubit.state.errorMessage ?? 'فشل حفظ التعديلات'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('حدث خطأ غير متوقع: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
+  }
+
+  void showEngineersMenu(List<EngineerModel> engineers) async {
+    if (engineerKey.currentContext == null) return;
     final RenderBox button =
-        _engineerKey.currentContext!.findRenderObject()! as RenderBox;
+        engineerKey.currentContext!.findRenderObject()! as RenderBox;
     final RenderBox overlay =
         Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
     final RelativeRect position = RelativeRect.fromRect(
@@ -290,7 +372,7 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey.shade200),
       ),
-      items: <PopupMenuItem<EngineerModel?>>[
+      items: <PopupMenuEntry<EngineerModel?>>[
         PopupMenuItem<EngineerModel?>(
           value: null,
           enabled: true,
@@ -302,7 +384,7 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                 SizedBox(width: 16),
                 Expanded(
                   child: Text(
-                    ' غير موجه ',
+                    'بدون مهندس',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
@@ -314,8 +396,8 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
             ),
           ),
         ),
-        ...engineers.map((eng) {
-          return PopupMenuItem<EngineerModel>(
+        ...engineers.map(
+          (eng) => PopupMenuItem<EngineerModel>(
             value: eng,
             enabled: true,
             child: Container(
@@ -350,25 +432,21 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                   size: 14,
                   color: Colors.grey,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                onTap: () {
-                  Navigator.pop(context, eng);
-                },
               ),
             ),
-          );
-        }),
+          ),
+        ),
       ],
     );
 
     if (selected != null) {
-      setState(() => _selectedEngineer = selected);
+      setState(() {
+        selectedEngineer = selected;
+      });
     }
   }
 
-  Widget _buildLabeledField({
+  Widget buildLabeledField({
     required Widget field,
     required String label,
   }) {
@@ -385,9 +463,10 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
               label,
               textAlign: TextAlign.right,
               style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
             ),
           ),
         ],
@@ -395,7 +474,7 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     );
   }
 
-  Widget _buildDisabledDropdown({
+  Widget buildDisabledDropdown({
     required String value,
     String? trailingText,
   }) {
@@ -411,20 +490,25 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
         children: [
           Expanded(
             child: Text(
-              trailingText != null ? '$value $trailingText' : value,
-              style:
-                  TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16),
+              trailingText != null ? '$value  -  $trailingText' : value,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 16,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Icon(Icons.arrow_drop_down,
-              color: Colors.white.withOpacity(0.5), size: 30),
+          Icon(
+            Icons.arrow_drop_down,
+            color: Colors.white.withOpacity(0.5),
+            size: 30,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDropdownButton<T>({
+  Widget buildDropdownButton<T>({
     required String displayValue,
     String? trailingText,
     required List<T> items,
@@ -439,12 +523,14 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
       elevation: 8,
       onSelected: onSelected,
       itemBuilder: (BuildContext context) {
-        return items.map<PopupMenuItem<T>>((T item) {
-          return PopupMenuItem<T>(
-            value: item,
-            child: itemBuilder(item),
-          );
-        }).toList();
+        return items
+            .map(
+              (item) => PopupMenuItem<T>(
+                value: item,
+                child: itemBuilder(item),
+              ),
+            )
+            .toList();
       },
       child: Container(
         height: 56,
@@ -466,13 +552,20 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
             Expanded(
               child: Text(
                 trailingText != null
-                    ? '$displayValue $trailingText'
+                    ? '$displayValue  -  $trailingText'
                     : displayValue,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Icon(Icons.arrow_drop_down, color: Colors.white, size: 30),
+            const Icon(
+              Icons.arrow_drop_down,
+              color: Colors.white,
+              size: 30,
+            ),
           ],
         ),
       ),
@@ -483,24 +576,27 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
   Widget build(BuildContext context) {
     return BlocListener<CustomerCubit, CustomerState>(
       listener: (context, state) {
-        // نستمع فقط عندما نكون في حالة حفظ (لمنع التكرار)
-        if (_isLoading) {
+        if (isLoading) {
           if (state.status == CustomerStatus.success) {
             Fluttertoast.showToast(
-              msg: 'تم حفظ التغييرات بنجاح',
+              msg: 'تم حفظ البيانات بنجاح',
               backgroundColor: Colors.green,
               textColor: Colors.white,
             );
-            setState(() => _isLoading = false);
-            if (mounted) Navigator.pop(context, true); // الرجوع مع إرسال true
+            setState(() {
+              isLoading = false;
+            });
+            if (mounted) Navigator.pop(context, true);
           } else if (state.status == CustomerStatus.failure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.errorMessage ?? 'فشل في حفظ التغييرات'),
+                content: Text(state.errorMessage ?? 'حدث خطأ أثناء الحفظ'),
                 backgroundColor: Colors.red,
               ),
             );
-            setState(() => _isLoading = false);
+            setState(() {
+              isLoading = false;
+            });
           }
         }
       },
@@ -509,7 +605,6 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
         body: SafeArea(
           child: Stack(
             children: [
-              // الهيدر
               Positioned(
                 top: 40.h,
                 left: 0,
@@ -527,13 +622,11 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                 top: 10.h,
                 right: 10.w,
                 child: IconButton(
-                  icon:
-                      const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                  icon: const Icon(Icons.arrow_forward_ios),
+                  color: Colors.white,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
-
-              // الجسم الرئيسي
               Positioned.fill(
                 top: 120.h,
                 child: Container(
@@ -554,45 +647,41 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _buildReadOnlyField(
-                                  label: 'اسم العميل', controller: _nameCtl),
-                              _buildReadOnlyField(
-                                  label: 'رقم التواصل',
-                                  controller: _contactCtl),
-
-                              // حالة المشكلة
+                              buildReadOnlyField(
+                                label: 'اسم العميل',
+                                controller: nameCtl,
+                              ),
+                              buildReadOnlyField(
+                                label: 'رقم التواصل',
+                                controller: contactCtl,
+                              ),
                               BlocBuilder<CustomerCubit, CustomerState>(
                                 builder: (context, state) {
                                   if (state.problemStatusList.isEmpty) {
-                                    return _buildLabeledField(
-                                      field: _buildDisabledDropdown(
-                                        value: 'جاري التحميل...',
-                                      ),
-                                      label: 'الحالة',
+                                    return buildLabeledField(
+                                      field: buildDisabledDropdown(
+                                          value: 'لا توجد حالات متاحة'),
+                                      label: 'حالة المشكلة',
                                     );
                                   }
 
                                   final filteredStatuses = state
                                       .problemStatusList
-                                      .where((s) =>
-                                          s.name == 'جديد' ||
-                                          s.name == 'جارى المتابعه' ||
-                                          s.name == 'تم الحل')
+                                      .where((s) => s.name.isNotEmpty)
                                       .toList();
 
                                   if (filteredStatuses.isEmpty) {
-                                    return _buildLabeledField(
-                                      field: _buildDisabledDropdown(
-                                        value: 'لا توجد حالات متاحة',
-                                      ),
-                                      label: 'الحالة',
+                                    return buildLabeledField(
+                                      field: buildDisabledDropdown(
+                                          value: 'لا توجد حالات متاحة'),
+                                      label: 'حالة المشكلة',
                                     );
                                   }
 
-                                  if (_selectedSpecialty == null ||
+                                  if (selectedSpecialty == null ||
                                       !filteredStatuses.any((s) =>
-                                          s.id == _selectedSpecialty!.id)) {
-                                    _selectedSpecialty =
+                                          s.id == selectedSpecialty!.id)) {
+                                    selectedSpecialty =
                                         filteredStatuses.firstWhere(
                                       (s) =>
                                           s.id == widget.issue.problemStatusId,
@@ -600,20 +689,22 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                     );
                                   }
 
-                                  return _buildLabeledField(
-                                    field: _buildDropdownButton<
-                                        ProblemStatusModel>(
-                                      displayValue: _selectedSpecialty!.name,
+                                  return buildLabeledField(
+                                    field:
+                                        buildDropdownButton<ProblemStatusModel>(
+                                      displayValue:
+                                          selectedSpecialty!.name ?? '',
                                       trailingText: null,
                                       items: filteredStatuses,
                                       onSelected: (status) {
-                                        setState(
-                                            () => _selectedSpecialty = status);
+                                        setState(() {
+                                          selectedSpecialty = status;
+                                        });
                                       },
                                       itemBuilder: (status) => ListTile(
                                         dense: true,
                                         title: Text(
-                                          status.name,
+                                          status.name ?? '',
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
@@ -621,35 +712,42 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                         ),
                                       ),
                                     ),
-                                    label: 'الحالة',
+                                    label: 'حالة المشكلة',
                                   );
                                 },
                               ),
-
-                              _buildReadOnlyField(
-                                  label: 'العنوان', controller: _addressCtl),
-                              _buildReadOnlyField(
-                                  label: 'عنوان المشكلة',
-                                  controller: _issueTitleCtl),
-                              _buildReadOnlyField(
-                                  label: 'تفاصيل المشكلة',
-                                  controller: _issueDetailsCtl,
-                                  maxLines: 4),
-                              _buildEditableField(
-                                  label: 'تفاصيل الحل',
-                                  controller: _solutionCtl,
-                                  maxLines: 5),
-
+                              buildReadOnlyField(
+                                label: 'العنوان',
+                                controller: addressCtl,
+                              ),
+                              buildReadOnlyField(
+                                label: 'عنوان المشكلة',
+                                controller: issueTitleCtl,
+                              ),
+                              buildReadOnlyField(
+                                label: 'تفاصيل المشكلة',
+                                controller: issueDetailsCtl,
+                                maxLines: 4,
+                              ),
+                              buildEditableField(
+                                label: 'الحل المقترح',
+                                controller: solutionCtl,
+                                maxLines: 5,
+                                hintText: 'اكتب تفاصيل الحل هنا...',
+                              ),
                               const SizedBox(height: 20),
                               Column(
                                 children: [
-                                  const Text('رفع ملفات',
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold)),
+                                  const Text(
+                                    ' رفع ملفات',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   const SizedBox(height: 10),
                                   GestureDetector(
-                                    onTap: _pickImage,
+                                    onTap: pickImage,
                                     child: Stack(
                                       alignment: Alignment.center,
                                       children: [
@@ -658,7 +756,7 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                           width: 50,
                                           height: 50,
                                         ),
-                                        if (_selectedImages.isNotEmpty)
+                                        if (selectedImages.isNotEmpty)
                                           Positioned(
                                             bottom: 0,
                                             right: 0,
@@ -678,23 +776,24 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                       ],
                                     ),
                                   ),
-                                  if (_selectedImages.isNotEmpty) ...[
+                                  if (selectedImages.isNotEmpty) ...[
                                     const SizedBox(height: 12),
                                     Wrap(
                                       spacing: 8,
                                       runSpacing: 8,
-                                      children: _selectedImages
+                                      children: selectedImages
                                           .asMap()
                                           .entries
                                           .map(
                                             (entry) => GestureDetector(
-                                              onTap: () => _showFullScreenImage(
+                                              onTap: () => showFullScreenImage(
                                                   entry.value, entry.key),
                                               child: Stack(
                                                 children: [
                                                   ClipRRect(
                                                     borderRadius:
-                                                        BorderRadius.circular(8),
+                                                        BorderRadius.circular(
+                                                            8),
                                                     child: Image.file(
                                                       entry.value,
                                                       width: 60,
@@ -708,15 +807,15 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                                     child: GestureDetector(
                                                       onTap: () {
                                                         setState(() {
-                                                          _selectedImages
+                                                          selectedImages
                                                               .removeAt(
                                                                   entry.key);
                                                         });
                                                       },
                                                       child: Container(
                                                         padding:
-                                                            const EdgeInsets.all(
-                                                                2),
+                                                            const EdgeInsets
+                                                                .all(2),
                                                         decoration:
                                                             const BoxDecoration(
                                                           color: Colors.red,
@@ -745,28 +844,26 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                           ),
                         ),
                       ),
-
-                      // الأزرار السفلية
                       Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 16),
                         child: Row(
                           children: [
                             Expanded(
-                              child: _buildBottomButton(
-                                label: 'أرشيف',
+                              child: buildBottomButton(
+                                label: (widget.issue.isArchive ?? false)
+                                    ? 'إلغاء الأرشفة'
+                                    : 'أرشيف',
                                 color: fieldBlue,
-                                onTap: () {
-                                  // لاحقًا
-                                },
+                                onTap: toggleArchiveStatus,
                               ),
                             ),
                             const SizedBox(width: 20),
                             Expanded(
-                              child: _buildBottomButton(
+                              child: buildBottomButton(
                                 label: 'حفظ',
                                 color: fieldBlue,
-                                onTap: _isLoading ? null : _saveChanges,
+                                onTap: isLoading ? null : saveChanges,
                               ),
                             ),
                           ],
@@ -783,34 +880,40 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     );
   }
 
-  // باقي الويدجتس كما هي (لا تغيير)
-  Widget _buildReadOnlyField(
-      {required String label,
-      required TextEditingController controller,
-      int maxLines = 1}) {
-    return _buildField(
-        label: label,
-        controller: controller,
-        maxLines: maxLines,
-        enabled: false);
+  Widget buildReadOnlyField({
+    required String label,
+    required TextEditingController controller,
+    int maxLines = 1,
+  }) {
+    return buildField(
+      label: label,
+      controller: controller,
+      maxLines: maxLines,
+      enabled: false,
+    );
   }
 
-  Widget _buildEditableField(
-      {required String label,
-      required TextEditingController controller,
-      int maxLines = 1}) {
-    return _buildField(
-        label: label,
-        controller: controller,
-        maxLines: maxLines,
-        enabled: true);
+  Widget buildEditableField({
+    required String label,
+    required TextEditingController controller,
+    int maxLines = 1,
+    String? hintText,
+  }) {
+    return buildField(
+      label: label,
+      controller: controller,
+      maxLines: maxLines,
+      enabled: true,
+      hintText: hintText,
+    );
   }
 
-  Widget _buildField({
+  Widget buildField({
     required String label,
     required TextEditingController controller,
     int maxLines = 1,
     bool enabled = false,
+    String? hintText,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -822,7 +925,9 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              constraints: BoxConstraints(minHeight: maxLines == 1 ? 56 : 90),
+              constraints: BoxConstraints(
+                minHeight: maxLines == 1 ? 56 : 90,
+              ),
               decoration: BoxDecoration(
                 color: enabled ? fieldBlue : fieldBlue.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(24),
@@ -831,11 +936,17 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                 controller: controller,
                 maxLines: maxLines,
                 enabled: enabled,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-                decoration: const InputDecoration(
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+                decoration: InputDecoration(
                   border: InputBorder.none,
                   isCollapsed: true,
-                  hintStyle: TextStyle(color: Colors.white54),
+                  hintText: hintText,
+                  hintStyle: const TextStyle(
+                    color: Colors.white54,
+                  ),
                 ),
               ),
             ),
@@ -847,9 +958,10 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
               label,
               textAlign: TextAlign.right,
               style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
             ),
           ),
         ],
@@ -857,7 +969,7 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     );
   }
 
-  Widget _buildBottomButton({
+  Widget buildBottomButton({
     required String label,
     required Color color,
     required VoidCallback? onTap,
@@ -871,19 +983,22 @@ class _ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
           borderRadius: BorderRadius.circular(30),
         ),
         alignment: Alignment.center,
-        child: _isLoading && label == 'حفظ'
+        child: isLoading && label == 'حفظ'
             ? const SizedBox(
                 height: 22,
                 width: 22,
                 child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2.5),
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
               )
             : Text(
                 label,
                 style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
       ),
     );

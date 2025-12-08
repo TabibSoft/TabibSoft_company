@@ -12,6 +12,7 @@ import 'package:tabib_soft_company/features/programmers/data/model/engineer_mode
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/technical_support_details_model.dart';
 
 class TechCardContent extends StatelessWidget {
   final ProblemModel issue;
@@ -866,14 +867,73 @@ class TechCardContent extends StatelessWidget {
                   borderRadius: BorderRadius.circular(30),
                   onTap: onDetailsPressed ??
                       () async {
-                        final result = await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ProblemDetailsScreen(issue: issue),
-                          ),
+                        // 1. Show loading indicator
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (BuildContext dialogContext) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          },
                         );
 
-                        if (result == true && context.mounted) {
-                          context.read<CustomerCubit>().refreshAllData();
+                        try {
+                          // 2. Call the API to get full details
+                          final apiService = ServicesLocator.locator<ApiService>();
+                          final details = await apiService.getTechnicalSupportDetails(issue.id!);
+
+                          // 3. Close loading indicator
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                          }
+
+                          // 4. Navigate to details screen with the full data
+                          if (context.mounted) {
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ProblemDetailsScreen(
+                                  issue: issue,
+                                  details: details,
+                                ),
+                              ),
+                            );
+
+                            // 5. Refresh data if needed
+                            if (result == true) {
+                              context.read<CustomerCubit>().refreshAllData();
+                            }
+                          }
+                        } on DioException catch (e) {
+                          // 3. Close loading indicator
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                          }
+
+                          // 4. Show error message
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('فشل جلب التفاصيل: ${e.message}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          // 3. Close loading indicator
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                          }
+
+                          // 4. Show generic error message
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('حدث خطأ غير متوقع: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         }
                       },
                   child: Padding(

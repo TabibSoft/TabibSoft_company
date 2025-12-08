@@ -3,19 +3,22 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/technical_support_details_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 
 class ProblemDetailsScreen extends StatefulWidget {
   final ProblemModel issue;
+  final TechnicalSupportDetailsModel details;
 
-  const ProblemDetailsScreen({super.key, required this.issue});
+  const ProblemDetailsScreen({super.key, required this.issue, required this.details});
 
   @override
   State<ProblemDetailsScreen> createState() => ProblemDetailsScreenState();
@@ -235,6 +238,9 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
 
   // عرض السجل التاريخي في Bottom Sheet
   void showHistoryBottomSheet() {
+    final customerSupportHistory = widget.details.customerSupport ?? [];
+    final underTransactionsHistory = widget.details.underTransactions ?? [];
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -566,6 +572,44 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     } catch (e) {
       return dateString.toString();
     }
+  }
+
+  // Helper widget to display details
+  Widget _buildDetailSection({required String title, required String content}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$title:',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              color: fieldBlue,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(10.r),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Text(
+              content,
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> toggleArchiveStatus() async {
@@ -970,13 +1014,34 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                   ),
                   child: Column(
                     children: [
-                      const SizedBox(height: 24),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
+                    // Body (Form Fields)
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Display full details from the new model
+                            _buildDetailSection(
+                              title: 'ملاحظة المعاملة',
+                              content: widget.details.transactionNote ?? 'لا توجد ملاحظة',
+                            ),
+                            _buildDetailSection(
+                              title: 'الموقع',
+                              content: widget.details.location ?? 'لا يوجد موقع',
+                            ),
+                            _buildDetailSection(
+                              title: 'المهندس الحالي',
+                              content: widget.details.engineer ?? 'غير محدد',
+                            ),
+                            _buildDetailSection(
+                              title: 'تاريخ الدعم الفني',
+                              content: widget.details.teacnicalSupportDate != null
+                                  ? DateFormat('yyyy-MM-dd HH:mm').format(widget.details.teacnicalSupportDate!)
+                                  : 'غير محدد',
+                            ),
+                            SizedBox(height: 20.h),en: [
                               buildReadOnlyField(
                                 label: 'اسم العميل',
                                 controller: nameCtl,
@@ -1315,6 +1380,75 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+      ),
+    );
+  }
+}
+
+
+// History Card Widget
+class HistoryCard extends StatelessWidget {
+  final String title;
+  final String details;
+  final String engineerName;
+  final DateTime? date;
+
+  const HistoryCard({
+    super.key,
+    required this.title,
+    required this.details,
+    required this.engineerName,
+    this.date,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 15),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Color(0xFF0B4C99),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              details,
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'المهندس: $engineerName',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+                Text(
+                  date != null
+                      ? DateFormat('yyyy-MM-dd HH:mm').format(date!)
+                      : 'التاريخ غير متوفر',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

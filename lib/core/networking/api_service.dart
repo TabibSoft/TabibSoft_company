@@ -17,6 +17,7 @@ import 'package:tabib_soft_company/features/technical_support/data/model/custome
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/tech_support_response.dart'; // إضافة الاستيراد
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/technical_support_details_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/create_under_transaction.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
@@ -47,7 +48,8 @@ abstract class ApiService {
   Future<List<CustomerModel>> getAllCustomers();
 
   @GET(ApiConstants.getTechnicalSupportData)
-  Future<ProblemModel> getTechnicalSupportData(@Path("Id") int customerId);
+  Future<TechnicalSupportDetailsModel> getTechnicalSupportDetails(
+      @Path("Id") String customerSupportId);
 
   @GET(ApiConstants.getAllTechSupport)
   Future<TechSupportResponse> getAllTechSupport({

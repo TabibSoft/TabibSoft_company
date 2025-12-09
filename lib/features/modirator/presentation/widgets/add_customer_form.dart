@@ -2,7 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:tabib_soft_company/features/modirator/export.dart';
+
 class AddCustomerForm extends StatefulWidget {
   const AddCustomerForm({super.key, required this.onSaved});
   final VoidCallback onSaved;
@@ -40,8 +42,40 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
     super.dispose();
   }
 
+  // ✅ دالة التحقق من صحة رقم الهاتف
+  bool validatePhoneNumber(String phone) {
+    // إزالة المسافات والأحرف غير الرقمية
+    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    // التحقق من أن الرقم يبدأ بـ 01 وطوله 11 رقم
+    if (cleanPhone.length != 11) {
+      Fluttertoast.showToast(
+        msg: 'رقم الهاتف يجب أن يكون 11 رقم',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return false;
+    }
+    
+    if (!cleanPhone.startsWith('01')) {
+      Fluttertoast.showToast(
+        msg: 'رقم الهاتف يجب أن يبدأ بـ 01',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return false;
+    }
+    
+    return true;
+  }
+
   void _onSave() {
     if (_formKey.currentState!.validate()) {
+      // ✅ التحقق من رقم الهاتف قبل الحفظ
+      if (!validatePhoneNumber(_phone.text)) {
+        return;
+      }
+
       final customer = AddCustomerModel(
         name: _name.text,
         telephone: _phone.text,
@@ -80,8 +114,21 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
             RowField(label: 'الموقع', child: boxedText(_location)),
             RowField(label: 'المهندس', child: _engineerDropdown()),
             if (_showEngineerDropdown)
-              SizedBox(
+              Container(
                 height: 200.h,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
                 child: BlocBuilder<EngineerCubit, EngineerState>(
                   builder: (context, state) {
                     if (state.status == EngineerStatus.loading) {
@@ -104,15 +151,30 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
                         },
                       );
                     } else {
-                      return const Text('خطأ في تحميل المهندسين');
+                      return const Center(
+                        child: Text('خطأ في تحميل المهندسين'),
+                      );
                     }
                   },
                 ),
               ),
             RowField(label: 'التخصص', child: _productDropdown()),
             if (_showProductDropdown)
-              SizedBox(
+              Container(
                 height: 200.h,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
                 child: BlocBuilder<ProductCubit, ProductState>(
                   builder: (context, state) {
                     if (state.status == ProductStatus.loading) {
@@ -135,13 +197,23 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
                         },
                       );
                     } else {
-                      return const Text('خطأ في تحميل المنتجات');
+                      return const Center(
+                        child: Text('خطأ في تحميل المنتجات'),
+                      );
                     }
                   },
                 ),
               ),
             SizedBox(height: 16.h),
-            saveButton(onPressed: _onSave),
+            BlocBuilder<AddCustomerCubit, AddCustomerState>(
+              builder: (context, state) {
+                final isLoading = state.status == AddCustomerStatus.loading;
+                return saveButton(
+                  onPressed: isLoading ? null : _onSave,
+                  isLoading: isLoading,
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -163,11 +235,21 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
           color: const Color(0xff104D9D),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Center(
-          child: Text(
-            _engineer.text.isEmpty ? 'اختر المهندس' : _engineer.text,
-            style: const TextStyle(color: Colors.white),
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                _engineer.text.isEmpty ? 'اختر المهندس' : _engineer.text,
+                style: TextStyle(
+                  color: _engineer.text.isEmpty ? Colors.white70 : Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down, color: Colors.white, size: 30),
+          ],
         ),
       ),
     );
@@ -188,12 +270,128 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
           color: const Color(0xff104D9D),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Center(
-          child: Text(
-            _product.text.isEmpty ? 'اختر التخصص' : _product.text,
-            style: const TextStyle(color: Colors.white),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                _product.text.isEmpty ? 'اختر التخصص' : _product.text,
+                style: TextStyle(
+                  color: _product.text.isEmpty ? Colors.white70 : Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down, color: Colors.white, size: 30),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget saveButton({required VoidCallback? onPressed, bool isLoading = false}) {
+    return Container(
+      width: double.infinity,
+      height: 54.h,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF28B5E1), Color(0xFF20AAC9)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF28B5E1).withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
+        child: isLoading
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 3,
+                ),
+              )
+            : Text(
+                'حفظ',
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+// Widget helper للـ boxedText
+Widget boxedText(TextEditingController controller, {TextInputType? type}) {
+  return Container(
+    height: 52,
+    padding: const EdgeInsets.symmetric(horizontal: 14),
+    decoration: BoxDecoration(
+      color: const Color(0xff104D9D),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: TextFormField(
+      controller: controller,
+      keyboardType: type,
+      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      decoration: const InputDecoration(
+        border: InputBorder.none,
+        contentPadding: EdgeInsets.symmetric(vertical: 15),
+      ),
+      validator: (value) =>
+          (value == null || value.trim().isEmpty) ? 'مطلوب' : null,
+    ),
+  );
+}
+
+// Widget helper للـ RowField
+class RowField extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const RowField({super.key, required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(child: child),
+          SizedBox(width: 12.w),
+          SizedBox(
+            width: 100.w,
+            child: Text(
+              label,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

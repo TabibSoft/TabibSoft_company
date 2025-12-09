@@ -91,6 +91,33 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
     super.dispose();
   }
 
+  // ✅ دالة التحقق من صحة رقم الهاتف
+  bool validatePhoneNumber(String phone) {
+    // إزالة المسافات والأحرف غير الرقمية
+    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    // التحقق من أن الرقم يبدأ بـ 01 وطوله 11 رقم
+    if (cleanPhone.length != 11) {
+      Fluttertoast.showToast(
+        msg: 'رقم الهاتف يجب أن يكون 11 رقم',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return false;
+    }
+    
+    if (!cleanPhone.startsWith('01')) {
+      Fluttertoast.showToast(
+        msg: 'رقم الهاتف يجب أن يبدأ بـ 01',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return false;
+    }
+    
+    return true;
+  }
+
   Future<void> pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await showModalBottomSheet<XFile?>(
@@ -161,7 +188,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
     }
   }
 
-  // دالة عرض الصورة بشكل كامل
   void _showFullScreenImage(File imageFile, int index) {
     showDialog(
       context: context,
@@ -171,7 +197,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
         insetPadding: EdgeInsets.zero,
         child: Stack(
           children: [
-            // الصورة بالحجم الكامل
             Center(
               child: InteractiveViewer(
                 minScale: 0.5,
@@ -182,7 +207,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                 ),
               ),
             ),
-            // زر الإغلاق
             Positioned(
               top: 40,
               right: 20,
@@ -197,7 +221,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                 ),
               ),
             ),
-            // زر الحذف
             Positioned(
               top: 40,
               left: 20,
@@ -222,7 +245,6 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                 ),
               ),
             ),
-            // معلومات الصورة
             Positioned(
               bottom: 20,
               left: 0,
@@ -252,6 +274,11 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
   }
 
   void saveProblem() {
+    // ✅ التحقق من رقم الهاتف إذا كان موجوداً
+    if (phoneController.text.isNotEmpty && !validatePhoneNumber(phoneController.text)) {
+      return;
+    }
+
     if (selectedCustomer == null ||
         selectedCategory == null ||
         selectedEngineer == null ||
@@ -923,7 +950,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
   }
 }
 
-// AddCustomerBottomSheet - نفس الكود السابق
+// AddCustomerBottomSheet
 class AddCustomerBottomSheet extends StatefulWidget {
   final VoidCallback onCustomerAdded;
 
@@ -963,8 +990,38 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
     super.dispose();
   }
 
+  // ✅ دالة التحقق من صحة رقم الهاتف
+  bool validatePhoneNumber(String phone) {
+    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    if (cleanPhone.length != 11) {
+      Fluttertoast.showToast(
+        msg: 'رقم الهاتف يجب أن يكون 11 رقم',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return false;
+    }
+    
+    if (!cleanPhone.startsWith('01')) {
+      Fluttertoast.showToast(
+        msg: 'رقم الهاتف يجب أن يبدأ بـ 01',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return false;
+    }
+    
+    return true;
+  }
+
   void _onSave() {
     if (_formKey.currentState!.validate()) {
+      // ✅ التحقق من رقم الهاتف قبل الحفظ
+      if (!validatePhoneNumber(_phoneController.text)) {
+        return;
+      }
+
       final customer = AddCustomerModel(
         name: _nameController.text,
         telephone: _phoneController.text,
@@ -1176,7 +1233,6 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle bar
                   Container(
                     width: 50,
                     height: 5,
@@ -1187,7 +1243,6 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
                   ),
                   SizedBox(height: 20.h),
                   
-                  // Title
                   Text(
                     'إضافة عميل جديد',
                     style: TextStyle(
@@ -1198,31 +1253,26 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
                   ),
                   SizedBox(height: 24.h),
                   
-                  // Name field
                   buildLabelledRow(
                     label: 'اسم العميل',
                     child: boxedText(_nameController),
                   ),
                   
-                  // Phone field
                   buildLabelledRow(
                     label: 'رقم التواصل',
                     child: boxedText(_phoneController, type: TextInputType.phone),
                   ),
                   
-                  // Location field
                   buildLabelledRow(
                     label: 'الموقع',
                     child: boxedText(_locationController),
                   ),
                   
-                  // Engineer dropdown
                   buildLabelledRow(
                     label: 'المهندس',
                     child: _engineerDropdown(),
                   ),
                   
-                  // Engineer list
                   if (_showEngineerDropdown)
                     Container(
                       height: 200.h,
@@ -1260,13 +1310,11 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
                       ),
                     ),
                   
-                  // Product/Specialty dropdown
                   buildLabelledRow(
                     label: 'التخصص',
                     child: _productDropdown(),
                   ),
                   
-                  // Product list
                   if (_showProductDropdown)
                     Container(
                       height: 200.h,
@@ -1306,7 +1354,6 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
                   
                   SizedBox(height: 16.h),
                   
-                  // Save button with loading state
                   BlocBuilder<AddCustomerCubit, AddCustomerState>(
                     builder: (context, state) {
                       final isLoading = state.status == AddCustomerStatus.loading;

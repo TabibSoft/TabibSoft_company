@@ -84,6 +84,33 @@ class _AddIssueFormState extends State<AddIssueForm> {
     super.dispose();
   }
 
+  // ✅ دالة التحقق من صحة رقم الهاتف
+  bool validatePhoneNumber(String phone) {
+    // إزالة المسافات والأحرف غير الرقمية
+    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    // التحقق من أن الرقم يبدأ بـ 01 وطوله 11 رقم
+    if (cleanPhone.length != 11) {
+      Fluttertoast.showToast(
+        msg: 'رقم الهاتف يجب أن يكون 11 رقم',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return false;
+    }
+    
+    if (!cleanPhone.startsWith('01')) {
+      Fluttertoast.showToast(
+        msg: 'رقم الهاتف يجب أن يبدأ بـ 01',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return false;
+    }
+    
+    return true;
+  }
+
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await showModalBottomSheet<XFile?>(
@@ -210,6 +237,11 @@ class _AddIssueFormState extends State<AddIssueForm> {
   }
 
   void _saveProblem() {
+    // ✅ التحقق من رقم الهاتف إذا كان موجوداً
+    if (_phoneController.text.isNotEmpty && !validatePhoneNumber(_phoneController.text)) {
+      return;
+    }
+
     if (selectedCustomer == null ||
         selectedCategory == null ||
         selectedEngineer == null ||
@@ -296,7 +328,6 @@ class _AddIssueFormState extends State<AddIssueForm> {
                         ),
                       );
                     }
-                    // Make the inner list scrollable by removing the 'NeverScrollableScrollPhysics'
                     return ListView.builder(
                       padding: EdgeInsets.zero,
                       shrinkWrap: true,

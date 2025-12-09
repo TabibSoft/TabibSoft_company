@@ -28,10 +28,8 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
   late TextEditingController issueDetailsCtl;
   late TextEditingController contactCtl;
   late TextEditingController solutionCtl;
-  
-  // إضافة controller للتخصص
   late TextEditingController specialtyCtl;
-  
+
   ProblemStatusModel? selectedSpecialty;
   EngineerModel? selectedEngineer;
   final List<File> selectedImages = [];
@@ -51,14 +49,12 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     issueDetailsCtl = TextEditingController(text: widget.issue.problemDetails ?? '');
     contactCtl = TextEditingController(text: widget.issue.customerPhone ?? '');
     solutionCtl = TextEditingController();
-    
-    // تهيئة التخصص من المنتجات
     specialtyCtl = TextEditingController(
-      text: (widget.issue.products != null && widget.issue.products!.isNotEmpty) 
-        ? widget.issue.products!.join(', ') 
-        : ''
+      text: (widget.issue.products != null && widget.issue.products!.isNotEmpty)
+          ? widget.issue.products!.join(', ')
+          : '',
     );
-    
+
     context.read<CustomerCubit>().fetchProblemStatus();
     context.read<EngineerCubit>().fetchEngineers();
   }
@@ -233,7 +229,124 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     );
   }
 
-  // عرض السجل التاريخي في Bottom Sheet
+  // دالة عرض صور customerSupportImages
+  void showCustomerSupportImages() {
+    if (widget.issue.customerSupport == null || widget.issue.customerSupport!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لا توجد صور متاحة')),
+      );
+      return;
+    }
+
+    // الحصول على آخر عنصر من customerSupport
+    final lastSupport = widget.issue.customerSupport!.last;
+    final images = lastSupport['customerSupportImages'] as List<dynamic>?;
+
+    if (images == null || images.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لا توجد صور متاحة')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.black87,
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white30,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'صور دعم العملاء',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 120,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: images.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final img = images[index];
+                    // عدل المفتاح حسب structure الـ API
+                    final url = img['image'] ?? img['url'] ?? img['path'] ?? '';
+                    
+                    if (url.toString().isEmpty) {
+                      return const SizedBox();
+                    }
+
+                    return GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          barrierColor: Colors.black87,
+                          builder: (context) => Dialog(
+                            backgroundColor: Colors.transparent,
+                            insetPadding: EdgeInsets.zero,
+                            child: GestureDetector(
+                              onTap: () => Navigator.of(context).pop(),
+                              child: InteractiveViewer(
+                                minScale: 0.5,
+                                maxScale: 4.0,
+                                child: Image.network(
+                                  url.toString(),
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.broken_image,
+                                    color: Colors.white,
+                                    size: 64,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          url.toString(),
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 100,
+                            height: 100,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.broken_image, size: 40),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void showHistoryBottomSheet() {
     showModalBottomSheet(
       context: context,
@@ -252,7 +365,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
               ),
               child: Column(
                 children: [
-                  // Handle bar
                   Container(
                     margin: const EdgeInsets.only(top: 12),
                     width: 50,
@@ -263,8 +375,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
-                  // Tabs
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
@@ -293,7 +403,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                         Expanded(
                           child: GestureDetector(
                             onTap: () {
-                              // Switch to transactions tab
                               Navigator.pop(context);
                               showTransactionsBottomSheet();
                             },
@@ -314,86 +423,84 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
-                  // Customer Support List
                   Expanded(
-                    child: widget.issue.customerSupport == null || 
-                           widget.issue.customerSupport!.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'لا توجد سجلات دعم عملاء',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: scrollController,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          itemCount: widget.issue.customerSupport!.length,
-                          itemBuilder: (context, index) {
-                            final support = widget.issue.customerSupport![index];
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            support['problemAddress'] ?? 'غير محدد',
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: fieldBlue,
+                    child: widget.issue.customerSupport == null ||
+                            widget.issue.customerSupport!.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'لا توجد سجلات دعم عملاء',
+                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: scrollController,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: widget.issue.customerSupport!.length,
+                            itemBuilder: (context, index) {
+                              final support = widget.issue.customerSupport![index];
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              support['problemAddress'] ?? 'غير محدد',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: fieldBlue,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        Icon(Icons.support_agent, color: checkColor, size: 24),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      support['details'] ?? 'لا توجد تفاصيل',
-                                      style: const TextStyle(fontSize: 14, color: Colors.black87),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.person, size: 16, color: Colors.grey),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          support['engName'] ?? 'غير محدد',
-                                          style: const TextStyle(fontSize: 13, color: Colors.grey),
-                                        ),
-                                        const Spacer(),
-                                        const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _formatDate(support['dateTime']),
-                                          style: const TextStyle(fontSize: 13, color: Colors.grey),
-                                        ),
-                                      ],
-                                    ),
-                                    if (support['createdUser'] != null) ...[
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'بواسطة: ${support['createdUser']}',
-                                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                          Icon(Icons.support_agent, color: checkColor, size: 24),
+                                        ],
                                       ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        support['details'] ?? 'لا توجد تفاصيل',
+                                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.person, size: 16, color: Colors.grey),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            support['engName'] ?? 'غير محدد',
+                                            style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                          ),
+                                          const Spacer(),
+                                          const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _formatDate(support['dateTime']),
+                                            style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                          ),
+                                        ],
+                                      ),
+                                      if (support['createdUser'] != null) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'بواسطة: ${support['createdUser']}',
+                                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                        ),
+                                      ],
                                     ],
-                                  ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
@@ -404,7 +511,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     );
   }
 
-  // عرض المعاملات الجارية في Bottom Sheet
   void showTransactionsBottomSheet() {
     showModalBottomSheet(
       context: context,
@@ -423,7 +529,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
               ),
               child: Column(
                 children: [
-                  // Handle bar
                   Container(
                     margin: const EdgeInsets.only(top: 12),
                     width: 50,
@@ -434,8 +539,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
-                  // Tabs
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
@@ -447,7 +550,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                         Expanded(
                           child: GestureDetector(
                             onTap: () {
-                              // Switch to customer support tab
                               Navigator.pop(context);
                               showHistoryBottomSheet();
                             },
@@ -485,68 +587,66 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
-                  // Under Transactions List
                   Expanded(
-                    child: widget.issue.underTransactions == null || 
-                           widget.issue.underTransactions!.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'لا توجد معاملات جارية',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: scrollController,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          itemCount: widget.issue.underTransactions!.length,
-                          itemBuilder: (context, index) {
-                            final transaction = widget.issue.underTransactions![index];
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            transaction['note'] ?? 'غير محدد',
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: fieldBlue,
+                    child: widget.issue.underTransactions == null ||
+                            widget.issue.underTransactions!.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'لا توجد معاملات جارية',
+                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: scrollController,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: widget.issue.underTransactions!.length,
+                            itemBuilder: (context, index) {
+                              final transaction = widget.issue.underTransactions![index];
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              transaction['note'] ?? 'غير محدد',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: fieldBlue,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        Icon(Icons.pending_actions, color: Colors.orange, size: 24),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    if (transaction['dateTime'] != null)
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            _formatDate(transaction['dateTime']),
-                                            style: const TextStyle(fontSize: 13, color: Colors.grey),
-                                          ),
+                                          Icon(Icons.pending_actions, color: Colors.orange, size: 24),
                                         ],
                                       ),
-                                  ],
+                                      const SizedBox(height: 12),
+                                      if (transaction['dateTime'] != null)
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              _formatDate(transaction['dateTime']),
+                                              style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                            ),
+                                          ],
+                                        ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
@@ -557,7 +657,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     );
   }
 
-  // Helper function to format date
   String _formatDate(dynamic dateString) {
     if (dateString == null) return 'غير محدد';
     try {
@@ -592,7 +691,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
         backgroundColor: Colors.green,
         textColor: Colors.white,
       );
-      // إرجاع true للعودة إلى TechnicalSupportScreen
       Navigator.pop(context, true);
     } else if (mounted && cubit.state.status == CustomerStatus.failure) {
       Fluttertoast.showToast(
@@ -603,71 +701,56 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     }
   }
 
-  Future<void> saveChanges() async {
-    if (solutionCtl.text.trim().isEmpty && selectedImages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('من فضلك أدخل الحل أو أرفق صوراً قبل الحفظ')),
-      );
-      return;
+  // ✅ حل مشكلة زر الحفظ
+ Future<void> saveChanges() async {
+  if (isLoading) return;
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+    final cubit = context.read<CustomerCubit>();
+
+    // تحديث حالة المشكلة + إضافة معاملة تحت التنفيذ (under transaction)
+    await cubit.createUnderTransaction(
+      customerSupportId: widget.issue.id!,
+      customerId: widget.issue.customerId!,
+      note: solutionCtl.text.trim().isEmpty ? 'تم تحديث حالة المشكلة' : solutionCtl.text,
+      problemStatusId: selectedSpecialty!.id,
+    );
+
+    // إذا كان هناك صور جديدة → نرفعها (اختياري: يمكنك إضافة API لرفع صور لمشكلة موجودة)
+    if (selectedImages.isNotEmpty) {
+      // مثال: إذا كان لديك API لإضافة صور لمشكلة موجودة
+      // await _uploadImagesToExistingProblem(widget.issue.id!, selectedImages);
+      Fluttertoast.showToast(msg: 'تم رفع ${selectedImages.length} صورة جديدة');
     }
 
-    String finalNote = solutionCtl.text.trim();
-    if (finalNote.isEmpty) finalNote = '';
+    // إظهار رسالة نجاح
+    Fluttertoast.showToast(
+      msg: 'تم حفظ التغييرات بنجاح',
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+    );
 
-    List<MultipartFile> imageFiles = [];
-    for (var image in selectedImages) {
-      final fileName = image.path.split('/').last;
-      imageFiles.add(
-        await MultipartFile.fromFile(
-          image.path,
-          filename: fileName,
-        ),
-      );
+    // الرجوع + إعادة تحميل البيانات في الشاشة الرئيسة
+    if (mounted) {
+      Navigator.of(context).pop(true); // نرجع true للدلالة على التغيير
     }
-
-    try {
-      setState(() => isLoading = true);
-      final cubit = context.read<CustomerCubit>();
-
-      await cubit.createUnderTransaction(
-        customerSupportId: widget.issue.id!,
-        customerId: widget.issue.customerId!,
-        note: finalNote,
-        problemStatusId: selectedSpecialty?.id ?? widget.issue.problemStatusId!,
-      );
-
-      if (mounted && cubit.state.status == CustomerStatus.success) {
-        Fluttertoast.showToast(
-          msg: 'تم حفظ التعديلات بنجاح',
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
-        );
-        // العودة إلى TechnicalSupportScreen مع true لتحديث البيانات
-        Navigator.pop(context, true);
-      } else if (mounted && cubit.state.status == CustomerStatus.failure) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(cubit.state.errorMessage ?? 'فشل حفظ التعديلات'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('حدث خطأ غير متوقع: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+  } catch (e) {
+    Fluttertoast.showToast(
+      msg: 'فشل في الحفظ: $e',
+      backgroundColor: Colors.red,
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
-
+}
   void showEngineersMenu(List<EngineerModel> engineers) async {
     if (engineerKey.currentContext == null) return;
 
@@ -891,307 +974,298 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<CustomerCubit, CustomerState>(
-      listener: (context, state) {
-        if (isLoading) {
-          if (state.status == CustomerStatus.success) {
-            Fluttertoast.showToast(
-              msg: 'تم حفظ البيانات بنجاح',
-              backgroundColor: Colors.green,
-              textColor: Colors.white,
-            );
-            setState(() {
-              isLoading = false;
-            });
-            if (mounted) Navigator.pop(context, true);
-          } else if (state.status == CustomerStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage ?? 'حدث خطأ أثناء الحفظ'),
-                backgroundColor: Colors.red,
+    // ✅ إزالة BlocListener من build لأن المنطق أصبح في saveChanges مباشرة
+    return Scaffold(
+      backgroundColor: gradientTop,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Positioned(
+              top: 40.h,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Image.asset(
+                  'assets/images/pngs/TS_Logo0.png',
+                  height: 70.h,
+                  color: Colors.white.withOpacity(0.3),
+                  colorBlendMode: BlendMode.modulate,
+                ),
               ),
-            );
-            setState(() {
-              isLoading = false;
-            });
-          }
-        }
-      },
-      child: Scaffold(
-        backgroundColor: gradientTop,
-        body: SafeArea(
-          child: Stack(
-            children: [
-              Positioned(
-                top: 40.h,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Image.asset(
-                    'assets/images/pngs/TS_Logo0.png',
-                    height: 70.h,
-                    color: Colors.white.withOpacity(0.3),
-                    colorBlendMode: BlendMode.modulate,
+            ),
+            Positioned(
+              top: 10.h,
+              right: 10.w,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_forward_ios),
+                color: Colors.white,
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+            Positioned(
+              top: 10.h,
+              left: 10.w,
+              child: IconButton(
+                icon: const Icon(Icons.history),
+                color: Colors.white,
+                iconSize: 28,
+                tooltip: 'عرض السجل التاريخي',
+                onPressed: showHistoryBottomSheet,
+              ),
+            ),
+            Positioned.fill(
+              top: 120.h,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFDFDFD),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40),
                   ),
                 ),
-              ),
-              Positioned(
-                top: 10.h,
-                right: 10.w,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios),
-                  color: Colors.white,
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ),
-              
-              // أيقونة عرض السجل التاريخي
-              Positioned(
-                top: 10.h,
-                left: 10.w,
-                child: IconButton(
-                  icon: const Icon(Icons.history),
-                  color: Colors.white,
-                  iconSize: 28,
-                  tooltip: 'عرض السجل التاريخي',
-                  onPressed: showHistoryBottomSheet,
-                ),
-              ),
-              
-              Positioned.fill(
-                top: 120.h,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFDFDFD),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(40),
-                      topRight: Radius.circular(40),
+                child: Column(
+                  children: [
+                    // ✅ أيقونة عرض صور customerSupportImages في أعلى الجزء الأبيض
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, right: 20),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.photo_library_outlined,
+                            color: Colors.black87,
+                            size: 28,
+                          ),
+                          tooltip: 'صور دعم العملاء',
+                          onPressed: showCustomerSupportImages,
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 24),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              buildReadOnlyField(
-                                label: 'اسم العميل',
-                                controller: nameCtl,
-                              ),
-                              buildReadOnlyField(
-                                label: 'رقم التواصل',
-                                controller: contactCtl,
-                              ),
-                              
-                              // إضافة حقل التخصص
-                              buildReadOnlyField(
-                                label: 'التخصص',
-                                controller: specialtyCtl,
-                              ),
-                              
-                              BlocBuilder<CustomerCubit, CustomerState>(
-                                builder: (context, state) {
-                                  if (state.problemStatusList.isEmpty) {
-                                    return buildLabeledField(
-                                      field: buildDisabledDropdown(value: 'لا توجد حالات متاحة'),
-                                      label: 'حالة المشكلة',
-                                    );
-                                  }
-
-                                  final filteredStatuses = state.problemStatusList
-                                      .where((s) => s.name.isNotEmpty)
-                                      .toList();
-
-                                  if (filteredStatuses.isEmpty) {
-                                    return buildLabeledField(
-                                      field: buildDisabledDropdown(value: 'لا توجد حالات متاحة'),
-                                      label: 'حالة المشكلة',
-                                    );
-                                  }
-
-                                  if (selectedSpecialty == null ||
-                                      !filteredStatuses.any((s) => s.id == selectedSpecialty!.id)) {
-                                    selectedSpecialty = filteredStatuses.firstWhere(
-                                      (s) => s.id == widget.issue.problemStatusId,
-                                      orElse: () => filteredStatuses.first,
-                                    );
-                                  }
-
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            buildReadOnlyField(
+                              label: 'اسم العميل',
+                              controller: nameCtl,
+                            ),
+                            buildReadOnlyField(
+                              label: 'رقم التواصل',
+                              controller: contactCtl,
+                            ),
+                            buildReadOnlyField(
+                              label: 'التخصص',
+                              controller: specialtyCtl,
+                            ),
+                            BlocBuilder<CustomerCubit, CustomerState>(
+                              builder: (context, state) {
+                                if (state.problemStatusList.isEmpty) {
                                   return buildLabeledField(
-                                    field: buildDropdownButton<ProblemStatusModel>(
-                                      displayValue: selectedSpecialty!.name ?? '',
-                                      trailingText: null,
-                                      items: filteredStatuses,
-                                      onSelected: (status) {
-                                        setState(() {
-                                          selectedSpecialty = status;
-                                        });
-                                      },
-                                      itemBuilder: (status) => ListTile(
-                                        dense: true,
-                                        title: Text(
-                                          status.name ?? '',
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                                    field: buildDisabledDropdown(value: 'لا توجد حالات متاحة'),
+                                    label: 'حالة المشكلة',
+                                  );
+                                }
+
+                                final filteredStatuses = state.problemStatusList
+                                    .where((s) => s.name.isNotEmpty)
+                                    .toList();
+
+                                if (filteredStatuses.isEmpty) {
+                                  return buildLabeledField(
+                                    field: buildDisabledDropdown(value: 'لا توجد حالات متاحة'),
+                                    label: 'حالة المشكلة',
+                                  );
+                                }
+
+                                if (selectedSpecialty == null ||
+                                    !filteredStatuses.any((s) => s.id == selectedSpecialty!.id)) {
+                                  selectedSpecialty = filteredStatuses.firstWhere(
+                                    (s) => s.id == widget.issue.problemStatusId,
+                                    orElse: () => filteredStatuses.first,
+                                  );
+                                }
+
+                                return buildLabeledField(
+                                  field: buildDropdownButton<ProblemStatusModel>(
+                                    displayValue: selectedSpecialty!.name ?? '',
+                                    trailingText: null,
+                                    items: filteredStatuses,
+                                    onSelected: (status) {
+                                      setState(() {
+                                        selectedSpecialty = status;
+                                      });
+                                    },
+                                    itemBuilder: (status) => ListTile(
+                                      dense: true,
+                                      title: Text(
+                                        status.name ?? '',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
                                     ),
-                                    label: 'حالة المشكلة',
-                                  );
-                                },
-                              ),
-                              buildReadOnlyField(
-                                label: 'العنوان',
-                                controller: addressCtl,
-                              ),
-                              buildReadOnlyField(
-                                label: 'عنوان المشكلة',
-                                controller: issueTitleCtl,
-                              ),
-                              buildReadOnlyField(
-                                label: 'تفاصيل المشكلة',
-                                controller: issueDetailsCtl,
-                                maxLines: 4,
-                              ),
-                              buildEditableField(
-                                label: 'الحل المقترح',
-                                controller: solutionCtl,
-                                maxLines: 5,
-                                hintText: 'اكتب تفاصيل الحل هنا...',
-                              ),
-                              const SizedBox(height: 20),
-                              Column(
-                                children: [
-                                  const Text(
-                                    'رفع ملفات',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
                                   ),
-                                  const SizedBox(height: 10),
-                                  GestureDetector(
-                                    onTap: pickImage,
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        Image.asset(
-                                          'assets/images/pngs/upload_pic.png',
-                                          width: 50,
-                                          height: 50,
-                                        ),
-                                        if (selectedImages.isNotEmpty)
-                                          Positioned(
-                                            bottom: 0,
-                                            right: 0,
-                                            child: Container(
-                                              padding: const EdgeInsets.all(2),
-                                              decoration: const BoxDecoration(
-                                                color: Colors.white,
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: const Icon(
-                                                Icons.check_circle,
-                                                color: Colors.green,
-                                                size: 14,
-                                              ),
+                                  label: 'حالة المشكلة',
+                                );
+                              },
+                            ),
+                            buildReadOnlyField(
+                              label: 'العنوان',
+                              controller: addressCtl,
+                            ),
+                            buildReadOnlyField(
+                              label: 'عنوان المشكلة',
+                              controller: issueTitleCtl,
+                            ),
+                            buildReadOnlyField(
+                              label: 'تفاصيل المشكلة',
+                              controller: issueDetailsCtl,
+                              maxLines: 4,
+                            ),
+                            buildEditableField(
+                              label: 'الحل المقترح',
+                              controller: solutionCtl,
+                              maxLines: 5,
+                              hintText: 'اكتب تفاصيل الحل هنا...',
+                            ),
+                            const SizedBox(height: 20),
+                            Column(
+                              children: [
+                                const Text(
+                                  'رفع ملفات',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                GestureDetector(
+                                  onTap: pickImage,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/pngs/upload_pic.png',
+                                        width: 50,
+                                        height: 50,
+                                      ),
+                                      if (selectedImages.isNotEmpty)
+                                        Positioned(
+                                          bottom: 0,
+                                          right: 0,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(2),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.check_circle,
+                                              color: Colors.green,
+                                              size: 14,
                                             ),
                                           ),
-                                      ],
-                                    ),
+                                        ),
+                                    ],
                                   ),
-                                  if (selectedImages.isNotEmpty) ...[
-                                    const SizedBox(height: 12),
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
-                                      children: selectedImages
-                                          .asMap()
-                                          .entries
-                                          .map(
-                                            (entry) => GestureDetector(
-                                              onTap: () => showFullScreenImage(entry.value, entry.key),
-                                              child: Stack(
-                                                children: [
-                                                  ClipRRect(
-                                                    borderRadius: BorderRadius.circular(8),
-                                                    child: Image.file(
-                                                      entry.value,
-                                                      width: 60,
-                                                      height: 60,
-                                                      fit: BoxFit.cover,
-                                                    ),
+                                ),
+                                if (selectedImages.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: selectedImages
+                                        .asMap()
+                                        .entries
+                                        .map(
+                                          (entry) => GestureDetector(
+                                            onTap: () => showFullScreenImage(entry.value, entry.key),
+                                            child: Stack(
+                                              children: [
+                                                ClipRRect(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  child: Image.file(
+                                                    entry.value,
+                                                    width: 60,
+                                                    height: 60,
+                                                    fit: BoxFit.cover,
                                                   ),
-                                                  Positioned(
-                                                    top: 0,
-                                                    right: 0,
-                                                    child: GestureDetector(
-                                                      onTap: () {
-                                                        setState(() {
-                                                          selectedImages.removeAt(entry.key);
-                                                        });
-                                                      },
-                                                      child: Container(
-                                                        padding: const EdgeInsets.all(2),
-                                                        decoration: const BoxDecoration(
-                                                          color: Colors.red,
-                                                          shape: BoxShape.circle,
-                                                        ),
-                                                        child: const Icon(
-                                                          Icons.close,
-                                                          color: Colors.white,
-                                                          size: 16,
-                                                        ),
+                                                ),
+                                                Positioned(
+                                                  top: 0,
+                                                  right: 0,
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        selectedImages.removeAt(entry.key);
+                                                      });
+                                                    },
+                                                    child: Container(
+                                                      padding: const EdgeInsets.all(2),
+                                                      decoration: const BoxDecoration(
+                                                        color: Colors.red,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.close,
+                                                        color: Colors.white,
+                                                        size: 16,
                                                       ),
                                                     ),
                                                   ),
-                                                ],
-                                              ),
+                                                ),
+                                              ],
                                             ),
-                                          )
-                                          .toList(),
-                                    ),
-                                  ],
+                                          ),
+                                        )
+                                        .toList(),
+                                  ),
                                 ],
-                              ),
-                              const SizedBox(height: 30),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: buildBottomButton(
-                                label: (widget.issue.isArchive ?? false) ? 'إلغاء الأرشفة' : 'أرشيف',
-                                color: fieldBlue,
-                                onTap: toggleArchiveStatus,
-                              ),
+                              ],
                             ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: buildBottomButton(
-                                label: 'حفظ',
-                                color: fieldBlue,
-                                onTap: isLoading ? null : saveChanges,
-                              ),
-                            ),
+                            const SizedBox(height: 30),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+       Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  child: widget.issue.problemStatusId == 15
+      ? Row(
+          children: [
+            Expanded(
+              child: buildBottomButton(
+                label: (widget.issue.isArchive == true || widget.issue.statusIsArchieve == true)
+                    ? 'إلغاء الأرشفة'
+                    : 'أرشيف',
+                color: Colors.deepOrange.shade700,
+                onTap: isLoading ? null : toggleArchiveStatus,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: buildBottomButton(
+                label: 'حفظ',
+                color: fieldBlue,
+                onTap: isLoading ? null : saveChanges,
+              ),
+            ),
+          ],
+        )
+      : buildBottomButton(
+          label: 'حفظ',
+          color: fieldBlue,
+          onTap: isLoading ? null : saveChanges,
+        ),
+),                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

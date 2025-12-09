@@ -478,7 +478,7 @@ class _AddIssueFormState extends State<AddIssueForm> {
                             fontSize: 16.sp, fontWeight: FontWeight.bold)),
                     Switch(
                         value: isUrgent,
-                        activeThumbColor: Colors.red,
+                        activeTrackColor: Colors.red,
                         onChanged: (v) => setState(() => isUrgent = v)),
                   ],
                 ),

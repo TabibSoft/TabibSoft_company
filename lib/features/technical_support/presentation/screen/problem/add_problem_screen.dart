@@ -680,7 +680,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                 ),
                                 Switch(
                                   value: isUrgent,
-                                  activeThumbColor: Colors.red,
+                                  activeTrackColor: Colors.red,
                                   onChanged: (v) {
                                     setState(() {
                                       isUrgent = v;

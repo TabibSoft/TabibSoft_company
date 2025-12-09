@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/visit_model.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/screens/action_selection_screen.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/presentation/screens/visit_detail_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
@@ -322,13 +323,18 @@ class _VisitCard extends StatelessWidget {
   left: 115,
   bottom: -20,
   child: GestureDetector(
-    onTap: () async {
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ActionSelectionScreen(visit: visit),
-        ),
-      );
+   onTap: () async {
+  final result = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => VisitDetailScreen(visit: visit),
+    ),
+  );
+
+  if (result == true && context.mounted) {
+    context.read<VisitCubit>().loadVisits();
+  }
+
       
       // إذا تم إتمام الزيارة، قم بتحديث القائمة
       if (result == true && context.mounted) {

@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/problem_details_screen.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/widget/new/full_screen_image_viewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:tabib_soft_company/core/networking/api_service.dart';
-import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
 import 'package:dio/dio.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/engineer_model.dart';
@@ -52,7 +52,6 @@ class TechCardContent extends StatelessWidget {
       return null;
     })();
 
-    // التحقق من البيانات المطلوبة
     if (problemId == null ||
         engineerId.isEmpty ||
         issue.customerId == null ||
@@ -61,14 +60,15 @@ class TechCardContent extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text(
-                  'خطأ: لا يمكن تعيين المشكلة. تأكد من توفر جميع البيانات المطلوبة')),
+            content: Text(
+              'خطأ: لا يمكن تعيين المشكلة. تأكد من توفر جميع البيانات المطلوبة',
+            ),
+          ),
         );
       }
       return;
     }
 
-    // إظهار مؤشر التحميل
     if (context.mounted) {
       showDialog(
         context: context,
@@ -91,12 +91,10 @@ class TechCardContent extends StatelessWidget {
         customerId: issue.customerId!,
       );
 
-      // إغلاق مؤشر التحميل
       if (context.mounted) {
         Navigator.of(context).pop();
       }
 
-      // التحقق من أن الـ context لا يزال صالحاً
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -106,11 +104,9 @@ class TechCardContent extends StatelessWidget {
           ),
         );
 
-        // تحديث القائمة بالكامل
         context.read<CustomerCubit>().refreshAllData();
       }
     } on DioException catch (e) {
-      // إغلاق مؤشر التحميل
       if (context.mounted) {
         Navigator.of(context).pop();
       }
@@ -130,7 +126,6 @@ class TechCardContent extends StatelessWidget {
         );
       }
     } catch (e) {
-      // إغلاق مؤشر التحميل
       if (context.mounted) {
         Navigator.of(context).pop();
       }
@@ -147,7 +142,6 @@ class TechCardContent extends StatelessWidget {
     }
   }
 
-  // حوار تأكيد التحويل الاحترافي
   Future<bool?> _showConfirmationDialog(
     BuildContext context,
     EngineerModel engineer,
@@ -192,7 +186,6 @@ class TechCardContent extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // أيقونة التأكيد
                   Container(
                     padding: EdgeInsets.all(16.r),
                     decoration: BoxDecoration(
@@ -214,10 +207,7 @@ class TechCardContent extends StatelessWidget {
                       size: 48.r,
                     ),
                   ),
-
                   SizedBox(height: 24.h),
-
-                  // عنوان الحوار
                   Text(
                     'تأكيد التحويل',
                     style: TextStyle(
@@ -227,10 +217,7 @@ class TechCardContent extends StatelessWidget {
                     ),
                     textAlign: TextAlign.center,
                   ),
-
                   SizedBox(height: 16.h),
-
-                  // محتوى الحوار
                   Container(
                     padding: EdgeInsets.all(16.w),
                     decoration: BoxDecoration(
@@ -252,10 +239,7 @@ class TechCardContent extends StatelessWidget {
                           ),
                           textAlign: TextAlign.center,
                         ),
-
                         SizedBox(height: 16.h),
-
-                        // معلومات المهندس
                         Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: 16.w,
@@ -321,13 +305,9 @@ class TechCardContent extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   SizedBox(height: 28.h),
-
-                  // الأزرار
                   Row(
                     children: [
-                      // زر الإلغاء
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
@@ -344,7 +324,8 @@ class TechCardContent extends StatelessWidget {
                               onTap: () =>
                                   Navigator.of(dialogContext).pop(false),
                               child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 14.h),
+                                padding:
+                                    EdgeInsets.symmetric(vertical: 14.h),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -369,10 +350,7 @@ class TechCardContent extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       SizedBox(width: 12.w),
-
-                      // زر التأكيد
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
@@ -382,7 +360,8 @@ class TechCardContent extends StatelessWidget {
                             borderRadius: BorderRadius.circular(16.r),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF20AAC9).withOpacity(0.4),
+                                color: const Color(0xFF20AAC9)
+                                    .withOpacity(0.4),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -395,7 +374,8 @@ class TechCardContent extends StatelessWidget {
                               onTap: () =>
                                   Navigator.of(dialogContext).pop(true),
                               child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 14.h),
+                                padding:
+                                    EdgeInsets.symmetric(vertical: 14.h),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -432,7 +412,6 @@ class TechCardContent extends StatelessWidget {
   }
 
   void _showEngineerSelectionDialog(BuildContext context) {
-    // تحميل المهندسين
     context.read<EngineerCubit>().fetchEngineers();
 
     showDialog(
@@ -447,8 +426,9 @@ class TechCardContent extends StatelessWidget {
             if (state.status == EngineerStatus.failure) {
               return AlertDialog(
                 title: const Text('خطأ'),
-                content:
-                    Text('فشل تحميل قائمة المهندسين: ${state.errorMessage}'),
+                content: Text(
+                  'فشل تحميل قائمة المهندسين: ${state.errorMessage}',
+                ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(),
@@ -498,7 +478,8 @@ class TechCardContent extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(
-                          color: const Color(0xFF20AAC9).withOpacity(0.3),
+                          color:
+                              const Color(0xFF20AAC9).withOpacity(0.3),
                         ),
                       ),
                       child: ListTile(
@@ -538,22 +519,17 @@ class TechCardContent extends StatelessWidget {
                           color: const Color(0xFF20AAC9),
                         ),
                         onTap: () async {
-                          // إغلاق قائمة المهندسين
                           Navigator.of(dialogContext).pop();
 
-                          // استخدام context الأصلي (من الويدجت الرئيسي)
                           if (!context.mounted) return;
 
-                          // إظهار حوار التأكيد
                           final confirmed = await _showConfirmationDialog(
                             context,
                             engineer,
                           );
 
-                          // التحقق مرة أخرى بعد عودة الحوار
                           if (!context.mounted) return;
 
-                          // إذا تم التأكيد، قم بالتحويل
                           if (confirmed == true) {
                             _assignProblem(context, engineer.id);
                           }
@@ -576,7 +552,217 @@ class TechCardContent extends StatelessWidget {
     );
   }
 
-  Color _hexToColor(String? hex, {Color fallback = const Color(0xFF6BABFA)}) {
+  void _showImageFullScreen(BuildContext context, String url) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Stack(
+            children: [
+              Center(
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: Image.network(
+                    url,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 40.h,
+                right: 20.w,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    iconSize: 28.r,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+ void _showImagesBottomSheet(BuildContext context) {
+  final images = issue.images;
+  if (images == null || images.isEmpty) return;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    enableDrag: true,
+    builder: (context) => DraggableScrollableSheet(
+      initialChildSize: 0.65,     // يبدأ من ثلثي الشاشة تقريبًا
+      minChildSize: 0.4,          // أقل ارتفاع ممكن
+      maxChildSize: 0.92,         // أقصى ارتفاع (يمكن السحب للأعلى)
+      builder: (context, scrollController) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          children: [
+            // شريط السحب + العنوان
+            Padding(
+              padding: EdgeInsets.only(top: 12.h, bottom: 8.h),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 5.h,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    'صور المشكلة • ${images.length}',
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF104D9D),
+                    ),
+                  ),
+                  Divider(
+                    height: 32.h,
+                    thickness: 1,
+                    indent: 60.w,
+                    endIndent: 60.w,
+                    color: Colors.grey[300],
+                  ),
+                ],
+              ),
+            ),
+
+            // GridView مع Scroll داخلي
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: GridView.builder(
+                  controller: scrollController, // مهم جدًا للـ scroll الداخلي
+                  padding: EdgeInsets.only(bottom: 20.h, top: 8.h),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 14.w,
+                    mainAxisSpacing: 14.h,
+                    childAspectRatio: 1.0,
+                  ),
+                  itemCount: images.length,
+                  itemBuilder: (context, index) {
+                    final String imageUrl = images[index].toString();
+
+                    return Hero(
+                      tag: 'problem_image_$index',
+                      child: Material(
+                        borderRadius: BorderRadius.circular(20.r),
+                        elevation: 8,
+                        shadowColor: Colors.black.withOpacity(0.2),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20.r),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20.r),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                PageRouteBuilder(
+                                  opaque: false,
+                                  barrierColor: Colors.black.withOpacity(0.95),
+                                  transitionDuration: const Duration(milliseconds: 300),
+                                  pageBuilder: (_, __, ___) => FullScreenImageViewer(
+                                    imageUrl: imageUrl,
+                                    heroTag: 'problem_image_$index',
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      color: Colors.grey[100],
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 3,
+                                          valueColor: const AlwaysStoppedAnimation(Color(0xFF20AAC9)),
+                                          value: loadingProgress.expectedTotalBytes != null
+                                              ? loadingProgress.cumulativeBytesLoaded /
+                                                  loadingProgress.expectedTotalBytes!
+                                              : null,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: Colors.grey[200],
+                                    child: Icon(Icons.image_not_supported_outlined,
+                                        size: 50.r, color: Colors.grey[500]),
+                                  ),
+                                ),
+                                // تدرج + رقم الصورة
+                                Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.transparent,
+                                          Colors.black.withOpacity(0.7),
+                                        ],
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '${index + 1}',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18.sp,
+                                        fontWeight: FontWeight.bold,
+                                        shadows: const [
+                                          Shadow(
+                                            blurRadius: 6,
+                                            color: Colors.black54,
+                                            offset: Offset(0, 1),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}  Color _hexToColor(String? hex, {Color fallback = const Color(0xFF6BABFA)}) {
     if (hex == null || hex.isEmpty) return fallback;
     final cleaned = hex.replaceAll('#', '').trim();
     try {
@@ -601,7 +787,6 @@ class TechCardContent extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // الخلفية الزرقاء الخارجية
           Positioned(
             left: 0,
             top: 13.h,
@@ -621,22 +806,21 @@ class TechCardContent extends StatelessWidget {
               ),
             ),
           ),
-
-          // البطاقة البيضاء الرئيسية
           Padding(
             padding: EdgeInsets.only(top: 23.h, left: 20.w, right: 0.w),
             child: Container(
               height: 250.h,
-              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 30.h),
+              padding:
+                  EdgeInsets.symmetric(horizontal: 18.w, vertical: 30.h),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(30.r),
-                border: Border.all(color: const Color(0xff20AAC9), width: 4),
+                border:
+                    Border.all(color: const Color(0xff20AAC9), width: 4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // الاسم + أيقونة العميل + أيقونة التحويل
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -681,12 +865,33 @@ class TechCardContent extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (issue.images != null && issue.images!.isNotEmpty)
+                        GestureDetector(
+                          onTap: () => _showImagesBottomSheet(context),
+                          child: Container(
+                            padding: EdgeInsets.all(6.r),
+                            margin: EdgeInsets.only(left: 8.w),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.12),
+                                  offset: Offset(1.w, 2.h),
+                                  blurRadius: 4.r,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.image_rounded,
+                              color: const Color(0xFF20AAC9),
+                              size: 24.r,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
-
                   SizedBox(height: 8.h),
-
-                  // رقم الهاتف + أيقونة الاتصال
                   GestureDetector(
                     onTap: () => _makePhoneCall(context),
                     child: Row(
@@ -712,10 +917,7 @@ class TechCardContent extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   SizedBox(height: 10.h),
-
-                  // المنتجات أو نوع الحالة
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -741,8 +943,9 @@ class TechCardContent extends StatelessWidget {
                               Wrap(
                                 spacing: 8.w,
                                 runSpacing: 6.h,
-                                children:
-                                    issue.products!.take(3).map((product) {
+                                children: issue.products!
+                                    .take(3)
+                                    .map((product) {
                                   final String name = product is Map
                                       ? (product['name'] ??
                                           product['productName'] ??
@@ -752,12 +955,18 @@ class TechCardContent extends StatelessWidget {
 
                                   return Container(
                                     padding: EdgeInsets.symmetric(
-                                        horizontal: 12.w, vertical: 6.h),
+                                      horizontal: 12.w,
+                                      vertical: 6.h,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: statusColor.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(20.r),
+                                      color:
+                                          statusColor.withOpacity(0.15),
+                                      borderRadius:
+                                          BorderRadius.circular(20.r),
                                       border: Border.all(
-                                          color: statusColor, width: 1.2),
+                                        color: statusColor,
+                                        width: 1.2,
+                                      ),
                                     ),
                                     child: Text(
                                       name,
@@ -774,7 +983,8 @@ class TechCardContent extends StatelessWidget {
                               Row(
                                 children: [
                                   Text(
-                                    issue.problemtype ?? 'نوع التخصص غير متاح',
+                                    issue.problemtype ??
+                                        'نوع التخصص غير متاح',
                                     style: TextStyle(
                                       fontSize: 17.sp,
                                       fontWeight: FontWeight.bold,
@@ -788,9 +998,13 @@ class TechCardContent extends StatelessWidget {
                                       fontSize: 14.sp,
                                       fontWeight: FontWeight.w500,
                                       color: const Color.fromARGB(
-                                          255, 231, 110, 110),
+                                        255,
+                                        231,
+                                        110,
+                                        110,
+                                      ),
                                     ),
-                                  )
+                                  ),
                                 ],
                               ),
                             if (issue.products != null &&
@@ -811,10 +1025,7 @@ class TechCardContent extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   SizedBox(height: 12.h),
-
-                  // عنوان المشكلة أو تفاصيلها
                   Row(
                     children: [
                       Icon(
@@ -841,8 +1052,6 @@ class TechCardContent extends StatelessWidget {
               ),
             ),
           ),
-
-          // زر "تفاصيل" في الأسفل
           Positioned(
             left: 110.w,
             bottom: -5.h,
@@ -868,7 +1077,8 @@ class TechCardContent extends StatelessWidget {
                       () async {
                         final result = await Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => ProblemDetailsScreen(issue: issue),
+                            builder: (_) =>
+                                ProblemDetailsScreen(issue: issue),
                           ),
                         );
 
@@ -877,8 +1087,10 @@ class TechCardContent extends StatelessWidget {
                         }
                       },
                   child: Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 36.w, vertical: 12.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 36.w,
+                      vertical: 12.h,
+                    ),
                     child: Text(
                       'تفاصيل',
                       style: TextStyle(

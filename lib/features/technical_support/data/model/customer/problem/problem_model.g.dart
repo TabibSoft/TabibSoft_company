@@ -26,13 +26,11 @@ ProblemModel _$ProblemModelFromJson(Map<String, dynamic> json) => ProblemModel(
       statusColor: json['statusColor'] as String?,
       isUrgent: json['isUrgent'] as bool?,
       isArchive: json['isArchive'] as bool?,
+      statusIsArchieveRaw: json['statusIsArchieve'] as bool?,
       products: json['products'] as List<dynamic>?,
-      customerSupport: (json['customerSupport'] as List<dynamic>?)
-          ?.map((e) => e as Map<String, dynamic>)
-          .toList(),
-      underTransactions: (json['underTransactions'] as List<dynamic>?)
-          ?.map((e) => e as Map<String, dynamic>)
-          .toList(),
+      images: json['images'] as List<dynamic>?,
+      customerSupport: json['customerSupport'] as List<dynamic>?,
+      underTransactions: json['underTransactions'] as List<dynamic>?,
     );
 
 Map<String, dynamic> _$ProblemModelToJson(ProblemModel instance) =>
@@ -56,7 +54,9 @@ Map<String, dynamic> _$ProblemModelToJson(ProblemModel instance) =>
       'statusColor': instance.statusColor,
       'isUrgent': instance.isUrgent,
       'isArchive': instance.isArchive,
+      'statusIsArchieve': instance.statusIsArchieveRaw,
       'products': instance.products,
+      'images': instance.images,
       'customerSupport': instance.customerSupport,
       'underTransactions': instance.underTransactions,
     };

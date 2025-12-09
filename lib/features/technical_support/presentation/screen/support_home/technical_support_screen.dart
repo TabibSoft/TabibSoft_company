@@ -366,23 +366,18 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
                                   final issue = filteredIssues[index];
                                   return TechCardContent(
                                     issue: issue,
-                                    onDetailsPressed: () async {
-                                      final result =
-                                          await Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => ProblemDetailsScreen(
-                                              issue: issue),
-                                        ),
-                                      );
+    onDetailsPressed: () async {
+  final result = await Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => ProblemDetailsScreen(issue: issue),
+    ),
+  );
 
-                                      // تحديث البيانات عند الرجوع
-                                      if (result == true && mounted) {
-                                        context
-                                            .read<CustomerCubit>()
-                                            .refreshAllData();
-                                      }
-                                    },
-                                  );
+  // إذا رجع true → يعني تم حفظ تغييرات
+  if (result == true && mounted) {
+    context.read<CustomerCubit>().refreshAllData();
+  }
+},                                  );
                                 },
                               ),
                             );

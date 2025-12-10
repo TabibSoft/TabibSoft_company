@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:tabib_soft_company/features/modirator/export.dart';
 
 class AddIssueForm extends StatefulWidget {
@@ -88,7 +89,7 @@ class _AddIssueFormState extends State<AddIssueForm> {
   bool validatePhoneNumber(String phone) {
     // إزالة المسافات والأحرف غير الرقمية
     String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    
+
     // التحقق من أن الرقم يبدأ بـ 01 وطوله 11 رقم
     if (cleanPhone.length != 11) {
       Fluttertoast.showToast(
@@ -98,7 +99,7 @@ class _AddIssueFormState extends State<AddIssueForm> {
       );
       return false;
     }
-    
+
     if (!cleanPhone.startsWith('01')) {
       Fluttertoast.showToast(
         msg: 'رقم الهاتف يجب أن يبدأ بـ 01',
@@ -107,7 +108,7 @@ class _AddIssueFormState extends State<AddIssueForm> {
       );
       return false;
     }
-    
+
     return true;
   }
 
@@ -238,7 +239,8 @@ class _AddIssueFormState extends State<AddIssueForm> {
 
   void _saveProblem() {
     // ✅ التحقق من رقم الهاتف إذا كان موجوداً
-    if (_phoneController.text.isNotEmpty && !validatePhoneNumber(_phoneController.text)) {
+    if (_phoneController.text.isNotEmpty &&
+        !validatePhoneNumber(_phoneController.text)) {
       return;
     }
 
@@ -356,11 +358,21 @@ class _AddIssueFormState extends State<AddIssueForm> {
                   }),
                 )),
             SizedBox(height: 16.h),
+
+            // ====== رقم التواصل (محدود 11 رقم — أرقام فقط) ======
             _buildLabelledRow(
                 label: 'رقم التواصل',
-                child: _buildTextField(_phoneController,
-                    hint: 'رقم الهاتف', keyboardType: TextInputType.phone)),
+                child: _buildTextField(
+                  _phoneController,
+                  hint: 'رقم الهاتف',
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(11),
+                  ],
+                )),
             SizedBox(height: 16.h),
+
             _buildLabelledRow(
                 label: 'نوع المشكلة',
                 child: _buildAutocompleteDropdown(
@@ -615,8 +627,12 @@ class _AddIssueFormState extends State<AddIssueForm> {
     );
   }
 
+  /// Updated helper: supports inputFormatters and keyboardType.
   Widget _buildTextField(TextEditingController controller,
-      {String? hint, int maxLines = 1, TextInputType? keyboardType}) {
+      {String? hint,
+      int maxLines = 1,
+      TextInputType? keyboardType,
+      List<TextInputFormatter>? inputFormatters}) {
     return Container(
       decoration: BoxDecoration(
           color: fieldColor, borderRadius: BorderRadius.circular(12)),
@@ -624,12 +640,15 @@ class _AddIssueFormState extends State<AddIssueForm> {
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         style:
             const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.white38),
             border: InputBorder.none,
+            // لا نعرض عداد الطول حتى لا يشوش التصميم
+            counterText: '',
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 15, vertical: 12)),
       ),

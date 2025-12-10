@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -95,7 +96,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
   bool validatePhoneNumber(String phone) {
     // إزالة المسافات والأحرف غير الرقمية
     String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    
+
     // التحقق من أن الرقم يبدأ بـ 01 وطوله 11 رقم
     if (cleanPhone.length != 11) {
       Fluttertoast.showToast(
@@ -105,7 +106,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
       );
       return false;
     }
-    
+
     if (!cleanPhone.startsWith('01')) {
       Fluttertoast.showToast(
         msg: 'رقم الهاتف يجب أن يبدأ بـ 01',
@@ -114,7 +115,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
       );
       return false;
     }
-    
+
     return true;
   }
 
@@ -275,7 +276,8 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
 
   void saveProblem() {
     // ✅ التحقق من رقم الهاتف إذا كان موجوداً
-    if (phoneController.text.isNotEmpty && !validatePhoneNumber(phoneController.text)) {
+    if (phoneController.text.isNotEmpty &&
+        !validatePhoneNumber(phoneController.text)) {
       return;
     }
 
@@ -530,16 +532,24 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                           ),
                         ),
                         SizedBox(height: 16.h),
+
+                        // ====== رقم التواصل (محدود 11 رقم — أرقام فقط) ======
                         buildLabelledRow(
                           label: 'رقم التواصل',
                           child: buildTextField(
                             controller: phoneController,
                             enabled: true,
-                            hint: 'رقم الهاتف',
+                            hint: '01XXXXXXXXX',
                             keyboardType: TextInputType.phone,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(11),
+                            ],
+                            maxLength: 11,
                           ),
                         ),
                         SizedBox(height: 16.h),
+
                         buildLabelledRow(
                           label: 'نوع المشكلة',
                           child: buildAutocompleteDropdown(
@@ -855,12 +865,15 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
     );
   }
 
+  /// Updated helper: supports inputFormatters and maxLength
   Widget buildTextField({
     required TextEditingController controller,
     bool enabled = true,
     String? hint,
     int maxLines = 1,
     TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -872,6 +885,8 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
         enabled: enabled,
         maxLines: maxLines,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        maxLength: maxLength,
         style:
             const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         decoration: InputDecoration(
@@ -880,6 +895,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+          counterText: '', // hide built-in counter to keep UI clean
         ),
       ),
     );
@@ -951,6 +967,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
 }
 
 // AddCustomerBottomSheet
+
 class AddCustomerBottomSheet extends StatefulWidget {
   final VoidCallback onCustomerAdded;
 
@@ -967,7 +984,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
   final _locationController = TextEditingController();
   final _engineerController = TextEditingController();
   final _productController = TextEditingController();
-  
+
   bool _showEngineerDropdown = false;
   bool _showProductDropdown = false;
   String? _selectedEngineerId;
@@ -993,7 +1010,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
   // ✅ دالة التحقق من صحة رقم الهاتف
   bool validatePhoneNumber(String phone) {
     String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    
+
     if (cleanPhone.length != 11) {
       Fluttertoast.showToast(
         msg: 'رقم الهاتف يجب أن يكون 11 رقم',
@@ -1002,7 +1019,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
       );
       return false;
     }
-    
+
     if (!cleanPhone.startsWith('01')) {
       Fluttertoast.showToast(
         msg: 'رقم الهاتف يجب أن يبدأ بـ 01',
@@ -1011,7 +1028,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
       );
       return false;
     }
-    
+
     return true;
   }
 
@@ -1023,11 +1040,13 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
       }
 
       final customer = AddCustomerModel(
-        name: _nameController.text,
-        telephone: _phoneController.text,
+        name: _nameController.text.trim(),
+        telephone: _phoneController.text.trim(),
         engineerId: _selectedEngineerId ?? '',
         productId: _selectedProductId ?? '',
-        location: _locationController.text.isNotEmpty ? _locationController.text : null,
+        location: _locationController.text.isNotEmpty
+            ? _locationController.text.trim()
+            : null,
         createdDate: DateTime.now(),
       );
       context.read<AddCustomerCubit>().addCustomer(customer);
@@ -1059,7 +1078,14 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
     );
   }
 
-  Widget boxedText(TextEditingController controller, {TextInputType? type}) {
+  /// تم تعديل boxedText ليأخذ inputFormatters و maxLength اختياريًا
+  Widget boxedText(
+    TextEditingController controller, {
+    TextInputType? type,
+    List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
+    String? hint,
+  }) {
     return Container(
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -1070,10 +1096,16 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
       child: TextFormField(
         controller: controller,
         keyboardType: type,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        decoration: const InputDecoration(
+        inputFormatters: inputFormatters,
+        maxLength: maxLength,
+        style:
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Colors.white70),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          counterText: '', // لإخفاء عداد الطول
         ),
         validator: (value) =>
             (value == null || value.trim().isEmpty) ? 'مطلوب' : null,
@@ -1183,7 +1215,8 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         child: Text(
           'حفظ',
@@ -1242,7 +1275,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
                     ),
                   ),
                   SizedBox(height: 20.h),
-                  
+
                   Text(
                     'إضافة عميل جديد',
                     style: TextStyle(
@@ -1252,27 +1285,37 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
                     ),
                   ),
                   SizedBox(height: 24.h),
-                  
+
                   buildLabelledRow(
                     label: 'اسم العميل',
                     child: boxedText(_nameController),
                   ),
-                  
+
+                  // here: phone field limited to digits only and max 11
                   buildLabelledRow(
                     label: 'رقم التواصل',
-                    child: boxedText(_phoneController, type: TextInputType.phone),
+                    child: boxedText(
+                      _phoneController,
+                      type: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      maxLength: 11,
+                      hint: '01XXXXXXXXX',
+                    ),
                   ),
-                  
+
                   buildLabelledRow(
                     label: 'الموقع',
                     child: boxedText(_locationController),
                   ),
-                  
+
                   buildLabelledRow(
                     label: 'المهندس',
                     child: _engineerDropdown(),
                   ),
-                  
+
                   if (_showEngineerDropdown)
                     Container(
                       height: 200.h,
@@ -1285,7 +1328,8 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
                       child: BlocBuilder<EngineerCubit, EngineerState>(
                         builder: (context, state) {
                           if (state.status == EngineerStatus.loading) {
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                                child: CircularProgressIndicator());
                           } else if (state.status == EngineerStatus.success) {
                             return ListView.builder(
                               itemCount: state.engineers.length,
@@ -1304,17 +1348,18 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
                               },
                             );
                           } else {
-                            return const Center(child: Text('خطأ في تحميل المهندسين'));
+                            return const Center(
+                                child: Text('خطأ في تحميل المهندسين'));
                           }
                         },
                       ),
                     ),
-                  
+
                   buildLabelledRow(
                     label: 'التخصص',
                     child: _productDropdown(),
                   ),
-                  
+
                   if (_showProductDropdown)
                     Container(
                       height: 200.h,
@@ -1327,7 +1372,8 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
                       child: BlocBuilder<ProductCubit, ProductState>(
                         builder: (context, state) {
                           if (state.status == ProductStatus.loading) {
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                                child: CircularProgressIndicator());
                           } else if (state.status == ProductStatus.success) {
                             return ListView.builder(
                               itemCount: state.products.length,
@@ -1346,18 +1392,20 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
                               },
                             );
                           } else {
-                            return const Center(child: Text('خطأ في تحميل التخصصات'));
+                            return const Center(
+                                child: Text('خطأ في تحميل التخصصات'));
                           }
                         },
                       ),
                     ),
-                  
+
                   SizedBox(height: 16.h),
-                  
+
                   BlocBuilder<AddCustomerCubit, AddCustomerState>(
                     builder: (context, state) {
-                      final isLoading = state.status == AddCustomerStatus.loading;
-                      
+                      final isLoading =
+                          state.status == AddCustomerStatus.loading;
+
                       return Container(
                         width: double.infinity,
                         height: 54.h,
@@ -1406,7 +1454,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet> {
                       );
                     },
                   ),
-                  
+
                   SizedBox(height: 20.h),
                 ],
               ),

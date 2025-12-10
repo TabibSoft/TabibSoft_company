@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter/services.dart';
 import 'package:tabib_soft_company/features/modirator/export.dart';
 
 class AddCustomerForm extends StatefulWidget {
@@ -42,43 +42,28 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
     super.dispose();
   }
 
-  // ✅ دالة التحقق من صحة رقم الهاتف
-  bool validatePhoneNumber(String phone) {
-    // إزالة المسافات والأحرف غير الرقمية
-    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    
-    // التحقق من أن الرقم يبدأ بـ 01 وطوله 11 رقم
-    if (cleanPhone.length != 11) {
-      Fluttertoast.showToast(
-        msg: 'رقم الهاتف يجب أن يكون 11 رقم',
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
-      return false;
-    }
-    
-    if (!cleanPhone.startsWith('01')) {
-      Fluttertoast.showToast(
-        msg: 'رقم الهاتف يجب أن يبدأ بـ 01',
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
-      return false;
-    }
-    
-    return true;
+  bool _isPhoneValid(String phone) {
+    final normalized = phone.trim();
+    final regex = RegExp(r'^01\d{9}$'); // 11 digits total
+    return regex.hasMatch(normalized);
   }
 
   void _onSave() {
     if (_formKey.currentState!.validate()) {
-      // ✅ التحقق من رقم الهاتف قبل الحفظ
-      if (!validatePhoneNumber(_phone.text)) {
+      final phoneText = _phone.text.trim();
+
+      if (!_isPhoneValid(phoneText)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('رقم التواصل يجب أن يبدأ بـ 01 ويكون 11 رقمًا'),
+          ),
+        );
         return;
       }
 
       final customer = AddCustomerModel(
         name: _name.text,
-        telephone: _phone.text,
+        telephone: phoneText,
         engineerId: _selectedEngineerId ?? '',
         productId: _selectedProductId ?? '',
         location: _location.text.isNotEmpty ? _location.text : null,
@@ -108,27 +93,48 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
         child: Column(
           children: [
             RowField(label: 'اسم العميل', child: boxedText(_name)),
+
+            // ====================== رقم التواصل ======================
             RowField(
-                label: 'رقم التواصل',
-                child: boxedText(_phone, type: TextInputType.phone)),
+              label: 'رقم التواصل',
+              child: TextFormField(
+                controller: _phone,
+                keyboardType: TextInputType.phone,
+                maxLength: 11,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly, // أرقام فقط
+                  LengthLimitingTextInputFormatter(11), // يمنع أكثر من 11 رقم
+                ],
+                decoration: InputDecoration(
+                  counterText: "",
+                  filled: true,
+                  fillColor: const Color(0xff104D9D),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  hintText: "رقم التواصل",
+                  hintStyle: const TextStyle(color: Colors.white70),
+                ),
+                style: const TextStyle(color: Colors.white),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'يرجى إدخال رقم التواصل';
+                  }
+                  if (!_isPhoneValid(value)) {
+                    return 'يجب أن يبدأ بـ 01 ويكون 11 رقمًا';
+                  }
+                  return null;
+                },
+              ),
+            ),
+
             RowField(label: 'الموقع', child: boxedText(_location)),
             RowField(label: 'المهندس', child: _engineerDropdown()),
+
             if (_showEngineerDropdown)
-              Container(
+              SizedBox(
                 height: 200.h,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
                 child: BlocBuilder<EngineerCubit, EngineerState>(
                   builder: (context, state) {
                     if (state.status == EngineerStatus.loading) {
@@ -151,30 +157,17 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
                         },
                       );
                     } else {
-                      return const Center(
-                        child: Text('خطأ في تحميل المهندسين'),
-                      );
+                      return const Text('خطأ في تحميل المهندسين');
                     }
                   },
                 ),
               ),
+
             RowField(label: 'التخصص', child: _productDropdown()),
+
             if (_showProductDropdown)
-              Container(
+              SizedBox(
                 height: 200.h,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
                 child: BlocBuilder<ProductCubit, ProductState>(
                   builder: (context, state) {
                     if (state.status == ProductStatus.loading) {
@@ -197,23 +190,14 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
                         },
                       );
                     } else {
-                      return const Center(
-                        child: Text('خطأ في تحميل المنتجات'),
-                      );
+                      return const Text('خطأ في تحميل المنتجات');
                     }
                   },
                 ),
               ),
+
             SizedBox(height: 16.h),
-            BlocBuilder<AddCustomerCubit, AddCustomerState>(
-              builder: (context, state) {
-                final isLoading = state.status == AddCustomerStatus.loading;
-                return saveButton(
-                  onPressed: isLoading ? null : _onSave,
-                  isLoading: isLoading,
-                );
-              },
-            ),
+            saveButton(onPressed: _onSave),
           ],
         ),
       ),
@@ -235,21 +219,11 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
           color: const Color(0xff104D9D),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                _engineer.text.isEmpty ? 'اختر المهندس' : _engineer.text,
-                style: TextStyle(
-                  color: _engineer.text.isEmpty ? Colors.white70 : Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const Icon(Icons.arrow_drop_down, color: Colors.white, size: 30),
-          ],
+        child: Center(
+          child: Text(
+            _engineer.text.isEmpty ? 'اختر المهندس' : _engineer.text,
+            style: const TextStyle(color: Colors.white),
+          ),
         ),
       ),
     );
@@ -270,128 +244,12 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
           color: const Color(0xff104D9D),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                _product.text.isEmpty ? 'اختر التخصص' : _product.text,
-                style: TextStyle(
-                  color: _product.text.isEmpty ? Colors.white70 : Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const Icon(Icons.arrow_drop_down, color: Colors.white, size: 30),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget saveButton({required VoidCallback? onPressed, bool isLoading = false}) {
-    return Container(
-      width: double.infinity,
-      height: 54.h,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF28B5E1), Color(0xFF20AAC9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF28B5E1).withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+        child: Center(
+          child: Text(
+            _product.text.isEmpty ? 'اختر التخصص' : _product.text,
+            style: const TextStyle(color: Colors.white),
           ),
         ),
-        child: isLoading
-            ? const SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 3,
-                ),
-              )
-            : Text(
-                'حفظ',
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-      ),
-    );
-  }
-}
-
-// Widget helper للـ boxedText
-Widget boxedText(TextEditingController controller, {TextInputType? type}) {
-  return Container(
-    height: 52,
-    padding: const EdgeInsets.symmetric(horizontal: 14),
-    decoration: BoxDecoration(
-      color: const Color(0xff104D9D),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: TextFormField(
-      controller: controller,
-      keyboardType: type,
-      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      decoration: const InputDecoration(
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.symmetric(vertical: 15),
-      ),
-      validator: (value) =>
-          (value == null || value.trim().isEmpty) ? 'مطلوب' : null,
-    ),
-  );
-}
-
-// Widget helper للـ RowField
-class RowField extends StatelessWidget {
-  final String label;
-  final Widget child;
-
-  const RowField({super.key, required this.label, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(child: child),
-          SizedBox(width: 12.w),
-          SizedBox(
-            width: 100.w,
-            child: Text(
-              label,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

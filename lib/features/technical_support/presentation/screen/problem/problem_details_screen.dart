@@ -45,8 +45,10 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     super.initState();
     nameCtl = TextEditingController(text: widget.issue.customerName ?? '');
     addressCtl = TextEditingController(text: widget.issue.adderss ?? '');
-    issueTitleCtl = TextEditingController(text: widget.issue.problemAddress ?? '');
-    issueDetailsCtl = TextEditingController(text: widget.issue.problemDetails ?? '');
+    issueTitleCtl =
+        TextEditingController(text: widget.issue.problemAddress ?? '');
+    issueDetailsCtl =
+        TextEditingController(text: widget.issue.problemDetails ?? '');
     contactCtl = TextEditingController(text: widget.issue.customerPhone ?? '');
     solutionCtl = TextEditingController();
     specialtyCtl = TextEditingController(
@@ -108,9 +110,11 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                   ),
                   child: const Icon(Icons.camera_alt, color: checkColor),
                 ),
-                title: const Text('التقاط صورة', style: TextStyle(fontWeight: FontWeight.w600)),
+                title: const Text('التقاط صورة',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
                 onTap: () async {
-                  Navigator.pop(context, await picker.pickImage(source: ImageSource.camera));
+                  Navigator.pop(context,
+                      await picker.pickImage(source: ImageSource.camera));
                 },
               ),
               ListTile(
@@ -122,9 +126,11 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                   ),
                   child: const Icon(Icons.photo_library, color: checkColor),
                 ),
-                title: const Text('اختيار من المعرض', style: TextStyle(fontWeight: FontWeight.w600)),
+                title: const Text('اختيار من المعرض',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
                 onTap: () async {
-                  Navigator.pop(context, await picker.pickImage(source: ImageSource.gallery));
+                  Navigator.pop(context,
+                      await picker.pickImage(source: ImageSource.gallery));
                 },
               ),
               const SizedBox(height: 10),
@@ -231,7 +237,8 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
 
   // دالة عرض صور customerSupportImages
   void showCustomerSupportImages() {
-    if (widget.issue.customerSupport == null || widget.issue.customerSupport!.isEmpty) {
+    if (widget.issue.customerSupport == null ||
+        widget.issue.customerSupport!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('لا توجد صور متاحة')),
       );
@@ -269,7 +276,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
               ),
               const SizedBox(height: 12),
               const Text(
-                'صور دعم العملاء',
+                'صور تاريخ المعاملات',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -288,7 +295,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                     final img = images[index];
                     // عدل المفتاح حسب structure الـ API
                     final url = img['image'] ?? img['url'] ?? img['path'] ?? '';
-                    
+
                     if (url.toString().isEmpty) {
                       return const SizedBox();
                     }
@@ -391,7 +398,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                               borderRadius: BorderRadius.circular(25),
                             ),
                             child: const Text(
-                              'دعم العملاء',
+                              'تاريخ المعاملات',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white,
@@ -409,7 +416,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               child: const Text(
-                                'المعاملات الجارية',
+                                'بيانات قيد التعامل',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.black54,
@@ -429,7 +436,8 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                         ? const Center(
                             child: Text(
                               'لا توجد سجلات دعم عملاء',
-                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.grey),
                             ),
                           )
                         : ListView.builder(
@@ -437,7 +445,8 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             itemCount: widget.issue.customerSupport!.length,
                             itemBuilder: (context, index) {
-                              final support = widget.issue.customerSupport![index];
+                              final support =
+                                  widget.issue.customerSupport![index];
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 elevation: 2,
@@ -447,14 +456,17 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              support['problemAddress'] ?? 'غير محدد',
+                                              support['problemAddress'] ??
+                                                  'غير محدد',
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
@@ -462,29 +474,38 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                               ),
                                             ),
                                           ),
-                                          Icon(Icons.support_agent, color: checkColor, size: 24),
+                                          const Icon(Icons.support_agent,
+                                              color: checkColor, size: 24),
                                         ],
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
                                         support['details'] ?? 'لا توجد تفاصيل',
-                                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black87),
                                       ),
                                       const SizedBox(height: 12),
                                       Row(
                                         children: [
-                                          const Icon(Icons.person, size: 16, color: Colors.grey),
+                                          const Icon(Icons.person,
+                                              size: 16, color: Colors.grey),
                                           const SizedBox(width: 4),
                                           Text(
                                             support['engName'] ?? 'غير محدد',
-                                            style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                            style: const TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey),
                                           ),
                                           const Spacer(),
-                                          const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                                          const Icon(Icons.access_time,
+                                              size: 16, color: Colors.grey),
                                           const SizedBox(width: 4),
                                           Text(
                                             _formatDate(support['dateTime']),
-                                            style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                            style: const TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey),
                                           ),
                                         ],
                                       ),
@@ -492,7 +513,8 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                         const SizedBox(height: 4),
                                         Text(
                                           'بواسطة: ${support['createdUser']}',
-                                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                          style: const TextStyle(
+                                              fontSize: 12, color: Colors.grey),
                                         ),
                                       ],
                                     ],
@@ -556,7 +578,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               child: const Text(
-                                'دعم العملاء',
+                                'تاريخ المعاملات',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.black54,
@@ -574,7 +596,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                               borderRadius: BorderRadius.circular(25),
                             ),
                             child: const Text(
-                              'المعاملات الجارية',
+                              'بيانات قيد التعامل',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white,
@@ -593,7 +615,8 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                         ? const Center(
                             child: Text(
                               'لا توجد معاملات جارية',
-                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.grey),
                             ),
                           )
                         : ListView.builder(
@@ -601,7 +624,8 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             itemCount: widget.issue.underTransactions!.length,
                             itemBuilder: (context, index) {
-                              final transaction = widget.issue.underTransactions![index];
+                              final transaction =
+                                  widget.issue.underTransactions![index];
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 elevation: 2,
@@ -611,10 +635,12 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
                                             child: Text(
@@ -626,18 +652,23 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                               ),
                                             ),
                                           ),
-                                          Icon(Icons.pending_actions, color: Colors.orange, size: 24),
+                                          const Icon(Icons.pending_actions,
+                                              color: Colors.orange, size: 24),
                                         ],
                                       ),
                                       const SizedBox(height: 12),
                                       if (transaction['dateTime'] != null)
                                         Row(
                                           children: [
-                                            const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                                            const Icon(Icons.access_time,
+                                                size: 16, color: Colors.grey),
                                             const SizedBox(width: 4),
                                             Text(
-                                              _formatDate(transaction['dateTime']),
-                                              style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                              _formatDate(
+                                                  transaction['dateTime']),
+                                              style: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.grey),
                                             ),
                                           ],
                                         ),
@@ -687,7 +718,9 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
 
     if (mounted && cubit.state.status == CustomerStatus.success) {
       Fluttertoast.showToast(
-        msg: newArchiveStatus ? 'تم أرشفة المشكلة بنجاح' : 'تم إلغاء الأرشفة بنجاح',
+        msg: newArchiveStatus
+            ? 'تم أرشفة المشكلة بنجاح'
+            : 'تم إلغاء الأرشفة بنجاح',
         backgroundColor: Colors.green,
         textColor: Colors.white,
       );
@@ -702,65 +735,72 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
   }
 
   // ✅ حل مشكلة زر الحفظ
- Future<void> saveChanges() async {
-  if (isLoading) return;
+  Future<void> saveChanges() async {
+    if (isLoading) return;
 
-  setState(() {
-    isLoading = true;
-  });
+    setState(() {
+      isLoading = true;
+    });
 
-  try {
-    final cubit = context.read<CustomerCubit>();
+    try {
+      final cubit = context.read<CustomerCubit>();
 
-    // تحديث حالة المشكلة + إضافة معاملة تحت التنفيذ (under transaction)
-    await cubit.createUnderTransaction(
-      customerSupportId: widget.issue.id!,
-      customerId: widget.issue.customerId!,
-      note: solutionCtl.text.trim().isEmpty ? 'تم تحديث حالة المشكلة' : solutionCtl.text,
-      problemStatusId: selectedSpecialty!.id,
-    );
+      // تحديث حالة المشكلة + إضافة معاملة تحت التنفيذ (under transaction)
+      await cubit.createUnderTransaction(
+        customerSupportId: widget.issue.id!,
+        customerId: widget.issue.customerId!,
+        note: solutionCtl.text.trim().isEmpty
+            ? 'تم تحديث حالة المشكلة'
+            : solutionCtl.text,
+        problemStatusId: selectedSpecialty!.id,
+      );
 
-    // إذا كان هناك صور جديدة → نرفعها (اختياري: يمكنك إضافة API لرفع صور لمشكلة موجودة)
-    if (selectedImages.isNotEmpty) {
-      // مثال: إذا كان لديك API لإضافة صور لمشكلة موجودة
-      // await _uploadImagesToExistingProblem(widget.issue.id!, selectedImages);
-      Fluttertoast.showToast(msg: 'تم رفع ${selectedImages.length} صورة جديدة');
-    }
+      // إذا كان هناك صور جديدة → نرفعها (اختياري: يمكنك إضافة API لرفع صور لمشكلة موجودة)
+      if (selectedImages.isNotEmpty) {
+        // مثال: إذا كان لديك API لإضافة صور لمشكلة موجودة
+        // await _uploadImagesToExistingProblem(widget.issue.id!, selectedImages);
+        Fluttertoast.showToast(
+            msg: 'تم رفع ${selectedImages.length} صورة جديدة');
+      }
 
-    // إظهار رسالة نجاح
-    Fluttertoast.showToast(
-      msg: 'تم حفظ التغييرات بنجاح',
-      backgroundColor: Colors.green,
-      textColor: Colors.white,
-    );
+      // إظهار رسالة نجاح
+      Fluttertoast.showToast(
+        msg: 'تم حفظ التغييرات بنجاح',
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+      );
 
-    // الرجوع + إعادة تحميل البيانات في الشاشة الرئيسة
-    if (mounted) {
-      Navigator.of(context).pop(true); // نرجع true للدلالة على التغيير
-    }
-  } catch (e) {
-    Fluttertoast.showToast(
-      msg: 'فشل في الحفظ: $e',
-      backgroundColor: Colors.red,
-    );
-  } finally {
-    if (mounted) {
-      setState(() {
-        isLoading = false;
-      });
+      // الرجوع + إعادة تحميل البيانات في الشاشة الرئيسة
+      if (mounted) {
+        Navigator.of(context).pop(true); // نرجع true للدلالة على التغيير
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: 'فشل في الحفظ: $e',
+        backgroundColor: Colors.red,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
-}
+
   void showEngineersMenu(List<EngineerModel> engineers) async {
     if (engineerKey.currentContext == null) return;
 
-    final RenderBox button = engineerKey.currentContext!.findRenderObject()! as RenderBox;
-    final RenderBox overlay = Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+    final RenderBox button =
+        engineerKey.currentContext!.findRenderObject()! as RenderBox;
+    final RenderBox overlay =
+        Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
 
     final RelativeRect position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
+        button.localToGlobal(button.size.bottomRight(Offset.zero),
+            ancestor: overlay),
       ),
       Offset.zero & overlay.size,
     );
@@ -953,7 +993,9 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
           children: [
             Expanded(
               child: Text(
-                trailingText != null ? '$displayValue - $trailingText' : displayValue,
+                trailingText != null
+                    ? '$displayValue - $trailingText'
+                    : displayValue,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -1036,7 +1078,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                             color: Colors.black87,
                             size: 28,
                           ),
-                          tooltip: 'صور دعم العملاء',
+                          tooltip: 'صور تاريخ المعاملات',
                           onPressed: showCustomerSupportImages,
                         ),
                       ),
@@ -1044,7 +1086,8 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                     const SizedBox(height: 8),
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -1064,7 +1107,8 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                               builder: (context, state) {
                                 if (state.problemStatusList.isEmpty) {
                                   return buildLabeledField(
-                                    field: buildDisabledDropdown(value: 'لا توجد حالات متاحة'),
+                                    field: buildDisabledDropdown(
+                                        value: 'لا توجد حالات متاحة'),
                                     label: 'حالة المشكلة',
                                   );
                                 }
@@ -1075,21 +1119,25 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
 
                                 if (filteredStatuses.isEmpty) {
                                   return buildLabeledField(
-                                    field: buildDisabledDropdown(value: 'لا توجد حالات متاحة'),
+                                    field: buildDisabledDropdown(
+                                        value: 'لا توجد حالات متاحة'),
                                     label: 'حالة المشكلة',
                                   );
                                 }
 
                                 if (selectedSpecialty == null ||
-                                    !filteredStatuses.any((s) => s.id == selectedSpecialty!.id)) {
-                                  selectedSpecialty = filteredStatuses.firstWhere(
+                                    !filteredStatuses.any(
+                                        (s) => s.id == selectedSpecialty!.id)) {
+                                  selectedSpecialty =
+                                      filteredStatuses.firstWhere(
                                     (s) => s.id == widget.issue.problemStatusId,
                                     orElse: () => filteredStatuses.first,
                                   );
                                 }
 
                                 return buildLabeledField(
-                                  field: buildDropdownButton<ProblemStatusModel>(
+                                  field:
+                                      buildDropdownButton<ProblemStatusModel>(
                                     displayValue: selectedSpecialty!.name ?? '',
                                     trailingText: null,
                                     items: filteredStatuses,
@@ -1183,11 +1231,13 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                         .entries
                                         .map(
                                           (entry) => GestureDetector(
-                                            onTap: () => showFullScreenImage(entry.value, entry.key),
+                                            onTap: () => showFullScreenImage(
+                                                entry.value, entry.key),
                                             child: Stack(
                                               children: [
                                                 ClipRRect(
-                                                  borderRadius: BorderRadius.circular(8),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
                                                   child: Image.file(
                                                     entry.value,
                                                     width: 60,
@@ -1201,12 +1251,16 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                                   child: GestureDetector(
                                                     onTap: () {
                                                       setState(() {
-                                                        selectedImages.removeAt(entry.key);
+                                                        selectedImages.removeAt(
+                                                            entry.key);
                                                       });
                                                     },
                                                     child: Container(
-                                                      padding: const EdgeInsets.all(2),
-                                                      decoration: const BoxDecoration(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              2),
+                                                      decoration:
+                                                          const BoxDecoration(
                                                         color: Colors.red,
                                                         shape: BoxShape.circle,
                                                       ),
@@ -1232,36 +1286,41 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                         ),
                       ),
                     ),
-       Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-  child: widget.issue.problemStatusId == 15
-      ? Row(
-          children: [
-            Expanded(
-              child: buildBottomButton(
-                label: (widget.issue.isArchive == true || widget.issue.statusIsArchieve == true)
-                    ? 'إلغاء الأرشفة'
-                    : 'أرشيف',
-                color: Colors.deepOrange.shade700,
-                onTap: isLoading ? null : toggleArchiveStatus,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: buildBottomButton(
-                label: 'حفظ',
-                color: fieldBlue,
-                onTap: isLoading ? null : saveChanges,
-              ),
-            ),
-          ],
-        )
-      : buildBottomButton(
-          label: 'حفظ',
-          color: fieldBlue,
-          onTap: isLoading ? null : saveChanges,
-        ),
-),                  ],
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
+                      child: widget.issue.problemStatusId == 15
+                          ? Row(
+                              children: [
+                                Expanded(
+                                  child: buildBottomButton(
+                                    label: (widget.issue.isArchive == true ||
+                                            widget.issue.statusIsArchieve ==
+                                                true)
+                                        ? 'إلغاء الأرشفة'
+                                        : 'أرشيف',
+                                    color: Colors.deepOrange.shade700,
+                                    onTap:
+                                        isLoading ? null : toggleArchiveStatus,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: buildBottomButton(
+                                    label: 'حفظ',
+                                    color: fieldBlue,
+                                    onTap: isLoading ? null : saveChanges,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : buildBottomButton(
+                              label: 'حفظ',
+                              color: fieldBlue,
+                              onTap: isLoading ? null : saveChanges,
+                            ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1309,7 +1368,9 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
-        crossAxisAlignment: maxLines == 1 ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+        crossAxisAlignment: maxLines == 1
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Container(

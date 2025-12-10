@@ -7,7 +7,9 @@ part 'task_update_model.g.dart';
 class TaskUpdateModel {
   final String id;
   final String? image;
+  @JsonKey(fromJson: _dateFromString, toJson: _dateToString)
   final DateTime startDate;
+  @JsonKey(fromJson: _dateFromString, toJson: _dateToString)
   final DateTime deadLine;
   final double? engRate;
   final bool testing;
@@ -15,14 +17,23 @@ class TaskUpdateModel {
   final String? enginnerTesterId;
   final List<String> engineerIds;
   final String? customerSupportId;
-  final String customerId;
-  final String detailes;
+  
+  // إصلاح customerId: إرسال null بدلاً من empty string
+  @JsonKey(includeIfNull: true)
+  final String? customerId;
+  
+  final String? detailes;
+  
   @JsonKey(name: 'customizationReports')
   final List<Report> reports;
+  
   final String sitiouationStatusesId;
   final String sitiouationId;
   final String? file;
-  final String? model; // حقل model مضاف
+  
+  // هذا الحقل مطلوب
+  @JsonKey(defaultValue: 'CustomizationForm')
+  final String model;
 
   TaskUpdateModel({
     required this.id,
@@ -35,23 +46,41 @@ class TaskUpdateModel {
     this.enginnerTesterId,
     required this.engineerIds,
     this.customerSupportId,
-    required this.customerId,
-    required this.detailes,
+    this.customerId,
+    this.detailes,
     required this.reports,
     required this.sitiouationStatusesId,
     required this.sitiouationId,
     this.file,
-    this.model,
+    this.model = 'CustomizationForm',
   });
 
-  factory TaskUpdateModel.fromJson(Map<String, dynamic> json) => _$TaskUpdateModelFromJson(json);
-  Map<String, dynamic> toJson() => _$TaskUpdateModelToJson(this);
-}@JsonSerializable()
-class ReportDoneModel {
-  final String id;
+  factory TaskUpdateModel.fromJson(Map<String, dynamic> json) =>
+      _$TaskUpdateModelFromJson(json);
 
-  ReportDoneModel({required this.id});
+  Map<String, dynamic> toJson() {
+    final json = _$TaskUpdateModelToJson(this);
+    
+    // إزالة customerId إذا كان empty string
+    if (customerId == null || customerId!.isEmpty) {
+      json.remove('customerId');
+    }
+    
+    return json;
+  }
 
-  factory ReportDoneModel.fromJson(Map<String, dynamic> json) => _$ReportDoneModelFromJson(json);
-  Map<String, dynamic> toJson() => _$ReportDoneModelToJson(this);
+  // تحويل آمن للتواريخ
+  static DateTime _dateFromString(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty || dateStr == '0001-01-01T00:00:00') {
+      return DateTime(1970);
+    }
+
+    if (!dateStr.contains('T')) {
+      return DateTime.tryParse(dateStr) ?? DateTime.now();
+    }
+
+    return DateTime.tryParse(dateStr) ?? DateTime.now();
+  }
+
+  static String _dateToString(DateTime date) => date.toIso8601String();
 }

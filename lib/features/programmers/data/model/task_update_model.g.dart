@@ -10,8 +10,8 @@ TaskUpdateModel _$TaskUpdateModelFromJson(Map<String, dynamic> json) =>
     TaskUpdateModel(
       id: json['id'] as String,
       image: json['image'] as String?,
-      startDate: DateTime.parse(json['startDate'] as String),
-      deadLine: DateTime.parse(json['deadLine'] as String),
+      startDate: TaskUpdateModel._dateFromString(json['startDate'] as String?),
+      deadLine: TaskUpdateModel._dateFromString(json['deadLine'] as String?),
       engRate: (json['engRate'] as num?)?.toDouble(),
       testing: json['testing'] as bool,
       applaied: json['applaied'] as bool,
@@ -20,23 +20,23 @@ TaskUpdateModel _$TaskUpdateModelFromJson(Map<String, dynamic> json) =>
           .map((e) => e as String)
           .toList(),
       customerSupportId: json['customerSupportId'] as String?,
-      customerId: json['customerId'] as String,
-      detailes: json['detailes'] as String,
+      customerId: json['customerId'] as String?,
+      detailes: json['detailes'] as String?,
       reports: (json['customizationReports'] as List<dynamic>)
           .map((e) => Report.fromJson(e as Map<String, dynamic>))
           .toList(),
       sitiouationStatusesId: json['sitiouationStatusesId'] as String,
       sitiouationId: json['sitiouationId'] as String,
       file: json['file'] as String?,
-      model: json['model'] as String?,
+      model: json['model'] as String? ?? 'CustomizationForm',
     );
 
 Map<String, dynamic> _$TaskUpdateModelToJson(TaskUpdateModel instance) =>
     <String, dynamic>{
       'id': instance.id,
       'image': instance.image,
-      'startDate': instance.startDate.toIso8601String(),
-      'deadLine': instance.deadLine.toIso8601String(),
+      'startDate': TaskUpdateModel._dateToString(instance.startDate),
+      'deadLine': TaskUpdateModel._dateToString(instance.deadLine),
       'engRate': instance.engRate,
       'testing': instance.testing,
       'applaied': instance.applaied,
@@ -50,14 +50,4 @@ Map<String, dynamic> _$TaskUpdateModelToJson(TaskUpdateModel instance) =>
       'sitiouationId': instance.sitiouationId,
       'file': instance.file,
       'model': instance.model,
-    };
-
-ReportDoneModel _$ReportDoneModelFromJson(Map<String, dynamic> json) =>
-    ReportDoneModel(
-      id: json['id'] as String,
-    );
-
-Map<String, dynamic> _$ReportDoneModelToJson(ReportDoneModel instance) =>
-    <String, dynamic>{
-      'id': instance.id,
     };

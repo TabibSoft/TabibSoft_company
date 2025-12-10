@@ -1,20 +1,22 @@
-import 'package:equatable/equatable.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/task_details_model.dart';
+import 'package:tabib_soft_company/features/programmers/data/model/section_model.dart';
 
 enum TaskStatus { initial, loading, success, failure }
 
-class TaskState extends Equatable {
+class TaskState {
   final TaskStatus status;
   final List<CustomizationTaskModel> tasks;
   final TaskDetailsModel? selectedTask;
   final String? errorMessage;
+  final List<SectionModel> sections;
 
-  const TaskState({
-    this.status = TaskStatus.initial,
-    this.tasks = const [],
+  const TaskState(
+    this.status,
+    this.tasks,
     this.selectedTask,
-    this.errorMessage,
+    this.errorMessage, {
+    this.sections = const [],
   });
 
   TaskState copyWith({
@@ -22,15 +24,14 @@ class TaskState extends Equatable {
     List<CustomizationTaskModel>? tasks,
     TaskDetailsModel? selectedTask,
     String? errorMessage,
+    List<SectionModel>? sections,
   }) {
     return TaskState(
-      status: status ?? this.status,
-      tasks: tasks ?? this.tasks,
-      selectedTask: selectedTask ?? this.selectedTask,
-      errorMessage: errorMessage ?? this.errorMessage,
+      status ?? this.status,
+      tasks ?? this.tasks,
+      selectedTask ?? this.selectedTask,
+      errorMessage ?? this.errorMessage,
+      sections: sections ?? this.sections,
     );
   }
-
-  @override
-  List<Object?> get props => [status, tasks, selectedTask, errorMessage];
 }

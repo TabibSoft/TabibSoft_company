@@ -128,7 +128,7 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<ProblemModel> getTechnicalSupportData(int customerId) async {
+  Future<ProblemModel> getTechnicalSupportData(String customerId) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tabib_soft_company/core/networking/api_service.dart';
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
@@ -78,7 +79,8 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                           return const Center(
                             child: Text(
                               'لا توجد مهام متاحة',
-                              style: TextStyle(fontSize: 18, color: Colors.grey),
+                              style:
+                                  TextStyle(fontSize: 18, color: Colors.grey),
                             ),
                           );
                         }
@@ -87,8 +89,8 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                           enabled: state.status == TaskStatus.loading,
                           child: ListView.builder(
                             physics: const BouncingScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 20),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.w, vertical: 20.h),
                             itemCount: state.status == TaskStatus.loading
                                 ? 6
                                 : customizations.length,
@@ -129,56 +131,58 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
 
   Widget buildTaskCardSkeleton() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Container(
-        height: 220,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: const Color.fromARGB(255, 185, 185, 185), width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: const Color.fromARGB(255, 150, 153, 156).withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                width: 50,
-                decoration: const BoxDecoration(
-                  color: Color.fromARGB(255, 143, 144, 145),
-                  borderRadius:
-                      BorderRadius.horizontal(left: Radius.circular(16)),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16).copyWith(left: 60),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(height: 20, color: Colors.grey[300]),
-                  const SizedBox(height: 12),
-                  Container(height: 16, width: 200, color: Colors.grey[300]),
-                  const SizedBox(height: 8),
-                  Container(height: 16, width: 150, color: Colors.grey[300]),
-                  const SizedBox(height: 8),
-                  Container(height: 16, width: 180, color: Colors.grey[300]),
-                  const Spacer(),
-                  Container(width: 120, height: 30, color: Colors.grey[300]),
+      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: 0,
+            top: 13.h,
+            child: Container(
+              width: 390.w,
+              height: 220.h,
+              decoration: BoxDecoration(
+                color: const Color(0xff104D9D),
+                borderRadius: BorderRadius.circular(25.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    offset: Offset(4.w, 6.h),
+                    blurRadius: 12.r,
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: 23.h, left: 20.w, right: 0.w),
+            child: Container(
+              height: 190.h,
+              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 20.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30.r),
+                border: Border.all(color: const Color(0xff20AAC9), width: 4),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                      height: 24.h, width: 250.w, color: Colors.grey[300]),
+                  SizedBox(height: 12.h),
+                  Container(
+                      height: 18.h, width: 200.w, color: Colors.grey[300]),
+                  SizedBox(height: 10.h),
+                  Container(
+                      height: 18.h, width: 180.w, color: Colors.grey[300]),
+                  const Spacer(),
+                  Container(
+                      width: 100.w, height: 32.h, color: Colors.grey[300]),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -186,8 +190,7 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
   Widget buildTaskCard(BuildContext context, Customization customization) {
     // تنسيق التاريخ
     String formattedDeadline = '';
-    if (customization.deadLine != null &&
-        customization.deadLine!.isNotEmpty) {
+    if (customization.deadLine != null && customization.deadLine!.isNotEmpty) {
       try {
         final date = DateTime.parse(customization.deadLine!);
         formattedDeadline = '${date.day}/${date.month}/${date.year}';
@@ -197,212 +200,278 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
     }
 
     // تحديد اللون من situationStatus
-    Color statusColor = const Color(0xff178CBB);
-    if (customization.situationStatus != null &&
-        customization.situationStatus!.color.isNotEmpty) {
-      try {
-        statusColor = Color(
-          int.parse(
-            '0xff${customization.situationStatus!.color.replaceAll('#', '')}',
-          ),
-        );
-      } catch (e) {
-        statusColor = const Color(0xff178CBB);
+    Color statusColor = const Color(0xff0000ff);
+    String statusName = 'مهمة';
+
+    if (customization.situationStatus != null) {
+      statusName = customization.situationStatus!.name.isNotEmpty
+          ? customization.situationStatus!.name
+          : 'مهمة';
+
+      if (customization.situationStatus!.color.isNotEmpty) {
+        try {
+          statusColor = Color(
+            int.parse(
+              '0xff${customization.situationStatus!.color.replaceAll('#', '')}',
+            ),
+          );
+        } catch (e) {
+          statusColor = const Color(0xff0000ff);
+        }
       }
     }
 
+    // حساب عدد المهام المنجزة
+    final totalReports = customization.reports.length;
+    final finishedReports =
+        customization.reports.where((r) => r.finished).length;
+    final progress = totalReports > 0 ? finishedReports / totalReports : 0.0;
+
+    // عنوان المهمة (أول تقرير أو رسالة افتراضية)
+    String taskTitle = 'مهمة برمجية';
+    if (customization.reports.isNotEmpty) {
+      taskTitle = customization.reports.first.name;
+    }
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: GestureDetector(
-        onTap: () => showDetailsPopup(context, customization.id),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF20AAC9), width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF104D9D).withOpacity(0.3),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // الظل الخلفي الأزرق
+          Positioned(
+            left: 0,
+            top: 13.h,
+            child: Container(
+              width: 390.w,
+              height: 260.h,
+              decoration: BoxDecoration(
+                color: const Color(0xff104D9D),
+                borderRadius: BorderRadius.circular(25.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    offset: Offset(4.w, 6.h),
+                    blurRadius: 12.r,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-          child: Stack(
-            children: [
-              // الشريط الجانبي الأزرق
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                child: Container(
-                  width: 50,
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: const BorderRadius.horizontal(
-                      left: Radius.circular(16),
+          // الكارد الأساسي
+          Padding(
+            padding: EdgeInsets.only(top: 23.h, left: 20.w, right: 0.w),
+            child: Container(
+              height: 240.h,
+              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 20.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30.r),
+                border: Border.all(color: const Color(0xff20AAC9), width: 4),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // عنوان المهمة
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.task_alt,
+                        color: const Color(0xff178CBB),
+                        size: 28.r,
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Text(
+                          taskTitle,
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black87,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+
+                  // اسم المهندس
+                  if (customization.engName.isNotEmpty)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.engineering_rounded,
+                          color: const Color(0xff178CBB),
+                          size: 24.r,
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Text(
+                            customization.engName,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                  if (customization.engName.isNotEmpty) SizedBox(height: 10.h),
+
+                  // التقدم
+                  if (totalReports > 0)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.pie_chart,
+                          color: Colors.green,
+                          size: 24.r,
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'التقدم: $finishedReports من $totalReports',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8.r),
+                                child: LinearProgressIndicator(
+                                  value: progress,
+                                  minHeight: 8.h,
+                                  backgroundColor: Colors.grey[300],
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    progress == 1.0
+                                        ? Colors.green
+                                        : const Color(0xff178CBB),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                  if (totalReports > 0) SizedBox(height: 10.h),
+
+                  // الموعد النهائي
+                  if (formattedDeadline.isNotEmpty)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          color: Colors.red,
+                          size: 22.r,
+                        ),
+                        SizedBox(width: 10.w),
+                        Text(
+                          'الموعد: $formattedDeadline',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                  const Spacer(),
+
+                  // حالة المشروع
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 6.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(
+                        color: statusColor,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.circle,
+                          size: 10.r,
+                          color: statusColor,
+                        ),
+                        SizedBox(width: 6.w),
+                        Text(
+                          statusName,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.bold,
+                            color: statusColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // زر التفاصيل
+          Positioned(
+            left: 110.w,
+            bottom: -5.h,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF20AAC9), Color(0xFF1E96BA)],
+                ),
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF20AAC9).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () => showDetailsPopup(context, customization.id),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 36.w,
+                      vertical: 12.h,
+                    ),
+                    child: Text(
+                      'تفاصيل',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-
-              // المحتوى
-              Padding(
-                padding: const EdgeInsets.all(16).copyWith(left: 65),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // اسم المشروع
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          const TextSpan(
-                            text: 'اسم المشروع: ',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff178CBB),
-                            ),
-                          ),
-                          TextSpan(
-                            text: customization.projectName.isEmpty
-                                ? 'غير محدد'
-                                : customization.projectName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // اسم العميل
-                    if (customization.customerName.isNotEmpty)
-                      _buildInfoRow(
-                        icon: Icons.person,
-                        label: 'العميل',
-                        value: customization.customerName,
-                      ),
-
-                    if (customization.customerName.isNotEmpty)
-                      const SizedBox(height: 6),
-
-                    // اسم المهندس
-                    if (customization.engName.isNotEmpty)
-                      _buildInfoRow(
-                        icon: Icons.engineering,
-                        label: 'المهندس',
-                        value: customization.engName,
-                      ),
-
-                    if (customization.engName.isNotEmpty)
-                      const SizedBox(height: 6),
-
-                    // اسم مهندس الاختبار
-                    if (customization.testEngName.isNotEmpty)
-                      _buildInfoRow(
-                        icon: Icons.science,
-                        label: 'مهندس الاختبار',
-                        value: customization.testEngName,
-                      ),
-
-                    if (customization.testEngName.isNotEmpty)
-                      const SizedBox(height: 6),
-
-                    // الموعد النهائي
-                    if (formattedDeadline.isNotEmpty)
-                      _buildInfoRow(
-                        icon: Icons.calendar_today,
-                        label: 'الموعد النهائي',
-                        value: formattedDeadline,
-                        color: Colors.red,
-                      ),
-
-                    const SizedBox(height: 12),
-
-                    // حالة المشروع
-                    if (customization.situationStatus != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: statusColor,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.circle,
-                              size: 10,
-                              color: statusColor,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              customization.situationStatus!.name,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: statusColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // دالة مساعدة لعرض صف معلومة
-  Widget _buildInfoRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    Color? color,
-  }) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 16,
-          color: color ?? const Color(0xff178CBB),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          '$label: ',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: color ?? const Color(0xff178CBB),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -441,20 +510,16 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
             } else if (state.status == TaskStatus.success &&
                 state.selectedTask != null) {
               final task = state.selectedTask!;
+              final sections = state.sections; // جلب الـ sections من الـ state
 
-              const statusOptions = [
-                'جارى العمل',
-                'قيد الاختبار',
-                'منتهى',
-              ];
+              // البحث عن الـ section الحالي
+              String? selectedSectionId = task.sitiouationId;
 
-              String? status = statusToSectionId.entries
-                  .firstWhere(
-                    (entry) => entry.value == task.sitiouationId,
-                    orElse: () => const MapEntry(
-                        'جارى العمل', '006bab2f-2709-4bcd-9597-08dcd09a6b67'),
-                  )
-                  .key;
+              // التأكد من وجود الـ section في القائمة
+              if (!sections.any((s) => s.id == selectedSectionId) &&
+                  sections.isNotEmpty) {
+                selectedSectionId = sections.first.id;
+              }
 
               final TextEditingController detailsCtrl =
                   TextEditingController(text: task.detailes);
@@ -490,23 +555,25 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 16),
+
+                            // Dropdown للحالات الديناميكية
                             Row(
                               children: [
-                                const Text('الحالة:',
+                                const Text('القسم:',
                                     style: TextStyle(fontSize: 16)),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
-                                    value: status,
-                                    items: statusOptions
-                                        .map((s) => DropdownMenuItem(
-                                              value: s,
-                                              child: Text(s),
+                                    initialValue: selectedSectionId,
+                                    items: sections
+                                        .map((section) => DropdownMenuItem(
+                                              value: section.id,
+                                              child: Text(section.name),
                                             ))
                                         .toList(),
                                     onChanged: (v) {
                                       setState(() {
-                                        status = v;
+                                        selectedSectionId = v;
                                       });
                                     },
                                     decoration: InputDecoration(
@@ -522,18 +589,7 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                               ],
                             ),
                             const SizedBox(height: 16),
-                            TextField(
-                              controller: detailsCtrl,
-                              maxLines: 4,
-                              decoration: InputDecoration(
-                                hintText: 'أدخل التفاصيل...',
-                                hintStyle: const TextStyle(color: Colors.grey),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                contentPadding: const EdgeInsets.all(16),
-                              ),
-                            ),
+
                             const SizedBox(height: 16),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -586,44 +642,46 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: const Color(0xff178CBB),
-                                  width: 2,
+                            if (allReports.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: const Color(0xff178CBB),
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                borderRadius: BorderRadius.circular(12),
+                                child: Column(
+                                  children:
+                                      List.generate(allReports.length, (i) {
+                                    return CheckboxListTile(
+                                      value: checked[i],
+                                      onChanged: (v) {
+                                        setState(() {
+                                          checked[i] = v!;
+                                        });
+                                      },
+                                      title: Text(
+                                        allReports[i].name,
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      subtitle: allReports[i].notes.isNotEmpty
+                                          ? Text(
+                                              allReports[i].notes,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey,
+                                              ),
+                                            )
+                                          : null,
+                                      controlAffinity:
+                                          ListTileControlAffinity.trailing,
+                                      contentPadding: EdgeInsets.zero,
+                                    );
+                                  }),
+                                ),
                               ),
-                              child: Column(
-                                children: List.generate(allReports.length, (i) {
-                                  return CheckboxListTile(
-                                    value: checked[i],
-                                    onChanged: (v) {
-                                      setState(() {
-                                        checked[i] = v!;
-                                      });
-                                    },
-                                    title: Text(
-                                      allReports[i].name,
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                    subtitle: allReports[i].notes.isNotEmpty
-                                        ? Text(
-                                            allReports[i].notes,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey,
-                                            ),
-                                          )
-                                        : null,
-                                    controlAffinity:
-                                        ListTileControlAffinity.trailing,
-                                    contentPadding: EdgeInsets.zero,
-                                  );
-                                }),
-                              ),
-                            ),
                             const SizedBox(height: 24),
                             BlocListener<ReportCubit, ReportState>(
                               listener: (context, reportState) {
@@ -634,38 +692,40 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                                         content: Text('تم الحفظ بنجاح')),
                                   );
                                   Navigator.of(context).pop();
-                                  context
-                                      .read<TaskCubit>()
-                                      .fetchTaskById(taskId);
+                                  context.read<TaskCubit>().fetchTasks();
                                 } else if (reportState.status ==
                                     ReportStatus.failure) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                        content: Text(reportState.errorMessage!)),
+                                        content:
+                                            Text(reportState.errorMessage!)),
                                   );
                                 }
                               },
                               child: ElevatedButton.icon(
                                 onPressed: () {
-                                  final updatedReports = allReports
-                                      .asMap()
-                                      .entries
-                                      .map((e) {
-                                        final index = e.key;
-                                        final report = e.value;
-                                        return Report(
-                                          id: report.id,
-                                          name: report.name,
-                                          notes: report.notes,
-                                          finished: checked[index],
-                                          time: report.time,
-                                        );
-                                      })
-                                      .toList();
+                                  final updatedReports =
+                                      allReports.asMap().entries.map((e) {
+                                    final index = e.key;
+                                    final report = e.value;
+                                    return Report(
+                                      id: report.id,
+                                      name: report.name,
+                                      notes: report.notes,
+                                      finished: checked[index],
+                                      time: report.time,
+                                    );
+                                  }).toList();
 
+                                  // استخدام الـ section المحدد
                                   final newSitiouationId =
-                                      statusToSectionId[status!] ??
-                                          task.sitiouationId;
+                                      selectedSectionId ?? task.sitiouationId;
+
+                                  // إصلاح customerId
+                                  String? validCustomerId = task.customerId;
+                                  if (validCustomerId.isEmpty) {
+                                    validCustomerId = null;
+                                  }
 
                                   final updatedTask = TaskUpdateModel(
                                     id: task.id,
@@ -678,7 +738,7 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
                                     enginnerTesterId: task.enginnerTesterId,
                                     engineerIds: task.engineerIds,
                                     customerSupportId: task.customerSupportId,
-                                    customerId: task.customerId,
+                                    customerId: validCustomerId,
                                     detailes: detailsCtrl.text,
                                     reports: updatedReports,
                                     sitiouationStatusesId:
@@ -779,130 +839,132 @@ class _ProgrammersScreenState extends State<ProgrammersScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(
-          'إضافة تقرير جديد',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: InputDecoration(
-                labelText: 'اسم التقرير',
-                border: OutlineInputBorder(
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text(
+            'إضافة تقرير جديد',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: InputDecoration(
+                  labelText: 'اسم التقرير',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: noteCtrl,
+                decoration: InputDecoration(
+                  labelText: 'ملاحظات',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      selectedTime == null
+                          ? 'اختر الوقت'
+                          : selectedTime!.format(context),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color:
+                            selectedTime == null ? Colors.grey : Colors.black,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final TimeOfDay? picked = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                        builder: (context, child) {
+                          return MediaQuery(
+                            data: MediaQuery.of(context)
+                                .copyWith(alwaysUse24HourFormat: false),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          selectedTime = picked;
+                        });
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff178CBB),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                    ),
+                    child: const Text(
+                      'اختر',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final name = nameCtrl.text.trim();
+                final note = noteCtrl.text.trim();
+
+                if (name.isEmpty || selectedTime == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('يرجى إكمال جميع الحقول')),
+                  );
+                  return;
+                }
+
+                final timeInMinutes =
+                    selectedTime!.hour * 60 + selectedTime!.minute;
+
+                final newReport = Report(
+                  id: null,
+                  name: name,
+                  notes: note,
+                  finished: false,
+                  time: timeInMinutes,
+                );
+
+                allReports.add(newReport);
+                checked.add(false);
+
+                Navigator.of(ctx).pop();
+                dialogSetState(() {});
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff178CBB),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: noteCtrl,
-              decoration: InputDecoration(
-                labelText: 'ملاحظات',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    selectedTime == null
-                        ? 'اختر الوقت'
-                        : selectedTime!.format(context),
-                    style: TextStyle(
-                      fontSize: 16,
-                      color:
-                          selectedTime == null ? Colors.grey : Colors.black,
-                    ),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final TimeOfDay? picked = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.now(),
-                      builder: (context, child) {
-                        return MediaQuery(
-                          data: MediaQuery.of(context)
-                              .copyWith(alwaysUse24HourFormat: false),
-                          child: child!,
-                        );
-                      },
-                    );
-                    if (picked != null) {
-                      dialogSetState(() {
-                        selectedTime = picked;
-                      });
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff178CBB),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
-                  ),
-                  child: const Text(
-                    'اختر',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-              ],
+              child: const Text('إضافة'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = nameCtrl.text.trim();
-              final note = noteCtrl.text.trim();
-
-              if (name.isEmpty || selectedTime == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('يرجى إكمال جميع الحقول')),
-                );
-                return;
-              }
-
-              final timeInMinutes =
-                  selectedTime!.hour * 60 + selectedTime!.minute;
-
-              final newReport = Report(
-                id: null,
-                name: name,
-                notes: note,
-                finished: false,
-                time: timeInMinutes,
-              );
-
-              allReports.add(newReport);
-              checked.add(false);
-
-              Navigator.of(ctx).pop();
-              dialogSetState(() {});
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff178CBB),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('إضافة'),
-          ),
-        ],
       ),
     );
   }

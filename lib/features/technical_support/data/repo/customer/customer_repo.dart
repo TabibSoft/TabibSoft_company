@@ -23,15 +23,20 @@ class CustomerRepository {
     }
   }
 
-  Future<ApiResult<ProblemModel>> getTechnicalSupportData(
-      int customerId) async {
-    try {
-      final response = await _apiService.getTechnicalSupportData(customerId);
-      return ApiResult.success(response);
-    } on DioException catch (e) {
-      return ApiResult.failure(ServerFailure.fromDioError(e));
-    }
+Future<ApiResult<ProblemModel>> getTechnicalSupportData(
+    String customerId) async {
+  try {
+    print('🔍 Repository: calling API with ID: $customerId'); // للتتبع
+    final response = await _apiService.getTechnicalSupportData(customerId);
+    print('✅ Repository: API response received'); // للتتبع
+    return ApiResult.success(response);
+  } on DioException catch (e) {
+    print('❌ Repository: DioException - ${e.message}'); // للتتبع
+    return ApiResult.failure(ServerFailure.fromDioError(e));
   }
+}
+
+
 
   Future<ApiResult<List<ProblemModel>>> getAllTechSupport({
     String? customerId,

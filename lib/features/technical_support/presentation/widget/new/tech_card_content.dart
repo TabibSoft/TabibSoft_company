@@ -324,8 +324,7 @@ class TechCardContent extends StatelessWidget {
                               onTap: () =>
                                   Navigator.of(dialogContext).pop(false),
                               child: Padding(
-                                padding:
-                                    EdgeInsets.symmetric(vertical: 14.h),
+                                padding: EdgeInsets.symmetric(vertical: 14.h),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -360,8 +359,7 @@ class TechCardContent extends StatelessWidget {
                             borderRadius: BorderRadius.circular(16.r),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF20AAC9)
-                                    .withOpacity(0.4),
+                                color: const Color(0xFF20AAC9).withOpacity(0.4),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -374,8 +372,7 @@ class TechCardContent extends StatelessWidget {
                               onTap: () =>
                                   Navigator.of(dialogContext).pop(true),
                               child: Padding(
-                                padding:
-                                    EdgeInsets.symmetric(vertical: 14.h),
+                                padding: EdgeInsets.symmetric(vertical: 14.h),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -478,8 +475,7 @@ class TechCardContent extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(
-                          color:
-                              const Color(0xFF20AAC9).withOpacity(0.3),
+                          color: const Color(0xFF20AAC9).withOpacity(0.3),
                         ),
                       ),
                       child: ListTile(
@@ -594,175 +590,190 @@ class TechCardContent extends StatelessWidget {
     );
   }
 
- void _showImagesBottomSheet(BuildContext context) {
-  final images = issue.images;
-  if (images == null || images.isEmpty) return;
+  void _showImagesBottomSheet(BuildContext context) {
+    final images = issue.images;
+    if (images == null || images.isEmpty) return;
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    enableDrag: true,
-    builder: (context) => DraggableScrollableSheet(
-      initialChildSize: 0.65,     // يبدأ من ثلثي الشاشة تقريبًا
-      minChildSize: 0.4,          // أقل ارتفاع ممكن
-      maxChildSize: 0.92,         // أقصى ارتفاع (يمكن السحب للأعلى)
-      builder: (context, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          children: [
-            // شريط السحب + العنوان
-            Padding(
-              padding: EdgeInsets.only(top: 12.h, bottom: 8.h),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 5.h,
-                    decoration: BoxDecoration(
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      enableDrag: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.65, // يبدأ من ثلثي الشاشة تقريبًا
+        minChildSize: 0.4, // أقل ارتفاع ممكن
+        maxChildSize: 0.92, // أقصى ارتفاع (يمكن السحب للأعلى)
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            children: [
+              // شريط السحب + العنوان
+              Padding(
+                padding: EdgeInsets.only(top: 12.h, bottom: 8.h),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 40.w,
+                      height: 5.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      'صور المشكلة • ${images.length}',
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF104D9D),
+                      ),
+                    ),
+                    Divider(
+                      height: 32.h,
+                      thickness: 1,
+                      indent: 60.w,
+                      endIndent: 60.w,
                       color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'صور المشكلة • ${images.length}',
-                    style: TextStyle(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF104D9D),
-                    ),
-                  ),
-                  Divider(
-                    height: 32.h,
-                    thickness: 1,
-                    indent: 60.w,
-                    endIndent: 60.w,
-                    color: Colors.grey[300],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            // GridView مع Scroll داخلي
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: GridView.builder(
-                  controller: scrollController, // مهم جدًا للـ scroll الداخلي
-                  padding: EdgeInsets.only(bottom: 20.h, top: 8.h),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 14.w,
-                    mainAxisSpacing: 14.h,
-                    childAspectRatio: 1.0,
-                  ),
-                  itemCount: images.length,
-                  itemBuilder: (context, index) {
-                    final String imageUrl = images[index].toString();
+              // GridView مع Scroll داخلي
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: GridView.builder(
+                    controller: scrollController, // مهم جدًا للـ scroll الداخلي
+                    padding: EdgeInsets.only(bottom: 20.h, top: 8.h),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 14.w,
+                      mainAxisSpacing: 14.h,
+                      childAspectRatio: 1.0,
+                    ),
+                    itemCount: images.length,
+                    itemBuilder: (context, index) {
+                      final String imageUrl = images[index].toString();
 
-                    return Hero(
-                      tag: 'problem_image_$index',
-                      child: Material(
-                        borderRadius: BorderRadius.circular(20.r),
-                        elevation: 8,
-                        shadowColor: Colors.black.withOpacity(0.2),
-                        child: ClipRRect(
+                      return Hero(
+                        tag: 'problem_image_$index',
+                        child: Material(
                           borderRadius: BorderRadius.circular(20.r),
-                          child: InkWell(
+                          elevation: 8,
+                          shadowColor: Colors.black.withOpacity(0.2),
+                          child: ClipRRect(
                             borderRadius: BorderRadius.circular(20.r),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                PageRouteBuilder(
-                                  opaque: false,
-                                  barrierColor: Colors.black.withOpacity(0.95),
-                                  transitionDuration: const Duration(milliseconds: 300),
-                                  pageBuilder: (_, __, ___) => FullScreenImageViewer(
-                                    imageUrl: imageUrl,
-                                    heroTag: 'problem_image_$index',
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20.r),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  PageRouteBuilder(
+                                    opaque: false,
+                                    barrierColor:
+                                        Colors.black.withOpacity(0.95),
+                                    transitionDuration:
+                                        const Duration(milliseconds: 300),
+                                    pageBuilder: (_, __, ___) =>
+                                        FullScreenImageViewer(
+                                      imageUrl: imageUrl,
+                                      heroTag: 'problem_image_$index',
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                Image.network(
-                                  imageUrl,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return Container(
-                                      color: Colors.grey[100],
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 3,
-                                          valueColor: const AlwaysStoppedAnimation(Color(0xFF20AAC9)),
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                  loadingProgress.expectedTotalBytes!
-                                              : null,
+                                );
+                              },
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        color: Colors.grey[100],
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 3,
+                                            valueColor:
+                                                const AlwaysStoppedAnimation(
+                                                    Color(0xFF20AAC9)),
+                                            value: loadingProgress
+                                                        .expectedTotalBytes !=
+                                                    null
+                                                ? loadingProgress
+                                                        .cumulativeBytesLoaded /
+                                                    loadingProgress
+                                                        .expectedTotalBytes!
+                                                : null,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: Colors.grey[200],
+                                      child: Icon(
+                                          Icons.image_not_supported_outlined,
+                                          size: 50.r,
+                                          color: Colors.grey[500]),
+                                    ),
+                                  ),
+                                  // تدرج + رقم الصورة
+                                  Align(
+                                    alignment: Alignment.bottomCenter,
+                                    child: Container(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 10.h),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.black.withOpacity(0.7),
+                                          ],
                                         ),
                                       ),
-                                    );
-                                  },
-                                  errorBuilder: (_, __, ___) => Container(
-                                    color: Colors.grey[200],
-                                    child: Icon(Icons.image_not_supported_outlined,
-                                        size: 50.r, color: Colors.grey[500]),
-                                  ),
-                                ),
-                                // تدرج + رقم الصورة
-                                Align(
-                                  alignment: Alignment.bottomCenter,
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(vertical: 10.h),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          Colors.transparent,
-                                          Colors.black.withOpacity(0.7),
-                                        ],
-                                      ),
-                                    ),
-                                    child: Text(
-                                      '${index + 1}',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18.sp,
-                                        fontWeight: FontWeight.bold,
-                                        shadows: const [
-                                          Shadow(
-                                            blurRadius: 6,
-                                            color: Colors.black54,
-                                            offset: Offset(0, 1),
-                                          ),
-                                        ],
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18.sp,
+                                          fontWeight: FontWeight.bold,
+                                          shadows: const [
+                                            Shadow(
+                                              blurRadius: 6,
+                                              color: Colors.black54,
+                                              offset: Offset(0, 1),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}  Color _hexToColor(String? hex, {Color fallback = const Color(0xFF6BABFA)}) {
+    );
+  }
+
+  Color _hexToColor(String? hex, {Color fallback = const Color(0xFF6BABFA)}) {
     if (hex == null || hex.isEmpty) return fallback;
     final cleaned = hex.replaceAll('#', '').trim();
     try {
@@ -810,13 +821,11 @@ class TechCardContent extends StatelessWidget {
             padding: EdgeInsets.only(top: 23.h, left: 20.w, right: 0.w),
             child: Container(
               height: 250.h,
-              padding:
-                  EdgeInsets.symmetric(horizontal: 18.w, vertical: 30.h),
+              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 30.h),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(30.r),
-                border:
-                    Border.all(color: const Color(0xff20AAC9), width: 4),
+                border: Border.all(color: const Color(0xff20AAC9), width: 4),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -943,9 +952,8 @@ class TechCardContent extends StatelessWidget {
                               Wrap(
                                 spacing: 8.w,
                                 runSpacing: 6.h,
-                                children: issue.products!
-                                    .take(3)
-                                    .map((product) {
+                                children:
+                                    issue.products!.take(3).map((product) {
                                   final String name = product is Map
                                       ? (product['name'] ??
                                           product['productName'] ??
@@ -959,10 +967,8 @@ class TechCardContent extends StatelessWidget {
                                       vertical: 6.h,
                                     ),
                                     decoration: BoxDecoration(
-                                      color:
-                                          statusColor.withOpacity(0.15),
-                                      borderRadius:
-                                          BorderRadius.circular(20.r),
+                                      color: statusColor.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(20.r),
                                       border: Border.all(
                                         color: statusColor,
                                         width: 1.2,
@@ -983,8 +989,7 @@ class TechCardContent extends StatelessWidget {
                               Row(
                                 children: [
                                   Text(
-                                    issue.problemtype ??
-                                        'نوع التخصص غير متاح',
+                                    issue.problemtype ?? 'نوع التخصص غير متاح',
                                     style: TextStyle(
                                       fontSize: 17.sp,
                                       fontWeight: FontWeight.bold,
@@ -1073,19 +1078,95 @@ class TechCardContent extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(30),
-                  onTap: onDetailsPressed ??
-                      () async {
+                  onTap: () async {
+                    print('🎯 Button pressed - Issue ID: ${issue.id}');
+
+                    // تحقق من وجود ID
+                    if (issue.id == null || issue.id!.isEmpty) {
+                      print('❌ Issue ID is null or empty');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('معرف المشكلة غير متوفر'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                      return;
+                    }
+
+                    // عرض Loading
+                    if (context.mounted) {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext dialogContext) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
+                      );
+                    }
+
+                    try {
+                      print(
+                          '📡 Calling fetchProblemDetailsById with ID: ${issue.id}');
+
+                      // ✅ جلب البيانات من API
+                      await context
+                          .read<CustomerCubit>()
+                          .fetchProblemDetailsById(issue.id!);
+
+                      if (!context.mounted) return;
+
+                      Navigator.of(context).pop(); // إغلاق Loading
+
+                      final updatedProblem =
+                          context.read<CustomerCubit>().state.selectedProblem;
+
+                      print(
+                          '📦 Selected problem after fetch: ${updatedProblem?.id}');
+                      print(
+                          '📋 CustomerSupport count: ${updatedProblem?.customerSupport?.length ?? 0}');
+                      print(
+                          '📋 UnderTransactions count: ${updatedProblem?.underTransactions?.length ?? 0}');
+
+                      if (updatedProblem != null) {
+                        print('✅ Opening ProblemDetailsScreen');
                         final result = await Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) =>
-                                ProblemDetailsScreen(issue: issue),
+                                ProblemDetailsScreen(issue: updatedProblem),
                           ),
                         );
 
                         if (result == true && context.mounted) {
                           context.read<CustomerCubit>().refreshAllData();
                         }
-                      },
+                      } else {
+                        print('❌ updatedProblem is null');
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('فشل تحميل تفاصيل المشكلة'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      print('❌ Exception in onTap: $e');
+                      if (context.mounted) {
+                        Navigator.of(context).pop(); // إغلاق Loading
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('حدث خطأ: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
                   child: Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: 36.w,

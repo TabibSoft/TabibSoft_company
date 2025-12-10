@@ -45,25 +45,53 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
   }
 
-  Future<void> fetchTechnicalSupportData(int customerId) async {
-    emit(state.copyWith(status: CustomerStatus.loading));
-    final result =
-        await _customerRepository.getTechnicalSupportData(customerId);
-    result.when(
-      success: (problem) {
-        emit(state.copyWith(
-          status: CustomerStatus.success,
-          selectedProblem: problem,
-        ));
-      },
-      failure: (error) {
-        emit(state.copyWith(
-          status: CustomerStatus.failure,
-          errorMessage: error.errMessages,
-        ));
-      },
-    );
-  }
+ // ✅ غيّر نوع المعامل من int إلى String
+Future<void> fetchTechnicalSupportData(String customerId) async {
+  emit(state.copyWith(status: CustomerStatus.loading));
+  final result =
+      await _customerRepository.getTechnicalSupportData(customerId);
+  result.when(
+    success: (problem) {
+      emit(state.copyWith(
+        status: CustomerStatus.success,
+        selectedProblem: problem,
+      ));
+    },
+    failure: (error) {
+      emit(state.copyWith(
+        status: CustomerStatus.failure,
+        errorMessage: error.errMessages,
+      ));
+    },
+  );
+}
+
+  // ✅ دالة جديدة لجلب تفاصيل المشكلة باستخدام ID (String UUID)
+ Future<void> fetchProblemDetailsById(String problemId) async {
+  print('🔵 Cubit: fetchProblemDetailsById called with ID: $problemId');
+  emit(state.copyWith(status: CustomerStatus.loading));
+  
+  final result = await _customerRepository.getTechnicalSupportData(problemId);
+  
+  result.when(
+    success: (problemDetails) {
+      print('✅ Cubit: Success - Problem ID: ${problemDetails.id}');
+      print('📋 CustomerSupport count: ${problemDetails.customerSupport?.length ?? 0}');
+      print('📋 UnderTransactions count: ${problemDetails.underTransactions?.length ?? 0}');
+      emit(state.copyWith(
+        status: CustomerStatus.success,
+        selectedProblem: problemDetails,
+      ));
+    },
+    failure: (error) {
+      print('❌ Cubit: Failure - ${error.errMessages}');
+      emit(state.copyWith(
+        status: CustomerStatus.failure,
+        errorMessage: error.errMessages,
+      ));
+    },
+  );
+}
 
   Future<void> fetchTechSupportIssues({
     String? customerId,

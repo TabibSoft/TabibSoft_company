@@ -46,8 +46,8 @@ abstract class ApiService {
   @GET(ApiConstants.getAllCustomers)
   Future<List<CustomerModel>> getAllCustomers();
 
-  @GET(ApiConstants.getTechnicalSupportData)
-  Future<ProblemModel> getTechnicalSupportData(@Path("Id") int customerId);
+@GET(ApiConstants.getTechnicalSupportData)
+Future<ProblemModel> getTechnicalSupportData(@Path("Id") String customerId);
 
   @GET(ApiConstants.getAllTechSupport)
   Future<TechSupportResponse> getAllTechSupport({

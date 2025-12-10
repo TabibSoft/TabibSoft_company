@@ -494,7 +494,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                   return const Center(
                                     child: Padding(
                                       padding: EdgeInsets.all(8),
-                                      child: CircularProgressIndicator(),
+                                      child: Text("لا يوجد عملاء"),
                                     ),
                                   );
                                 }

@@ -84,9 +84,17 @@ Future<ProblemModel> getTechnicalSupportData(@Path("Id") String customerId);
     @Query("CustomerId") required String customerId,
   });
 
-  @POST(ApiConstants.createUnderTransaction)
-  Future<void> createUnderTransaction(@Body() CreateUnderTransaction dto);
+  // تم تعديل هذه الدالة لتستخدم MultiPart
 
+  @POST(ApiConstants.createUnderTransaction)
+@MultiPart()
+Future<void> createUnderTransaction(
+  @Part(name: "CustomerSupportId") String customerSupportId,
+  @Part(name: "CustomerId") String customerId,
+  @Part(name: "Note") String note,
+  @Part(name: "ProblemstausId") int problemStatusId,
+  @Part() List<MultipartFile>? images, // إزالة name لإرسالها كـ array
+);
   @GET(ApiConstants.getAllEngineers)
   Future<List<EngineerModel>> getAllEngineers();
 

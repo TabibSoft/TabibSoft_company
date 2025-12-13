@@ -225,35 +225,40 @@ Future<void> fetchTechnicalSupportData(String customerId) async {
     );
   }
 
+
+  // الدالة المعدلة لدعم الصور
   Future<void> createUnderTransaction({
     required String customerSupportId,
     required String customerId,
     required String note,
     required int problemStatusId,
+    List<File>? images, // إضافة معامل الصور
   }) async {
+    print('Creating under transaction...');
     emit(state.copyWith(status: CustomerStatus.loading));
+
     final dto = CreateUnderTransaction(
       customerSupportId: customerSupportId,
       customerId: customerId,
       note: note,
       problemstausId: problemStatusId,
+      images: images, // تمرير الصور
     );
-    final result = await _customerRepository.createUnderTransaction(dto);
-    result.when(
-      success: (_) async {
-        // ✅ استخدم await لضمان اكتمال التحميل
-        resetPagination();
-        await fetchTechSupportIssues();
 
-        // ✅ أضف emit للنجاح بعد اكتمال التحديث
-        emit(state.copyWith(
-          status: CustomerStatus.success,
-        ));
+    final result = await _customerRepository.createUnderTransaction(dto);
+
+    result.when(
+      success: (_) {
+        print('Under transaction created successfully');
+        emit(state.copyWith(status: CustomerStatus.success));
+        resetPagination();
+        fetchTechSupportIssues();
       },
       failure: (error) {
+        print('Failed to create under transaction: ${error.errMessages}');
         emit(state.copyWith(
           status: CustomerStatus.failure,
-          errorMessage: error.errMessages,
+          errorMessage: error.errMessages ?? '',
         ));
       },
     );

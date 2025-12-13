@@ -299,14 +299,32 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<void> createUnderTransaction(CreateUnderTransaction dto) async {
+  Future<void> createUnderTransaction(
+    String customerSupportId,
+    String customerId,
+    String note,
+    int problemStatusId,
+    List<MultipartFile>? images,
+  ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
+    queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
-    final _data = <String, dynamic>{};
-    _data.addAll(dto.toJson());
+    final _data = FormData();
+    _data.fields.add(MapEntry('CustomerSupportId', customerSupportId));
+    _data.fields.add(MapEntry('CustomerId', customerId));
+    _data.fields.add(MapEntry('Note', note));
+    _data.fields.add(MapEntry('ProblemstausId', problemStatusId.toString()));
+    if (images != null) {
+      _data.files.addAll(images.map((i) => MapEntry('images', i)));
+    }
     final _options = _setStreamType<void>(
-      Options(method: 'POST', headers: _headers, extra: _extra)
+      Options(
+        method: 'POST',
+        headers: _headers,
+        extra: _extra,
+        contentType: 'multipart/form-data',
+      )
           .compose(
             _dio.options,
             'Problem/CreateUnderTransaction',

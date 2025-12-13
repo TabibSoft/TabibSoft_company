@@ -14,7 +14,6 @@ import 'package:tabib_soft_company/features/technical_support/presentation/cubit
 
 class ProblemDetailsScreen extends StatefulWidget {
   final ProblemModel issue;
-
   const ProblemDetailsScreen({super.key, required this.issue});
 
   @override
@@ -43,13 +42,17 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    nameCtl = TextEditingController(text: widget.issue.customerName ?? '');
-    addressCtl = TextEditingController(text: widget.issue.adderss ?? '');
+
+    nameCtl = TextEditingController(
+        text: widget.issue.name ?? widget.issue.customerName ?? '');
+    addressCtl = TextEditingController(
+        text: widget.issue.location ?? widget.issue.adderss ?? '');
     issueTitleCtl =
         TextEditingController(text: widget.issue.problemAddress ?? '');
-    issueDetailsCtl =
-        TextEditingController(text: widget.issue.problemDetails ?? '');
-    contactCtl = TextEditingController(text: widget.issue.customerPhone ?? '');
+    issueDetailsCtl = TextEditingController(
+        text: widget.issue.details ?? widget.issue.problemDetails ?? '');
+    contactCtl = TextEditingController(
+        text: widget.issue.telephone ?? widget.issue.customerPhone ?? '');
     solutionCtl = TextEditingController();
     specialtyCtl = TextEditingController(
       text: (widget.issue.products != null && widget.issue.products!.isNotEmpty)
@@ -59,6 +62,24 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
 
     context.read<CustomerCubit>().fetchProblemStatus();
     context.read<EngineerCubit>().fetchEngineers();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeSelectedSpecialty();
+    });
+  }
+
+  void _initializeSelectedSpecialty() {
+    final cubit = context.read<CustomerCubit>();
+    if (cubit.state.problemStatusList.isNotEmpty &&
+        widget.issue.problemStatusId != null) {
+      final status = cubit.state.problemStatusList.firstWhere(
+        (s) => s.id == widget.issue.problemStatusId,
+        orElse: () => cubit.state.problemStatusList.first,
+      );
+      setState(() {
+        selectedSpecialty = status;
+      });
+    }
   }
 
   @override
@@ -235,7 +256,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     );
   }
 
-  // دالة عرض صور customerSupportImages
   void showCustomerSupportImages() {
     if (widget.issue.customerSupport == null ||
         widget.issue.customerSupport!.isEmpty) {
@@ -245,7 +265,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
       return;
     }
 
-    // الحصول على آخر عنصر من customerSupport
     final lastSupport = widget.issue.customerSupport!.last;
     final images = lastSupport['customerSupportImages'] as List<dynamic>?;
 
@@ -276,7 +295,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
               ),
               const SizedBox(height: 12),
               const Text(
-                'صور تاريخ المعاملات',
+                'صور دعم العملاء',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -293,7 +312,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (context, index) {
                     final img = images[index];
-                    // عدل المفتاح حسب structure الـ API
                     final url = img['image'] ?? img['url'] ?? img['path'] ?? '';
 
                     if (url.toString().isEmpty) {
@@ -398,7 +416,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                               borderRadius: BorderRadius.circular(25),
                             ),
                             child: const Text(
-                              'تاريخ المعاملات',
+                              'دعم العملاء',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white,
@@ -416,7 +434,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               child: const Text(
-                                'بيانات قيد التعامل',
+                                'المعاملات الجارية',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.black54,
@@ -578,7 +596,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               child: const Text(
-                                'تاريخ المعاملات',
+                                'دعم العملاء',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.black54,
@@ -596,7 +614,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                               borderRadius: BorderRadius.circular(25),
                             ),
                             child: const Text(
-                              'بيانات قيد التعامل',
+                              'المعاملات الجارية',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white,
@@ -698,92 +716,347 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
     }
   }
 
+  // ⭐ دالة الأرشفة/إلغاء الأرشفة المحسّنة
   Future<void> toggleArchiveStatus() async {
-    if (widget.issue.id == null) {
+    if (widget.issue.customerSupportId == null) {
       Fluttertoast.showToast(
         msg: 'رقم المشكلة غير متوفر',
         backgroundColor: Colors.red,
         textColor: Colors.white,
       );
+      print('❌ Debug: customerSupportId is null');
       return;
     }
 
     final cubit = context.read<CustomerCubit>();
     final newArchiveStatus = !(widget.issue.isArchive ?? false);
 
+    print('🗄️ Archiving ProblemId: ${widget.issue.customerSupportId}');
+    print('🗄️ Archive status: $newArchiveStatus');
+
     await cubit.isArchiveProblem(
-      problemId: widget.issue.id!,
+      problemId: widget.issue.customerSupportId!,
       isArchive: newArchiveStatus,
     );
 
-    if (mounted && cubit.state.status == CustomerStatus.success) {
-      Fluttertoast.showToast(
-        msg: newArchiveStatus
-            ? 'تم أرشفة المشكلة بنجاح'
-            : 'تم إلغاء الأرشفة بنجاح',
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-      );
-      Navigator.pop(context, true);
-    } else if (mounted && cubit.state.status == CustomerStatus.failure) {
-      Fluttertoast.showToast(
-        msg: cubit.state.errorMessage ?? 'فشل تغيير حالة الأرشفة',
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+    if (mounted) {
+      if (cubit.state.status == CustomerStatus.success) {
+        Fluttertoast.showToast(
+          msg: newArchiveStatus
+              ? 'تم أرشفة المشكلة بنجاح'
+              : 'تم إلغاء الأرشفة بنجاح',
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+        );
+
+        // ⭐ تحديث البيانات والخروج
+        await cubit.refreshAllData();
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
+      } else if (cubit.state.status == CustomerStatus.failure) {
+        Fluttertoast.showToast(
+          msg: cubit.state.errorMessage ?? 'فشل تغيير حالة الأرشفة',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+      }
     }
   }
 
-  // ✅ حل مشكلة زر الحفظ
+  // ⭐ دالة الحفظ المحسّنة بالكامل
   Future<void> saveChanges() async {
     if (isLoading) return;
 
-    setState(() {
-      isLoading = true;
-    });
+    if (widget.issue.customerSupportId == null) {
+      Fluttertoast.showToast(
+        msg: 'خطأ: معرف الدعم الفني غير موجود',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    if (widget.issue.id == null) {
+      Fluttertoast.showToast(
+        msg: 'خطأ: معرف العميل غير موجود',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    if (selectedSpecialty == null) {
+      Fluttertoast.showToast(
+        msg: 'الرجاء اختيار حالة المشكلة',
+        backgroundColor: Colors.orange,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
 
     try {
       final cubit = context.read<CustomerCubit>();
 
-      // تحديث حالة المشكلة + إضافة معاملة تحت التنفيذ (under transaction)
+      print('💾 Saving - customerSupportId: ${widget.issue.customerSupportId}');
+      print('💾 Saving - customerId: ${widget.issue.id}');
+      print('💾 Saving - statusId: ${selectedSpecialty!.id}');
+      print('💾 Saving - images count: ${selectedImages.length}');
+
       await cubit.createUnderTransaction(
-        customerSupportId: widget.issue.id!,
-        customerId: widget.issue.customerId!,
-        note: solutionCtl.text.trim().isEmpty
-            ? 'تم تحديث حالة المشكلة'
-            : solutionCtl.text,
+        customerSupportId: widget.issue.customerSupportId!,
+        customerId: widget.issue.id!,
+        note: solutionCtl.text.trim().isEmpty ? '' : solutionCtl.text.trim(),
         problemStatusId: selectedSpecialty!.id,
+        images: selectedImages.isNotEmpty ? selectedImages : null,
       );
 
-      // إذا كان هناك صور جديدة → نرفعها (اختياري: يمكنك إضافة API لرفع صور لمشكلة موجودة)
-      if (selectedImages.isNotEmpty) {
-        // مثال: إذا كان لديك API لإضافة صور لمشكلة موجودة
-        // await _uploadImagesToExistingProblem(widget.issue.id!, selectedImages);
-        Fluttertoast.showToast(
-            msg: 'تم رفع ${selectedImages.length} صورة جديدة');
-      }
+      await Future.delayed(const Duration(milliseconds: 300));
 
-      // إظهار رسالة نجاح
-      Fluttertoast.showToast(
-        msg: 'تم حفظ التغييرات بنجاح',
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-      );
-
-      // الرجوع + إعادة تحميل البيانات في الشاشة الرئيسة
       if (mounted) {
-        Navigator.of(context).pop(true); // نرجع true للدلالة على التغيير
+        if (cubit.state.status == CustomerStatus.success) {
+          Fluttertoast.showToast(
+            msg: '✓ تم حفظ التغييرات بنجاح',
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+            toastLength: Toast.LENGTH_SHORT,
+          );
+
+          // إذا كانت الحالة 15 اسأل عن الأرشفة
+          if (selectedSpecialty!.id == 15) {
+            await _showArchiveDialog();
+          } else {
+            // ⭐ الخروج وتحديث الشاشة السابقة
+            if (mounted) {
+              print('🔄 Refreshing data...');
+              await cubit.refreshAllData();
+              print('✅ Data refreshed, exiting...');
+              Navigator.of(context).pop(true);
+            }
+          }
+        } else if (cubit.state.status == CustomerStatus.failure) {
+          Fluttertoast.showToast(
+            msg: cubit.state.errorMessage ?? 'فشل حفظ التغييرات',
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            toastLength: Toast.LENGTH_LONG,
+          );
+        }
       }
     } catch (e) {
-      Fluttertoast.showToast(
-        msg: 'فشل في الحفظ: $e',
-        backgroundColor: Colors.red,
-      );
+      print('❌ Error in saveChanges: $e');
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: e.toString(),
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          toastLength: Toast.LENGTH_LONG,
+        );
+      }
     } finally {
       if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
+        setState(() => isLoading = false);
+      }
+    }
+  }
+
+  // ⭐ دالة عرض Dialog الأرشفة
+  Future<void> _showArchiveDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.archive_outlined,
+                  color: Colors.orange.shade700,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'أرشفة المشكلة',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'تم حل المشكلة بنجاح ✓',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green,
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'هل تريد أرشفة هذه المشكلة؟',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'يمكنك الأرشفة الآن أو لاحقاً من القائمة',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text(
+                'لاحقاً',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange.shade700,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+              ),
+              icon: const Icon(Icons.archive, color: Colors.white),
+              label: const Text(
+                'أرشفة الآن',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (mounted) {
+      if (result == true) {
+        // ✅ المستخدم اختار الأرشفة
+        await _performArchive();
+      } else {
+        // ✅ المستخدم اختار "لاحقاً" - تحديث وخروج
+        final cubit = context.read<CustomerCubit>();
+        print('🔄 User chose later, refreshing data...');
+        await cubit.refreshAllData();
+        print('✅ Data refreshed, exiting...');
+        if (mounted) {
+          Navigator.of(context).pop(true);
+        }
+      }
+    }
+  }
+
+  // ⭐ دالة تنفيذ الأرشفة
+  Future<void> _performArchive() async {
+    if (widget.issue.customerSupportId == null) {
+      Fluttertoast.showToast(
+        msg: 'خطأ: معرف المشكلة غير موجود',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      // حتى في حالة الخطأ، حدّث البيانات واخرج
+      final cubit = context.read<CustomerCubit>();
+      await cubit.refreshAllData();
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
+      return;
+    }
+
+    // عرض مؤشر تحميل
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          color: Colors.white,
+        ),
+      ),
+    );
+
+    final cubit = context.read<CustomerCubit>();
+
+    print('🗄️ Archiving ProblemId: ${widget.issue.customerSupportId}');
+
+    await cubit.isArchiveProblem(
+      problemId: widget.issue.customerSupportId!,
+      isArchive: true,
+    );
+
+    if (mounted) {
+      // إغلاق مؤشر التحميل
+      Navigator.of(context).pop();
+
+      if (cubit.state.status == CustomerStatus.success) {
+        Fluttertoast.showToast(
+          msg: '✓ تم أرشفة المشكلة بنجاح',
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+        );
+
+        // ⭐ تحديث البيانات والخروج
+        print('🔄 Archive successful, refreshing data...');
+        await cubit.refreshAllData();
+        print('✅ Data refreshed, exiting...');
+        if (mounted) {
+          Navigator.of(context).pop(true);
+        }
+      } else if (cubit.state.status == CustomerStatus.failure) {
+        Fluttertoast.showToast(
+          msg: cubit.state.errorMessage ?? 'فشل في الأرشفة',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+
+        // ⭐ حتى لو فشلت الأرشفة، حدّث البيانات واخرج
+        print('❌ Archive failed, but still refreshing data...');
+        await cubit.refreshAllData();
+        print('✅ Data refreshed, exiting...');
+        if (mounted) {
+          Navigator.of(context).pop(true);
+        }
       }
     }
   }
@@ -1016,7 +1289,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ إزالة BlocListener من build لأن المنطق أصبح في saveChanges مباشرة
     return Scaffold(
       backgroundColor: gradientTop,
       body: SafeArea(
@@ -1067,7 +1339,6 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                 ),
                 child: Column(
                   children: [
-                    // ✅ أيقونة عرض صور customerSupportImages في أعلى الجزء الأبيض
                     Padding(
                       padding: const EdgeInsets.only(top: 12, right: 20),
                       child: Align(
@@ -1078,7 +1349,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                             color: Colors.black87,
                             size: 28,
                           ),
-                          tooltip: 'صور تاريخ المعاملات',
+                          tooltip: 'صور دعم العملاء',
                           onPressed: showCustomerSupportImages,
                         ),
                       ),
@@ -1108,13 +1379,17 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                 if (state.problemStatusList.isEmpty) {
                                   return buildLabeledField(
                                     field: buildDisabledDropdown(
-                                        value: 'لا توجد حالات متاحة'),
+                                        value: 'جاري التحميل...'),
                                     label: 'حالة المشكلة',
                                   );
                                 }
 
+                                final allowedStatusIds = [12, 13, 15];
+
                                 final filteredStatuses = state.problemStatusList
-                                    .where((s) => s.name.isNotEmpty)
+                                    .where((s) =>
+                                        s.name.isNotEmpty &&
+                                        allowedStatusIds.contains(s.id))
                                     .toList();
 
                                 if (filteredStatuses.isEmpty) {
@@ -1125,20 +1400,29 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                   );
                                 }
 
-                                if (selectedSpecialty == null ||
-                                    !filteredStatuses.any(
-                                        (s) => s.id == selectedSpecialty!.id)) {
-                                  selectedSpecialty =
-                                      filteredStatuses.firstWhere(
-                                    (s) => s.id == widget.issue.problemStatusId,
-                                    orElse: () => filteredStatuses.first,
-                                  );
+                                if (selectedSpecialty == null) {
+                                  if (widget.issue.problemStatusId != null) {
+                                    selectedSpecialty =
+                                        filteredStatuses.firstWhere(
+                                      (s) =>
+                                          s.id == widget.issue.problemStatusId,
+                                      orElse: () => filteredStatuses.first,
+                                    );
+                                  } else {
+                                    selectedSpecialty = filteredStatuses.first;
+                                  }
+                                }
+
+                                if (!filteredStatuses.any(
+                                    (s) => s.id == selectedSpecialty!.id)) {
+                                  selectedSpecialty = filteredStatuses.first;
                                 }
 
                                 return buildLabeledField(
                                   field:
                                       buildDropdownButton<ProblemStatusModel>(
-                                    displayValue: selectedSpecialty!.name ?? '',
+                                    displayValue:
+                                        selectedSpecialty!.name ?? 'غير محدد',
                                     trailingText: null,
                                     items: filteredStatuses,
                                     onSelected: (status) {
@@ -1149,7 +1433,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                     itemBuilder: (status) => ListTile(
                                       dense: true,
                                       title: Text(
-                                        status.name ?? '',
+                                        status.name ?? 'غير محدد',
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,

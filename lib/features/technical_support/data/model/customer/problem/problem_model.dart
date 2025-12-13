@@ -6,6 +6,11 @@ part 'problem_model.g.dart';
 class ProblemModel {
   final String? id;
   final String? customerId;
+  
+  // ✅ إضافة حقل customerSupportId
+  @JsonKey(name: 'customerSupportId')
+  final String? customerSupportId;
+  
   final String? customerName;
   final String? customerPhone;
   final String? adderss;
@@ -23,32 +28,31 @@ class ProblemModel {
   final String? statusColor;
   final bool? isUrgent;
 
-  // الحقل الأصلي في الكود القديم
   @JsonKey(name: 'isArchive')
   final bool? isArchive;
 
-  // الحقل الجديد اللي جاي من الـ API
   @JsonKey(name: 'statusIsArchieve')
   final bool? statusIsArchieveRaw;
 
-  // Getter ذكي: يسمح لك باستخدام statusIsArchieve في كل الكود بأمان
   bool? get statusIsArchieve => statusIsArchieveRaw ?? isArchive;
 
-  // قائمة المنتجات
   final List<dynamic>? products;
-
-  // قائمة روابط الصور من الـ API
   final List<dynamic>? images;
-
-  // السجل التاريخي - دعم العملاء
   final List<dynamic>? customerSupport;
-
-  // المعاملات الجارية
   final List<dynamic>? underTransactions;
+
+  // ✅ الحقول الإضافية
+  final String? name;
+  final String? location;
+  final String? telephone;
+
+  // ✅ Getter ذكي لإرجاع customerId أو customerSupportId
+  String? get effectiveCustomerId => customerId ?? customerSupportId;
 
   ProblemModel({
     this.id,
     this.customerId,
+    this.customerSupportId,  // ✅ إضافة
     this.customerName,
     this.customerPhone,
     this.adderss,
@@ -71,6 +75,9 @@ class ProblemModel {
     this.images,
     this.customerSupport,
     this.underTransactions,
+    this.name,
+    this.location,
+    this.telephone,
   });
 
   factory ProblemModel.fromJson(Map<String, dynamic> json) =>
@@ -81,6 +88,7 @@ class ProblemModel {
   ProblemModel copyWith({
     String? id,
     String? customerId,
+    String? customerSupportId,  // ✅ إضافة
     String? customerName,
     String? customerPhone,
     String? adderss,
@@ -103,10 +111,14 @@ class ProblemModel {
     List<dynamic>? images,
     List<dynamic>? customerSupport,
     List<dynamic>? underTransactions,
+    String? name,
+    String? location,
+    String? telephone,
   }) {
     return ProblemModel(
       id: id ?? this.id,
       customerId: customerId ?? this.customerId,
+      customerSupportId: customerSupportId ?? this.customerSupportId,  // ✅ إضافة
       customerName: customerName ?? this.customerName,
       customerPhone: customerPhone ?? this.customerPhone,
       adderss: adderss ?? this.adderss,
@@ -129,11 +141,14 @@ class ProblemModel {
       images: images ?? this.images,
       customerSupport: customerSupport ?? this.customerSupport,
       underTransactions: underTransactions ?? this.underTransactions,
+      name: name ?? this.name,
+      location: location ?? this.location,
+      telephone: telephone ?? this.telephone,
     );
   }
 
   @override
   String toString() {
-    return 'ProblemModel(id: $id, customerName: $customerName, problemAddress: $problemAddress, statusIsArchieve: $statusIsArchieve)';
+    return 'ProblemModel(id: $id, customerName: $customerName, problemAddress: $problemAddress, statusIsArchieve: $statusIsArchieve, effectiveCustomerId: $effectiveCustomerId)';
   }
 }

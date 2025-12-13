@@ -9,6 +9,7 @@ part of 'problem_model.dart';
 ProblemModel _$ProblemModelFromJson(Map<String, dynamic> json) => ProblemModel(
       id: json['id'] as String?,
       customerId: json['customerId'] as String?,
+      customerSupportId: json['customerSupportId'] as String?,
       customerName: json['customerName'] as String?,
       customerPhone: json['customerPhone'] as String?,
       adderss: json['adderss'] as String?,
@@ -31,12 +32,16 @@ ProblemModel _$ProblemModelFromJson(Map<String, dynamic> json) => ProblemModel(
       images: json['images'] as List<dynamic>?,
       customerSupport: json['customerSupport'] as List<dynamic>?,
       underTransactions: json['underTransactions'] as List<dynamic>?,
+      name: json['name'] as String?,
+      location: json['location'] as String?,
+      telephone: json['telephone'] as String?,
     );
 
 Map<String, dynamic> _$ProblemModelToJson(ProblemModel instance) =>
     <String, dynamic>{
       'id': instance.id,
       'customerId': instance.customerId,
+      'customerSupportId': instance.customerSupportId,
       'customerName': instance.customerName,
       'customerPhone': instance.customerPhone,
       'adderss': instance.adderss,
@@ -59,4 +64,7 @@ Map<String, dynamic> _$ProblemModelToJson(ProblemModel instance) =>
       'images': instance.images,
       'customerSupport': instance.customerSupport,
       'underTransactions': instance.underTransactions,
+      'name': instance.name,
+      'location': instance.location,
+      'telephone': instance.telephone,
     };

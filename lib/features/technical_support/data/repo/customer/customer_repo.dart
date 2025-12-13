@@ -73,16 +73,48 @@ Future<ApiResult<ProblemModel>> getTechnicalSupportData(
     }
   }
 
+ 
+  // الدالة المعدلة لدعم MultiPart FormData
   Future<ApiResult<void>> createUnderTransaction(
-      CreateUnderTransaction dto) async {
+    CreateUnderTransaction dto,
+  ) async {
     try {
-      await _apiService.createUnderTransaction(dto);
+      // تحويل الصور إلى MultipartFile
+      List<MultipartFile>? imageFiles;
+      
+      if (dto.images != null && dto.images!.isNotEmpty) {
+        imageFiles = [];
+        for (var file in dto.images!) {
+          if (await file.exists() && await file.length() > 0) {
+            final multipartFile = await MultipartFile.fromFile(
+              file.path,
+              filename: file.path.split('/').last,
+            );
+            imageFiles.add(multipartFile);
+          }
+        }
+      }
+
+      print('Sending createUnderTransaction with ${imageFiles?.length ?? 0} images');
+      
+      await _apiService.createUnderTransaction(
+        dto.customerSupportId,
+        dto.customerId,
+        dto.note ?? '',
+        dto.problemstausId,
+        imageFiles,
+      );
+      
       return const ApiResult.success(null);
     } on DioException catch (e) {
+      print('DioException in createUnderTransaction: ${e.message}');
+      print('Response: ${e.response?.data}');
       return ApiResult.failure(ServerFailure.fromDioError(e));
+    } catch (e) {
+      print('Unexpected error in createUnderTransaction: $e');
+      return ApiResult.failure(ServerFailure(e.toString()));
     }
   }
-
   Future<ApiResult<List<CustomerModel>>> autoCompleteCustomer(
       String query) async {
     try {

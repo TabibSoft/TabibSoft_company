@@ -11,6 +11,7 @@ import 'package:tabib_soft_company/features/technical_support/data/model/custome
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/add_tech_task_screen.dart';
 
 class ProblemDetailsScreen extends StatefulWidget {
   final ProblemModel issue;
@@ -1611,6 +1612,36 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12.0),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              AddTechTaskScreen(
+                                            customerName: nameCtl.text,
+                                            customerId: widget.issue.id,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.add_task, size: 18),
+                                    label: const Text('إضافة مهمة'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: fieldBlue,
+                                      elevation: 2,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                               buildReadOnlyField(
                                 label: 'اسم العميل',
                                 controller: nameCtl,

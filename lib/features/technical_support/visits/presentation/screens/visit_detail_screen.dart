@@ -6,6 +6,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/visit_model.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/presentation/widgets/full_screen_image_dialog.dart';
+import 'package:tabib_soft_company/features/technical_support/visits/presentation/widgets/simple_note_card.dart';
 
 class VisitDetailScreen extends StatefulWidget {
   final VisitModel visit;
@@ -19,7 +21,7 @@ class VisitDetailScreen extends StatefulWidget {
 class _VisitDetailScreenState extends State<VisitDetailScreen> {
   late TextEditingController _globalNoteController;
   final ImagePicker _picker = ImagePicker();
-  List<File> _selectedImages = [];
+  final List<File> _selectedImages = [];
   List<String> _uploadedImageUrls = [];
   List<dynamic> _previousNotes = [];
   bool _isLoading = false;
@@ -27,7 +29,8 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _globalNoteController = TextEditingController(text: widget.visit.globalNote ?? '');
+    _globalNoteController =
+        TextEditingController(text: widget.visit.globalNote ?? '');
     _refreshData(); // تحديث تلقائي عند الدخول
   }
 
@@ -36,11 +39,9 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     setState(() => _isLoading = true);
     try {
       await context.read<VisitCubit>().fetchVisits(); // جلب أحدث بيانات
-      final updatedVisit = context
-          .read<VisitCubit>()
-          .state
-          .visits
-          .firstWhere((v) => v.id == widget.visit.id, orElse: () => widget.visit);
+      final updatedVisit = context.read<VisitCubit>().state.visits.firstWhere(
+          (v) => v.id == widget.visit.id,
+          orElse: () => widget.visit);
 
       setState(() {
         _globalNoteController.text = updatedVisit.globalNote ?? '';
@@ -58,22 +59,34 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
   Future<void> _pickImage() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
       builder: (_) => Container(
         padding: EdgeInsets.symmetric(vertical: 20.h),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 50.w, height: 5.h, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+            Container(
+                width: 50.w,
+                height: 5.h,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10))),
             SizedBox(height: 20.h),
             ListTile(
-              leading: CircleAvatar(backgroundColor: Colors.blue[100], child: const Icon(Icons.camera_alt, color: Colors.blue)),
-              title: const Text('الكاميرا', style: TextStyle(fontWeight: FontWeight.bold)),
+              leading: CircleAvatar(
+                  backgroundColor: Colors.blue[100],
+                  child: const Icon(Icons.camera_alt, color: Colors.blue)),
+              title: const Text('الكاميرا',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
-              leading: CircleAvatar(backgroundColor: Colors.blue[100], child: const Icon(Icons.photo_library, color: Colors.blue)),
-              title: const Text('المعرض', style: TextStyle(fontWeight: FontWeight.bold)),
+              leading: CircleAvatar(
+                  backgroundColor: Colors.blue[100],
+                  child: const Icon(Icons.photo_library, color: Colors.blue)),
+              title: const Text('المعرض',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],
@@ -103,47 +116,15 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.zero,
-        child: Stack(
-          children: [
-            Center(
-              child: Hero(
-                tag: 'img_$index',
-                child: InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 5.0,
-                  child: path.startsWith('http')
-                      ? Image.network(path, fit: BoxFit.contain)
-                      : Image.file(File(path), fit: BoxFit.contain),
-                ),
-              ),
-            ),
-            Positioned(top: 40.h, right: 20.w, child: _closeButton()),
-            Positioned(
-              bottom: 30.h,
-              child: Container(
-                width: MediaQuery.of(context).size.width,
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12)),
-                alignment: Alignment.center,
-                child: Text(
-                  'صورة ${index + 1} من ${allPaths.length}',
-                  style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ],
-        ),
+      builder: (_) => FullScreenImageDialog(
+        imageUrl: path,
+        currentIndex: index,
+        totalCount: allPaths.length,
+        tag: 'img_$index',
+        isLocal: !path.startsWith('http'),
       ),
     );
   }
-
-  Widget _closeButton() => GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: CircleAvatar(backgroundColor: Colors.black54, child: Icon(Icons.close, color: Colors.white, size: 28.r)),
-      );
 
   // حفظ التفاصيل + تحديث تلقائي
   Future<void> _saveVisitDetail() async {
@@ -162,25 +143,32 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
       if (widget.visit.hasVisitDetails) {
         await cubit.editVisitDetail(
           visitInstallDetailId: visitId,
-          note: _globalNoteController.text.trim().isEmpty ? "تم التحديث" : _globalNoteController.text.trim(),
+          note: _globalNoteController.text.trim().isEmpty
+              ? "تم التحديث"
+              : _globalNoteController.text.trim(),
           images: imageFiles.isNotEmpty ? imageFiles : null,
           existingImageUrls: widget.visit.existingImages,
         );
       } else {
         await cubit.addVisitDetail(
           visitInstallDetailId: visitId,
-          note: _globalNoteController.text.trim().isEmpty ? "تم الزيارة" : _globalNoteController.text.trim(),
+          note: _globalNoteController.text.trim().isEmpty
+              ? "تم الزيارة"
+              : _globalNoteController.text.trim(),
           images: imageFiles.isNotEmpty ? imageFiles : null,
         );
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم الحفظ بنجاح'), backgroundColor: Colors.green),
+        const SnackBar(
+            content: Text('تم الحفظ بنجاح'), backgroundColor: Colors.green),
       );
 
+      _selectedImages.clear(); // مسح الصور المحلية بعد الحفظ
       await _refreshData(); // تحديث تلقائي بعد الحفظ
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('فشل: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('فشل: $e'), backgroundColor: Colors.red));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -191,11 +179,14 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
         title: const Text('تأكيد إنهاء الزيارة'),
         content: const Text('هل أنت متأكد من إتمام الزيارة؟'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('لا')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('لا')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             onPressed: () => Navigator.pop(context, true),
@@ -212,13 +203,16 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
       await context.read<VisitCubit>().makeVisitDone(visitId: widget.visit.id);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم إنهاء الزيارة بنجاح'), backgroundColor: Colors.green),
+        const SnackBar(
+            content: Text('تم إنهاء الزيارة بنجاح'),
+            backgroundColor: Colors.green),
       );
 
       await _refreshData(); // تحديث تلقائي بعد "تم"
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('فشل: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('فشل: $e'), backgroundColor: Colors.red));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -230,18 +224,22 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
         title: const Text('ملاحظة جديدة'),
         content: TextField(
           controller: ctrl,
           maxLines: 4,
           decoration: InputDecoration(
             hintText: 'اكتب الملاحظة...',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+            border:
+                OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('إلغاء')),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('إضافة'),
@@ -255,10 +253,13 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     if (text.isEmpty) return;
 
     try {
-      await context.read<VisitCubit>().addNote(visitInstallId: widget.visit.id, note: text);
+      await context
+          .read<VisitCubit>()
+          .addNote(visitInstallId: widget.visit.id, note: text);
       await _refreshData(); // تحديث تلقائي بعد إضافة ملاحظة
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('فشل: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('فشل: $e'), backgroundColor: Colors.red));
     }
   }
 
@@ -268,261 +269,325 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     super.dispose();
   }
 
+  Widget _buildSectionHeader({required String title, required IconData icon}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12.h, top: 4.h),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: BoxDecoration(
+              color: const Color(0xFF16669E).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Icon(icon, color: const Color(0xFF16669E), size: 22.r),
+          ),
+          SizedBox(width: 12.w),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF2C3E50),
+            ),
+          ),
+          const Spacer(),
+          Container(
+            width: 40.w,
+            height: 2.h,
+            decoration: BoxDecoration(
+              color: const Color(0xFF16669E).withOpacity(0.3),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final allImages = [..._uploadedImageUrls, ..._selectedImages.map((f) => f.path)];
+    final allImages = [
+      ..._uploadedImageUrls,
+      ..._selectedImages.map((f) => f.path)
+    ];
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('تفاصيل الزيارة'),
-        centerTitle: true,
-        backgroundColor: const Color(0xFF16669E),
-        foregroundColor: Colors.white,
-        ),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: RefreshIndicator(
         onRefresh: _refreshData,
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
-          child: ListView(
-            children: [
-              // الملاحظات السابقة (بدون اسم المرسل)
- // الملاحظات السابقة (مع إمكانية تحديد "مقروءة" بالضغط)
-Card(
-  child: Padding(
-    padding: EdgeInsets.all(16.w),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.history, color: Color(0xFF16669E)),
-            SizedBox(width: 8.w),
-            Text('الملاحظات السابقة (${_previousNotes.length})',
-                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        const Divider(),
-        _previousNotes.isEmpty
-            ? Padding(
-                padding: EdgeInsets.symmetric(vertical: 30.h),
-                child: const Center(
-                  child: Text('لا توجد ملاحظات', style: TextStyle(color: Colors.grey)),
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 120.h,
+              pinned: true,
+              stretch: true,
+              backgroundColor: const Color(0xFF16669E),
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(
+                  'تفاصيل الزيارة',
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              )
-            : ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _previousNotes.length,
-                separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                itemBuilder: (_, i) {
-                  final n = _previousNotes[i];
-                  final bool isRead = n['isRead'] == true;
-                  final String id = n['id']?.toString() ?? '';
-
-                  return Container(
-                    padding: EdgeInsets.all(14.w),
-                    decoration: BoxDecoration(
-                      color: isRead ? Colors.grey[50] : Colors.blue[50],
-                      borderRadius: BorderRadius.circular(16.r),
-                      border: Border.all(
-                        color: isRead ? Colors.grey[300]! : Colors.blue[400]!,
-                        width: 1.8,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                centerTitle: true,
+                background: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF16669E), Color(0xFF20AAC9)],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // أيقونة الحالة + الضغط لتغييرها
-                        GestureDetector(
-                         onTap: id.isEmpty
-    ? null
-    : () async {
-        if (isRead) return; // لو مقروءة بالفعل
-
-        try {
-          await context.read<VisitCubit>().makeNoteRead(noteId: id);
-
-          // نحدث الحالة محليًا فورًا (حتى لو الـ API مش بيحدثها)
-          setState(() {
-            n['isRead'] = true;
-          });
-
-          // اختياري: نعمل refresh عشان نجيب باقي التغييرات
-          // await _refreshData();
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('فشل التحديث'), backgroundColor: Colors.red),
-          );
-        }
-      
-                                  
-                                },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            padding: EdgeInsets.all(10.r),
-                            decoration: BoxDecoration(
-                              color: isRead ? Colors.green.withOpacity(0.15) : Colors.orange.withOpacity(0.15),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isRead ? Colors.green : Colors.orange,
-                                width: 2,
-                              ),
-                            ),
-                            child: Icon(
-                              isRead ? Icons.mark_email_read : Icons.mark_email_unread,
-                              color: isRead ? Colors.green[700] : Colors.orange[700],
-                              size: 26.r,
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(width: 14.w),
-
-                        // نص الملاحظة
-                        Expanded(
-                          child: Text(
-                            n['note'] ?? '',
-                            style: TextStyle(
-                              fontSize: 15.5.sp,
-                              height: 1.5,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(width: 10.w),
-
-                        // زر الحذف
-                        if (id.isNotEmpty)
-                          GestureDetector(
-                            onTap: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                  title: const Text('حذف الملاحظة'),
-                                  content: const Text('هل أنت متأكد من حذف هذه الملاحظة؟'),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('لا')),
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, true),
-                                      child: const Text('نعم، احذف', style: TextStyle(color: Colors.red)),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (confirm == true) {
-                                await context.read<VisitCubit>().deleteNote(noteId: id);
-                                await _refreshData();
-                              }
-                            },
-                            child: Container(
-                              padding: EdgeInsets.all(8.r),
-                              decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(Icons.delete_outline, color: Colors.red[600], size: 22.r),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-      ],
-    ),
-  ),
-),
-              SizedBox(height: 16.h),
-
-              // زر إضافة ملاحظة
-              ElevatedButton.icon(
-                onPressed: _showAddNoteDialog,
-                icon: const Icon(Icons.add_circle),
-                label: const Text('إضافة ملاحظة جديدة'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00BCD4),
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                ),
-              ),
-
-              SizedBox(height: 20.h),
-
-              // ملاحظة عامة
-              Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(children: [Icon(Icons.note_alt, color: Color(0xFF16669E)), SizedBox(width: 8), Text('ملاحظة عامة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))]),
-                      SizedBox(height: 12.h),
-                      TextField(
-                        controller: _globalNoteController,
-                        maxLines: 5,
-                        decoration: InputDecoration(
-                          hintText: 'اكتب الملاحظة العامة...',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
-                          filled: true,
-                          fillColor: Colors.blue[50],
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ),
-
-              SizedBox(height: 20.h),
-
-              // الصور
-              Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('الصور (${allImages.length})', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold)),
-                          TextButton.icon(onPressed: _pickImage, icon: const Icon(Icons.add_photo_alternate), label: const Text('إضافة صورة')),
-                        ],
-                      ),
-                      const Divider(),
-                      allImages.isEmpty
-                          ? Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 30.h), child: const Text('لا توجد صور')))
-                          : GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 12.w,
-                                mainAxisSpacing: 12.h,
+            ),
+            SliverPadding(
+              padding: EdgeInsets.all(16.w),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  // الملاحظات السابقة
+                  _buildSectionHeader(
+                    title: 'الملاحظات السابقة (${_previousNotes.length})',
+                    icon: Icons.history,
+                  ),
+                  _buildCard(
+                    child: _previousNotes.isEmpty
+                        ? Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20.h),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(Icons.notes_rounded,
+                                      size: 40.r, color: Colors.grey[300]),
+                                  SizedBox(height: 8.h),
+                                  const Text('لا توجد ملاحظات سابقة',
+                                      style: TextStyle(color: Colors.grey)),
+                                ],
                               ),
-                              itemCount: allImages.length,
-                              itemBuilder: (_, i) {
-                                final path = allImages[i];
-                                final isNetwork = path.startsWith('http');
-                                return GestureDetector(
-                                  onTap: () => _showFullScreenImage(path, i, allImages),
+                            ),
+                          )
+                        : ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _previousNotes.length,
+                            separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                            itemBuilder: (_, i) {
+                              final n = _previousNotes[i];
+                              final bool isRead = n['isRead'] == true;
+                              final String id = n['id']?.toString() ?? '';
+
+                              return SimpleNoteCard(
+                                note: n,
+                                onMarkAsRead: id.isEmpty
+                                    ? null
+                                    : () async {
+                                        if (isRead) return;
+                                        try {
+                                          await context
+                                              .read<VisitCubit>()
+                                              .makeNoteRead(noteId: id);
+                                          setState(() {
+                                            n['isRead'] = true;
+                                          });
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content: Text('فشل التحديث'),
+                                                backgroundColor: Colors.red),
+                                          );
+                                        }
+                                      },
+                                onDelete: id.isEmpty
+                                    ? null
+                                    : () async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (_) => AlertDialog(
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        20.r)),
+                                            title: const Text('حذف الملاحظة'),
+                                            content: const Text(
+                                                'هل أنت متأكد من حذف هذه الملاحظة؟'),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                          context, false),
+                                                  child: const Text('لا')),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.red),
+                                                onPressed: () => Navigator.pop(
+                                                    context, true),
+                                                child: const Text('نعم، احذف'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm == true) {
+                                          await context
+                                              .read<VisitCubit>()
+                                              .deleteNote(noteId: id);
+                                          await _refreshData();
+                                        }
+                                      },
+                              );
+                            },
+                          ),
+                  ),
+
+                  SizedBox(height: 16.h),
+
+                  // زر إضافة ملاحظة
+                  ElevatedButton.icon(
+                    onPressed: _showAddNoteDialog,
+                    icon: Icon(Icons.add_comment_rounded, size: 22.r),
+                    label: Text(
+                      'إضافة ملاحظة سريعة',
+                      style: TextStyle(
+                          fontSize: 16.sp, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF20AAC9),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.r)),
+                    ),
+                  ),
+
+                  SizedBox(height: 24.h),
+
+                  // ملاحظة عامة
+                  _buildSectionHeader(
+                    title: 'تقرير الزيارة',
+                    icon: Icons.edit_note_rounded,
+                  ),
+                  _buildCard(
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _globalNoteController,
+                          maxLines: 4,
+                          style: TextStyle(fontSize: 15.sp),
+                          decoration: InputDecoration(
+                            hintText: 'اكتب تفاصيل ما تم خلال الزيارة...',
+                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15.r),
+                              borderSide: BorderSide(color: Colors.grey[200]!),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15.r),
+                              borderSide: BorderSide(color: Colors.grey[100]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15.r),
+                              borderSide: const BorderSide(
+                                  color: Color(0xFF16669E), width: 1.5),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF1F5F9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 24.h),
+
+                  // الصور
+                  _buildSectionHeader(
+                    title: 'المرفقات (${allImages.length})',
+                    icon: Icons.collections_rounded,
+                  ),
+                  _buildCard(
+                    child: Column(
+                      children: [
+                        if (allImages.isEmpty)
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20.h),
+                            child: Column(
+                              children: [
+                                Icon(Icons.add_a_photo_outlined,
+                                    size: 50.r, color: Colors.grey[300]),
+                                SizedBox(height: 12.h),
+                                Text(
+                                  'لا توجد صور مرفقة',
+                                  style: TextStyle(
+                                      color: Colors.grey[400], fontSize: 14.sp),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 10.w,
+                              mainAxisSpacing: 10.h,
+                            ),
+                            itemCount: allImages.length,
+                            itemBuilder: (_, i) {
+                              final path = allImages[i];
+                              final isNetwork = path.startsWith('http');
+                              return GestureDetector(
+                                onTap: () =>
+                                    _showFullScreenImage(path, i, allImages),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 5,
+                                      ),
+                                    ],
+                                  ),
                                   child: Stack(
+                                    fit: StackFit.expand,
                                     children: [
                                       Hero(
                                         tag: 'img_$i',
                                         child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12.r),
+                                          borderRadius:
+                                              BorderRadius.circular(12.r),
                                           child: isNetwork
-                                              ? Image.network(path, width: double.infinity, height: double.infinity, fit: BoxFit.cover)
-                                              : Image.file(File(path), fit: BoxFit.cover),
+                                              ? Image.network(path,
+                                                  fit: BoxFit.cover)
+                                              : Image.file(File(path),
+                                                  fit: BoxFit.cover),
                                         ),
                                       ),
                                       if (!isNetwork)
@@ -530,58 +595,105 @@ Card(
                                           top: 4,
                                           right: 4,
                                           child: GestureDetector(
-                                            onTap: () => _removeLocalImage(i - _uploadedImageUrls.length),
-                                            child: CircleAvatar(radius: 14.r, backgroundColor: Colors.red, child: const Icon(Icons.close, size: 18, color: Colors.white)),
+                                            onTap: () => _removeLocalImage(
+                                                i - _uploadedImageUrls.length),
+                                            child: Container(
+                                              padding: EdgeInsets.all(4.r),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(Icons.close,
+                                                  size: 14.r,
+                                                  color: Colors.white),
+                                            ),
                                           ),
                                         ),
                                     ],
                                   ),
-                                );
-                              },
-                            ),
+                                ),
+                              );
+                            },
+                          ),
+                        SizedBox(height: 16.h),
+                        OutlinedButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.add_photo_alternate_rounded),
+                          label: const Text('إضافة صور جديدة'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF16669E),
+                            side: const BorderSide(color: Color(0xFF16669E)),
+                            minimumSize: Size(double.infinity, 45.h),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 40.h),
+
+                  // الأزرار الرئيسية
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _markAsDone,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green[600],
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            elevation: 4,
+                            shadowColor: Colors.green.withOpacity(0.3),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18.r)),
+                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                                  height: 24.r,
+                                  width: 24.r,
+                                  child: const CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2))
+                              : Text('إنهاء الزيارة',
+                                  style: TextStyle(
+                                      fontSize: 17.sp,
+                                      fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _saveVisitDetail,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF16669E),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            elevation: 4,
+                            shadowColor:
+                                const Color(0xFF16669E).withOpacity(0.3),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18.r)),
+                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                                  height: 24.r,
+                                  width: 24.r,
+                                  child: const CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2))
+                              : Text('حفظ الإجراء',
+                                  style: TextStyle(
+                                      fontSize: 17.sp,
+                                      fontWeight: FontWeight.bold)),
+                        ),
+                      ),
                     ],
                   ),
-                ),
+                  SizedBox(height: 40.h),
+                ]),
               ),
-
-              SizedBox(height: 40.h),
-
-              // الأزرار: تم + حفظ
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _markAsDone,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: EdgeInsets.symmetric(vertical: 18.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
-                      ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('تم', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _saveVisitDetail,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00BCD4),
-                        padding: EdgeInsets.symmetric(vertical: 18.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
-                      ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('حفظ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 30.h),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

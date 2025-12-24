@@ -16,11 +16,32 @@ class TaskCubit extends Cubit<TaskState> {
         ));
 
   Future<void> fetchTasks() async {
-    emit(state.copyWith(status: TaskStatus.loading));
+    // 1. جلب البيانات المخبأة محلياً لعرضها فوراً وتقليل وقت الانتظار
+    final cachedTasks = _taskRepository.getCachedTasks();
+    if (cachedTasks != null && cachedTasks.isNotEmpty) {
+      final sections = cachedTasks.map((task) {
+        return SectionModel(
+          id: task.id,
+          name: task.name,
+          isTest: false,
+        );
+      }).toList();
+
+      emit(state.copyWith(
+        status: TaskStatus.success,
+        tasks: cachedTasks,
+        sections: sections,
+      ));
+      // لا نستخدم return هنا لأننا نريد تحديث البيانات من الـ API أيضاً
+    } else {
+      // إذا لم يوجد كاش، نظهر الـ loading كالمعتاد
+      emit(state.copyWith(status: TaskStatus.loading));
+    }
+
+    // 2. طلب البيانات الفعلية من الـ API لتحديث الصفحة بأحدث المهام
     final result = await _taskRepository.getAllTasks();
     result.when(
       success: (tasks) {
-        // استخراج الـ sections من المهام
         final sections = tasks.map((task) {
           return SectionModel(
             id: task.id,
@@ -36,10 +57,13 @@ class TaskCubit extends Cubit<TaskState> {
         ));
       },
       failure: (error) {
-        emit(state.copyWith(
-          status: TaskStatus.failure,
-          errorMessage: error.errMessages,
-        ));
+        // إذا كانت هناك بيانات قديمة معروضة، لا نظهر الخطأ للمستخدم لتجنب الإزعاج
+        if (state.tasks.isEmpty) {
+          emit(state.copyWith(
+            status: TaskStatus.failure,
+            errorMessage: error.errMessages,
+          ));
+        }
       },
     );
   }

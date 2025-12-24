@@ -15,6 +15,7 @@ CustomerModel _$CustomerModelFromJson(Map<String, dynamic> json) =>
       address: json['address'] as String?,
       productId: (json['productId'] as num?)?.toInt(),
       model: json['model'] as String?,
+      proudctName: json['proudctName'] as String?,
     );
 
 Map<String, dynamic> _$CustomerModelToJson(CustomerModel instance) =>
@@ -26,4 +27,5 @@ Map<String, dynamic> _$CustomerModelToJson(CustomerModel instance) =>
       'address': instance.address,
       'productId': instance.productId,
       'model': instance.model,
+      'proudctName': instance.proudctName,
     };

@@ -51,6 +51,13 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
   bool isEngineerDropdownVisible = false;
   bool isSaving = false;
 
+  // متغيرات البحث المحلي
+  String problemTypeSearchQuery = '';
+  String engineerSearchQuery = '';
+
+  // تاريخ المشكلة (الافتراضي: تاريخ اليوم)
+  DateTime selectedDate = DateTime.now();
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +70,8 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
     });
 
     clientNameController.addListener(onClientNameChanged);
+    problemTypeController.addListener(onProblemTypeChanged);
+    engineerController.addListener(onEngineerChanged);
   }
 
   void onClientNameChanged() {
@@ -80,9 +89,29 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
     }
   }
 
+  void onProblemTypeChanged() {
+    setState(() {
+      problemTypeSearchQuery = problemTypeController.text;
+      if (problemTypeSearchQuery.isNotEmpty) {
+        isTypeDropdownVisible = true;
+      }
+    });
+  }
+
+  void onEngineerChanged() {
+    setState(() {
+      engineerSearchQuery = engineerController.text;
+      if (engineerSearchQuery.isNotEmpty) {
+        isEngineerDropdownVisible = true;
+      }
+    });
+  }
+
   @override
   void dispose() {
     clientNameController.removeListener(onClientNameChanged);
+    problemTypeController.removeListener(onProblemTypeChanged);
+    engineerController.removeListener(onEngineerChanged);
     clientNameController.dispose();
     problemTypeController.dispose();
     phoneController.dispose();
@@ -117,6 +146,45 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
     }
 
     return true;
+  }
+
+  // دالة اختيار التاريخ
+  Future<void> pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      locale: const Locale('ar'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: primaryBtnColor,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: primaryBtnColor,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
+  }
+
+  // تنسيق التاريخ للعرض
+  String formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   Future<void> pickImage() async {
@@ -312,7 +380,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
 
     context.read<CustomerCubit>().createProblem(
           customerId: selectedCustomer!.id!,
-          dateTime: DateTime.now(),
+          dateTime: selectedDate,
           problemStatusId: statusId,
           problemCategoryId: selectedCategory!.id,
           problemAddress: problemTitleController.text.trim(),
@@ -505,9 +573,30 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                   itemBuilder: (context, index) {
                                     final customer = state.customers[index];
                                     return ListTile(
-                                      title: Text(
-                                        customer.name ?? '',
-                                        style: const TextStyle(fontSize: 14),
+                                      title: Text.rich(
+                                        TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text: customer.name ?? '',
+                                              style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            if (customer.proudctName != null &&
+                                                customer
+                                                    .proudctName!.isNotEmpty)
+                                              TextSpan(
+                                                text:
+                                                    ' (${customer.proudctName!})',
+                                                style: const TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.red,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                          ],
+                                        ),
                                       ),
                                       subtitle: Text(
                                         customer.phone?.toString() ?? '',
@@ -550,6 +639,43 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                         ),
                         SizedBox(height: 16.h),
 
+                        // ====== تاريخ المشكلة ======
+                        buildLabelledRow(
+                          label: 'التاريخ',
+                          child: GestureDetector(
+                            onTap: pickDate,
+                            child: Container(
+                              constraints: const BoxConstraints(minHeight: 50),
+                              decoration: BoxDecoration(
+                                color: fieldColor,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 15),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    formatDate(selectedDate),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.calendar_today,
+                                    color: primaryBtnColor,
+                                    size: 24.sp,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+
                         buildLabelledRow(
                           label: 'نوع المشكلة',
                           child: buildAutocompleteDropdown(
@@ -563,12 +689,32 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                             },
                             child: BlocBuilder<CustomerCubit, CustomerState>(
                               builder: (context, state) {
+                                // فلترة نتائج البحث
+                                final filteredCategories =
+                                    problemTypeSearchQuery.isEmpty
+                                        ? state.problemCategories
+                                        : state.problemCategories
+                                            .where((cat) => cat.name
+                                                .toLowerCase()
+                                                .contains(problemTypeSearchQuery
+                                                    .toLowerCase()))
+                                            .toList();
+
+                                if (filteredCategories.isEmpty) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(8),
+                                      child: Text("لا توجد نتائج"),
+                                    ),
+                                  );
+                                }
+
                                 return ListView.builder(
                                   shrinkWrap: true,
                                   padding: EdgeInsets.zero,
-                                  itemCount: state.problemCategories.length,
+                                  itemCount: filteredCategories.length,
                                   itemBuilder: (context, index) {
-                                    final cat = state.problemCategories[index];
+                                    final cat = filteredCategories[index];
                                     return ListTile(
                                       title: Text(cat.name,
                                           style: const TextStyle(fontSize: 14)),
@@ -576,6 +722,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                         setState(() {
                                           selectedCategory = cat;
                                           problemTypeController.text = cat.name;
+                                          problemTypeSearchQuery = '';
                                           isTypeDropdownVisible = false;
                                         });
                                       },
@@ -621,12 +768,32 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                             },
                             child: BlocBuilder<EngineerCubit, EngineerState>(
                               builder: (context, state) {
+                                // فلترة نتائج البحث
+                                final filteredEngineers =
+                                    engineerSearchQuery.isEmpty
+                                        ? state.engineers
+                                        : state.engineers
+                                            .where((eng) => eng.name
+                                                .toLowerCase()
+                                                .contains(engineerSearchQuery
+                                                    .toLowerCase()))
+                                            .toList();
+
+                                if (filteredEngineers.isEmpty) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(8),
+                                      child: Text("لا توجد نتائج"),
+                                    ),
+                                  );
+                                }
+
                                 return ListView.builder(
                                   shrinkWrap: true,
                                   padding: EdgeInsets.zero,
-                                  itemCount: state.engineers.length,
+                                  itemCount: filteredEngineers.length,
                                   itemBuilder: (context, index) {
-                                    final eng = state.engineers[index];
+                                    final eng = filteredEngineers[index];
                                     return ListTile(
                                       leading: CircleAvatar(
                                         backgroundColor: primaryBtnColor,
@@ -647,6 +814,7 @@ class _AddProblemScreenState extends State<AddProblemScreen> {
                                         setState(() {
                                           selectedEngineer = eng;
                                           engineerController.text = eng.name;
+                                          engineerSearchQuery = '';
                                           isEngineerDropdownVisible = false;
                                         });
                                       },

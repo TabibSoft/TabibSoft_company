@@ -42,6 +42,11 @@ SalesModel _$SalesModelFromJson(Map<String, dynamic> json) => SalesModel(
       nextCallDate: json['nextCallDate'] as String?,
       fullName: json['fullName'] as String?,
       statusId: json['statusId'] as String?,
+      lastNotee: json['lastNotee'] as String?,
+      measurementRequirement: (json['measurementRequirement'] as List<dynamic>?)
+          ?.map(
+              (e) => MeasurementRequirement.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
 
 Map<String, dynamic> _$SalesModelToJson(SalesModel instance) =>
@@ -61,4 +66,6 @@ Map<String, dynamic> _$SalesModelToJson(SalesModel instance) =>
       'nextCallDate': instance.nextCallDate,
       'fullName': instance.fullName,
       'statusId': instance.statusId,
+      'lastNotee': instance.lastNotee,
+      'measurementRequirement': instance.measurementRequirement,
     };

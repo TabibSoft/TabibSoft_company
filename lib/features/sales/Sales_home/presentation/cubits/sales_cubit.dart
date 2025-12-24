@@ -8,7 +8,8 @@ class SalesCubit extends Cubit<SalesState> {
 
   SalesCubit(this._salesRepository) : super(const SalesState.initial());
 
-  Future<void> fetchProducts() async {
+  Future<void> fetchProducts({bool forceRefresh = false}) async {
+    if (!forceRefresh && state.products.isNotEmpty) return;
     final result = await _salesRepository.getAllProducts();
     result.fold(
       (failure) => emit(state.copyWith(products: [])),
@@ -16,7 +17,8 @@ class SalesCubit extends Cubit<SalesState> {
     );
   }
 
-  Future<void> fetchStatuses() async {
+  Future<void> fetchStatuses({bool forceRefresh = false}) async {
+    if (!forceRefresh && state.statuses.isNotEmpty) return;
     final result = await _salesRepository.getAllStatuses();
     result.fold(
       (failure) => emit(state.copyWith(statuses: [])),
@@ -56,7 +58,11 @@ class SalesCubit extends Cubit<SalesState> {
       toDate: toDate,
     );
     result.fold(
-      (failure) => emit(SalesState.error(failure)),
+      (failure) => emit(SalesState.error(
+        failure,
+        products: state.products,
+        statuses: state.statuses,
+      )),
       (paginated) {
         List<SalesModel> updatedMeasurements;
         if (isRefresh || page == 1) {

@@ -1,5 +1,3 @@
-
-
 import 'package:tabib_soft_company/core/networking/api_error_handler.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/filter/status_model.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/paginated_sales_model.dart';
@@ -26,14 +24,22 @@ class SalesState {
     this.failure,
   });
 
-  const SalesState.initial() : this._(status: SalesStatus.initial);
-  const SalesState.loading() : this._(status: SalesStatus.loading);
-  const SalesState.loadingMore(
-      List<SalesModel> measurements,
-      int currentPage,
-      int totalPages,
-      List<ProductModel> products,
-      List<StatusModel> statuses)
+  const SalesState.initial(
+      {List<ProductModel> products = const [],
+      List<StatusModel> statuses = const []})
+      : this._(
+            status: SalesStatus.initial,
+            products: products,
+            statuses: statuses);
+  const SalesState.loading(
+      {List<ProductModel> products = const [],
+      List<StatusModel> statuses = const []})
+      : this._(
+            status: SalesStatus.loading,
+            products: products,
+            statuses: statuses);
+  const SalesState.loadingMore(List<SalesModel> measurements, int currentPage,
+      int totalPages, List<ProductModel> products, List<StatusModel> statuses)
       : this._(
             status: SalesStatus.loadingMore,
             measurements: measurements,
@@ -41,12 +47,8 @@ class SalesState {
             totalPages: totalPages,
             products: products,
             statuses: statuses);
-  const SalesState.loaded(
-      List<SalesModel> measurements,
-      int currentPage,
-      int totalPages,
-      List<ProductModel> products,
-      List<StatusModel> statuses)
+  const SalesState.loaded(List<SalesModel> measurements, int currentPage,
+      int totalPages, List<ProductModel> products, List<StatusModel> statuses)
       : this._(
             status: SalesStatus.loaded,
             measurements: measurements,
@@ -54,8 +56,14 @@ class SalesState {
             totalPages: totalPages,
             products: products,
             statuses: statuses);
-  const SalesState.error(ServerFailure failure)
-      : this._(status: SalesStatus.error, failure: failure);
+  const SalesState.error(ServerFailure failure,
+      {List<ProductModel> products = const [],
+      List<StatusModel> statuses = const []})
+      : this._(
+            status: SalesStatus.error,
+            failure: failure,
+            products: products,
+            statuses: statuses);
 
   SalesState copyWith({
     SalesStatus? status,

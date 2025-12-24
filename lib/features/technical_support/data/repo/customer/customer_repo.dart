@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 import 'package:tabib_soft_company/core/networking/api_error_handler.dart';
 import 'package:tabib_soft_company/core/networking/api_result.dart';
 import 'package:tabib_soft_company/core/networking/api_service.dart';
@@ -23,20 +24,18 @@ class CustomerRepository {
     }
   }
 
-Future<ApiResult<ProblemModel>> getTechnicalSupportData(
-    String customerId) async {
-  try {
-    print('🔍 Repository: calling API with ID: $customerId'); // للتتبع
-    final response = await _apiService.getTechnicalSupportData(customerId);
-    print('✅ Repository: API response received'); // للتتبع
-    return ApiResult.success(response);
-  } on DioException catch (e) {
-    print('❌ Repository: DioException - ${e.message}'); // للتتبع
-    return ApiResult.failure(ServerFailure.fromDioError(e));
+  Future<ApiResult<ProblemModel>> getTechnicalSupportData(
+      String customerId) async {
+    try {
+      print('🔍 Repository: calling API with ID: $customerId'); // للتتبع
+      final response = await _apiService.getTechnicalSupportData(customerId);
+      print('✅ Repository: API response received'); // للتتبع
+      return ApiResult.success(response);
+    } on DioException catch (e) {
+      print('❌ Repository: DioException - ${e.message}'); // للتتبع
+      return ApiResult.failure(ServerFailure.fromDioError(e));
+    }
   }
-}
-
-
 
   Future<ApiResult<List<ProblemModel>>> getAllTechSupport({
     String? customerId,
@@ -73,7 +72,6 @@ Future<ApiResult<ProblemModel>> getTechnicalSupportData(
     }
   }
 
- 
   // الدالة المعدلة لدعم MultiPart FormData
   Future<ApiResult<void>> createUnderTransaction(
     CreateUnderTransaction dto,
@@ -81,7 +79,7 @@ Future<ApiResult<ProblemModel>> getTechnicalSupportData(
     try {
       // تحويل الصور إلى MultipartFile
       List<MultipartFile>? imageFiles;
-      
+
       if (dto.images != null && dto.images!.isNotEmpty) {
         imageFiles = [];
         for (var file in dto.images!) {
@@ -93,10 +91,15 @@ Future<ApiResult<ProblemModel>> getTechnicalSupportData(
             imageFiles.add(multipartFile);
           }
         }
+        // إذا كانت القائمة فارغة بعد المعالجة، نجعلها null
+        if (imageFiles.isEmpty) {
+          imageFiles = null;
+        }
       }
 
-      print('Sending createUnderTransaction with ${imageFiles?.length ?? 0} images');
-      
+      print(
+          'Sending createUnderTransaction with ${imageFiles?.length ?? 0} images');
+
       await _apiService.createUnderTransaction(
         dto.customerSupportId,
         dto.customerId,
@@ -104,7 +107,7 @@ Future<ApiResult<ProblemModel>> getTechnicalSupportData(
         dto.problemstausId,
         imageFiles,
       );
-      
+
       return const ApiResult.success(null);
     } on DioException catch (e) {
       print('DioException in createUnderTransaction: ${e.message}');
@@ -115,6 +118,16 @@ Future<ApiResult<ProblemModel>> getTechnicalSupportData(
       return ApiResult.failure(ServerFailure(e.toString()));
     }
   }
+
+  Future<ApiResult<void>> updateUnderTransaction(String id, String note) async {
+    try {
+      await _apiService.updateUnderTransaction(id, note);
+      return const ApiResult.success(null);
+    } on DioException catch (e) {
+      return ApiResult.failure(ServerFailure.fromDioError(e));
+    }
+  }
+
   Future<ApiResult<List<CustomerModel>>> autoCompleteCustomer(
       String query) async {
     try {
@@ -136,79 +149,79 @@ Future<ApiResult<ProblemModel>> getTechnicalSupportData(
   }
 
   Future<ApiResult<ProblemModel>> createProblem({
-  required String customerId,
-  required DateTime dateTime,
-  required int problemStatusId,
-  required String problemCategoryId,
-  String? note,
-  String? engineerId,
-  String? details,
-  String? phone,
-  String? problemAddress,   // جديد: عنوان المشكلة
-  bool? isUrgent,
-  List<File>? images,
-}) async {
-  try {
-    final formData = FormData();
+    required String customerId,
+    required DateTime dateTime,
+    required int problemStatusId,
+    required String problemCategoryId,
+    String? note,
+    String? engineerId,
+    String? details,
+    String? phone,
+    String? problemAddress, // جديد: عنوان المشكلة
+    bool? isUrgent,
+    List<File>? images,
+  }) async {
+    try {
+      final formData = FormData();
 
- formData.fields.addAll([
-  MapEntry('CustomerId', customerId),
-  MapEntry('DateTime', dateTime.toIso8601String()),
-  MapEntry('ProblemStatusId', problemStatusId.toString()),
-  MapEntry('ProblemCategoryId', problemCategoryId),
-  
-  // العنوان (شغال 100%)
-  if (problemAddress != null && problemAddress.isNotEmpty)
-    MapEntry('ProblemAddress', problemAddress),
+      formData.fields.addAll([
+        MapEntry('CustomerId', customerId),
+        MapEntry(
+            'DateTime', DateFormat('yyyy-MM-dd HH:mm:ss').format(dateTime)),
+        MapEntry('ProblemStatusId', problemStatusId.toString()),
+        MapEntry('ProblemCategoryId', problemCategoryId),
 
-  // التفاصيل: نرسلها في Note + Details (لأن الـ API يقرأ Note غالبًا)
-  if (note != null && note.isNotEmpty) MapEntry('Note', note),
-  if (details != null && details.isNotEmpty) ...[
-    MapEntry('Note', details),      // الأهم: الـ API يعتمد على Note
-    MapEntry('Details', details),   // للتأكد
-  ],
+        // العنوان (شغال 100%)
+        if (problemAddress != null && problemAddress.isNotEmpty)
+          MapEntry('ProblemAddress', problemAddress),
 
-  if (engineerId != null && engineerId.isNotEmpty)
-    MapEntry('EngineerId', engineerId),
-  if (phone != null && phone.isNotEmpty)
-    MapEntry('Phone', phone),
+        // التفاصيل: نرسلها في Note + Details (لأن الـ API يقرأ Note غالبًا)
+        if (note != null && note.isNotEmpty) MapEntry('Note', note),
+        if (details != null && details.isNotEmpty) ...[
+          MapEntry('Note', details), // الأهم: الـ API يعتمد على Note
+          MapEntry('Details', details), // للتأكد
+        ],
 
-  // IsUrgent كـ String
-  MapEntry('IsUrgent', isUrgent.toString()), // مهم جدًا: كـ string
+        if (engineerId != null && engineerId.isNotEmpty)
+          MapEntry('EngineerId', engineerId),
+        if (phone != null && phone.isNotEmpty) MapEntry('Phone', phone),
 
-  // إذا كان فيه Solvid أو غيره لاحقًا نضيفه
-]);
-    if (images != null && images.isNotEmpty) {
-      for (var i = 0; i < images.length; i++) {
-        final file = images[i];
-        if (await file.exists() && await file.length() > 0) {
-          formData.files.add(
-            MapEntry(
-              'Images',
-              await MultipartFile.fromFile(
-                file.path,
-                filename: 'image_$i.jpg',
+        // IsUrgent كـ String
+        MapEntry('IsUrgent', isUrgent.toString()), // مهم جدًا: كـ string
+
+        // إذا كان فيه Solvid أو غيره لاحقًا نضيفه
+      ]);
+      if (images != null && images.isNotEmpty) {
+        for (var i = 0; i < images.length; i++) {
+          final file = images[i];
+          if (await file.exists() && await file.length() > 0) {
+            formData.files.add(
+              MapEntry(
+                'Images',
+                await MultipartFile.fromFile(
+                  file.path,
+                  filename: 'image_$i.jpg',
+                ),
               ),
-            ),
-          );
+            );
+          }
         }
       }
+
+      print('Sending CreateProblem FormData: ${formData.fields}');
+      print('Images count: ${formData.files.length}');
+
+      final response = await _apiService.createProblem(formData);
+      return ApiResult.success(response);
+    } on DioException catch (e) {
+      print('DioException in createProblem: ${e.message}');
+      print('Response: ${e.response?.data}');
+      return ApiResult.failure(ServerFailure.fromDioError(e));
+    } catch (e) {
+      print('Unexpected error: $e');
+      return ApiResult.failure(ServerFailure('خطأ غير متوقع: $e'));
     }
-
-    print('Sending CreateProblem FormData: ${formData.fields}');
-    print('Images count: ${formData.files.length}');
-
-    final response = await _apiService.createProblem(formData);
-    return ApiResult.success(response);
-  } on DioException catch (e) {
-    print('DioException in createProblem: ${e.message}');
-    print('Response: ${e.response?.data}');
-    return ApiResult.failure(ServerFailure.fromDioError(e));
-  } catch (e) {
-    print('Unexpected error: $e');
-    return ApiResult.failure(ServerFailure('خطأ غير متوقع: $e'));
   }
-}
 
   Future<ApiResult<void>> isArchiveProblem({
     required String problemId,
@@ -223,4 +236,5 @@ Future<ApiResult<ProblemModel>> getTechnicalSupportData(
     } on DioException catch (e) {
       return ApiResult.failure(ServerFailure.fromDioError(e));
     }
-  }}
+  }
+}

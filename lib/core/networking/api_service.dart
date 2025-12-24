@@ -46,8 +46,8 @@ abstract class ApiService {
   @GET(ApiConstants.getAllCustomers)
   Future<List<CustomerModel>> getAllCustomers();
 
-@GET(ApiConstants.getTechnicalSupportData)
-Future<ProblemModel> getTechnicalSupportData(@Path("Id") String customerId);
+  @GET(ApiConstants.getTechnicalSupportData)
+  Future<ProblemModel> getTechnicalSupportData(@Path("Id") String customerId);
 
   @GET(ApiConstants.getAllTechSupport)
   Future<TechSupportResponse> getAllTechSupport({
@@ -87,14 +87,21 @@ Future<ProblemModel> getTechnicalSupportData(@Path("Id") String customerId);
   // تم تعديل هذه الدالة لتستخدم MultiPart
 
   @POST(ApiConstants.createUnderTransaction)
-@MultiPart()
-Future<void> createUnderTransaction(
-  @Part(name: "CustomerSupportId") String customerSupportId,
-  @Part(name: "CustomerId") String customerId,
-  @Part(name: "Note") String note,
-  @Part(name: "ProblemstausId") int problemStatusId,
-  @Part() List<MultipartFile>? images, // إزالة name لإرسالها كـ array
-);
+  @MultiPart()
+  Future<void> createUnderTransaction(
+    @Part(name: "CustomerSupportId") String customerSupportId,
+    @Part(name: "CustomerId") String customerId,
+    @Part(name: "Note") String note,
+    @Part(name: "ProblemstausId") int problemStatusId,
+    @Part() List<MultipartFile>? images, // إزالة name لإرسالها كـ array
+  );
+
+  @POST(ApiConstants.updateUnderTransaction)
+  Future<void> updateUnderTransaction(
+    @Query("id") String id,
+    @Query("note") String note,
+  );
+
   @GET(ApiConstants.getAllEngineers)
   Future<List<EngineerModel>> getAllEngineers();
 

@@ -11,6 +11,7 @@ class CustomerModel {
   final String? address;
   final int? productId;
   final String? model;
+  final String? proudctName;
 
   CustomerModel({
     this.id,
@@ -20,6 +21,7 @@ class CustomerModel {
     this.address,
     this.productId,
     this.model,
+    this.proudctName,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) =>

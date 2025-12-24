@@ -47,6 +47,13 @@ class _AddIssueFormState extends State<AddIssueForm> {
   bool isEngineerDropdownVisible = false;
   bool isSaving = false;
 
+  // متغيرات البحث المحلي
+  String problemTypeSearchQuery = '';
+  String engineerSearchQuery = '';
+
+  // تاريخ المشكلة (الافتراضي: تاريخ اليوم)
+  DateTime selectedDate = DateTime.now();
+
   @override
   void initState() {
     super.initState();
@@ -58,6 +65,8 @@ class _AddIssueFormState extends State<AddIssueForm> {
       context.read<EngineerCubit>().fetchEngineers();
     });
     _clientNameController.addListener(_onClientNameChanged);
+    _problemTypeController.addListener(_onProblemTypeChanged);
+    _engineerController.addListener(_onEngineerChanged);
   }
 
   void _onClientNameChanged() {
@@ -73,9 +82,29 @@ class _AddIssueFormState extends State<AddIssueForm> {
     }
   }
 
+  void _onProblemTypeChanged() {
+    setState(() {
+      problemTypeSearchQuery = _problemTypeController.text;
+      if (problemTypeSearchQuery.isNotEmpty) {
+        isTypeDropdownVisible = true;
+      }
+    });
+  }
+
+  void _onEngineerChanged() {
+    setState(() {
+      engineerSearchQuery = _engineerController.text;
+      if (engineerSearchQuery.isNotEmpty) {
+        isEngineerDropdownVisible = true;
+      }
+    });
+  }
+
   @override
   void dispose() {
     _clientNameController.removeListener(_onClientNameChanged);
+    _problemTypeController.removeListener(_onProblemTypeChanged);
+    _engineerController.removeListener(_onEngineerChanged);
     _clientNameController.dispose();
     _problemTypeController.dispose();
     _phoneController.dispose();
@@ -110,6 +139,45 @@ class _AddIssueFormState extends State<AddIssueForm> {
     }
 
     return true;
+  }
+
+  // دالة اختيار التاريخ
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      locale: const Locale('ar'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: primaryBtnColor,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: primaryBtnColor,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
+  }
+
+  // تنسيق التاريخ للعرض
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   Future<void> _pickImage() async {
@@ -339,8 +407,28 @@ class _AddIssueFormState extends State<AddIssueForm> {
                       itemBuilder: (context, i) {
                         final c = state.customers[i];
                         return ListTile(
-                          title: Text(c.name ?? '',
-                              style: const TextStyle(fontSize: 14)),
+                          title: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: c.name ?? '',
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                if (c.proudctName != null &&
+                                    c.proudctName!.isNotEmpty)
+                                  TextSpan(
+                                    text: ' (${c.proudctName})',
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                              ],
+                            ),
+                          ),
                           subtitle: Text(c.phone?.toString() ?? '',
                               style: const TextStyle(
                                   fontSize: 12, color: Colors.grey)),
@@ -373,6 +461,41 @@ class _AddIssueFormState extends State<AddIssueForm> {
                 )),
             SizedBox(height: 16.h),
 
+            // ====== تاريخ المشكلة ======
+            _buildLabelledRow(
+              label: 'التاريخ',
+              child: GestureDetector(
+                onTap: _pickDate,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 50),
+                  decoration: BoxDecoration(
+                    color: fieldColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _formatDate(selectedDate),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Icon(
+                        Icons.calendar_today,
+                        color: primaryBtnColor,
+                        size: 24.sp,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+
             _buildLabelledRow(
                 label: 'نوع المشكلة',
                 child: _buildAutocompleteDropdown(
@@ -383,11 +506,20 @@ class _AddIssueFormState extends State<AddIssueForm> {
                       () => isTypeDropdownVisible = !isTypeDropdownVisible),
                   child: BlocBuilder<CustomerCubit, CustomerState>(
                       builder: (context, state) {
-                    if (state.problemCategories.isEmpty) {
+                    // فلترة نتائج البحث
+                    final filteredCategories = problemTypeSearchQuery.isEmpty
+                        ? state.problemCategories
+                        : state.problemCategories
+                            .where((cat) => cat.name
+                                .toLowerCase()
+                                .contains(problemTypeSearchQuery.toLowerCase()))
+                            .toList();
+
+                    if (filteredCategories.isEmpty) {
                       return SizedBox(
                         height: 150.h,
                         child: Center(
-                          child: Text('لا توجد فئات',
+                          child: Text('لا توجد نتائج',
                               style: TextStyle(color: Colors.grey[600])),
                         ),
                       );
@@ -397,9 +529,9 @@ class _AddIssueFormState extends State<AddIssueForm> {
                       shrinkWrap: true,
                       primary: false,
                       physics: const BouncingScrollPhysics(),
-                      itemCount: state.problemCategories.length,
+                      itemCount: filteredCategories.length,
                       itemBuilder: (context, i) {
-                        final cat = state.problemCategories[i];
+                        final cat = filteredCategories[i];
                         return ListTile(
                           title: Text(cat.name,
                               style: const TextStyle(fontSize: 14)),
@@ -407,6 +539,7 @@ class _AddIssueFormState extends State<AddIssueForm> {
                             setState(() {
                               selectedCategory = cat;
                               _problemTypeController.text = cat.name;
+                              problemTypeSearchQuery = '';
                               isTypeDropdownVisible = false;
                             });
                           },
@@ -439,11 +572,20 @@ class _AddIssueFormState extends State<AddIssueForm> {
                       isEngineerDropdownVisible = !isEngineerDropdownVisible),
                   child: BlocBuilder<EngineerCubit, EngineerState>(
                       builder: (context, state) {
-                    if (state.engineers.isEmpty) {
+                    // فلترة نتائج البحث
+                    final filteredEngineers = engineerSearchQuery.isEmpty
+                        ? state.engineers
+                        : state.engineers
+                            .where((eng) => eng.name
+                                .toLowerCase()
+                                .contains(engineerSearchQuery.toLowerCase()))
+                            .toList();
+
+                    if (filteredEngineers.isEmpty) {
                       return SizedBox(
                         height: 150.h,
                         child: Center(
-                          child: Text('لا يوجد مهندسين',
+                          child: Text('لا توجد نتائج',
                               style: TextStyle(color: Colors.grey[600])),
                         ),
                       );
@@ -453,9 +595,9 @@ class _AddIssueFormState extends State<AddIssueForm> {
                       shrinkWrap: true,
                       primary: false,
                       physics: const BouncingScrollPhysics(),
-                      itemCount: state.engineers.length,
+                      itemCount: filteredEngineers.length,
                       itemBuilder: (context, i) {
-                        final eng = state.engineers[i];
+                        final eng = filteredEngineers[i];
                         return ListTile(
                           leading: CircleAvatar(
                               backgroundColor: primaryBtnColor,
@@ -473,6 +615,7 @@ class _AddIssueFormState extends State<AddIssueForm> {
                             setState(() {
                               selectedEngineer = eng;
                               _engineerController.text = eng.name;
+                              engineerSearchQuery = '';
                               isEngineerDropdownVisible = false;
                             });
                           },

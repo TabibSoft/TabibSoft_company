@@ -337,6 +337,25 @@ class _ApiService implements ApiService {
   }
 
   @override
+  Future<void> updateUnderTransaction(String id, String note) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{r'id': id, r'note': note};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<void>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'Problem/UpdateUnderTransaction',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    await _dio.fetch<void>(_options);
+  }
+
+  @override
   Future<List<EngineerModel>> getAllEngineers() async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};

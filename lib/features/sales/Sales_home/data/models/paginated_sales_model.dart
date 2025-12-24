@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:tabib_soft_company/features/sales/Sales_home/data/models/notes/sales_detail_model.dart';
 
 part 'paginated_sales_model.g.dart';
 
@@ -44,6 +45,8 @@ class SalesModel {
   final String? fullName;
   @JsonKey(name: 'statusId') // Added statusId field
   final String? statusId;
+  final String? lastNotee; // Changed from expectedComment
+  final List<MeasurementRequirement>? measurementRequirement;
 
   SalesModel({
     required this.id,
@@ -61,6 +64,8 @@ class SalesModel {
     this.nextCallDate,
     this.fullName,
     this.statusId,
+    this.lastNotee, // Changed from expectedComment
+    this.measurementRequirement,
   });
 
   factory SalesModel.fromJson(Map<String, dynamic> json) =>

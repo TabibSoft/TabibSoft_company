@@ -6,11 +6,11 @@ part 'problem_model.g.dart';
 class ProblemModel {
   final String? id;
   final String? customerId;
-  
+
   // ✅ إضافة حقل customerSupportId
   @JsonKey(name: 'customerSupportId')
   final String? customerSupportId;
-  
+
   final String? customerName;
   final String? customerPhone;
   final String? adderss;
@@ -19,6 +19,7 @@ class ProblemModel {
   final String? problemDetails;
   final String? phone;
   final String? problemDate;
+  final String? createDate;
   final String? porblemColor;
   final String? enginnerName;
   final String? details;
@@ -52,7 +53,7 @@ class ProblemModel {
   ProblemModel({
     this.id,
     this.customerId,
-    this.customerSupportId,  // ✅ إضافة
+    this.customerSupportId, // ✅ إضافة
     this.customerName,
     this.customerPhone,
     this.adderss,
@@ -61,6 +62,7 @@ class ProblemModel {
     this.problemDetails,
     this.phone,
     this.problemDate,
+    this.createDate,
     this.porblemColor,
     this.enginnerName,
     this.details,
@@ -88,7 +90,7 @@ class ProblemModel {
   ProblemModel copyWith({
     String? id,
     String? customerId,
-    String? customerSupportId,  // ✅ إضافة
+    String? customerSupportId, // ✅ إضافة
     String? customerName,
     String? customerPhone,
     String? adderss,
@@ -97,6 +99,7 @@ class ProblemModel {
     String? problemDetails,
     String? phone,
     String? problemDate,
+    String? createDate,
     String? porblemColor,
     String? enginnerName,
     String? details,
@@ -118,7 +121,7 @@ class ProblemModel {
     return ProblemModel(
       id: id ?? this.id,
       customerId: customerId ?? this.customerId,
-      customerSupportId: customerSupportId ?? this.customerSupportId,  // ✅ إضافة
+      customerSupportId: customerSupportId ?? this.customerSupportId, // ✅ إضافة
       customerName: customerName ?? this.customerName,
       customerPhone: customerPhone ?? this.customerPhone,
       adderss: adderss ?? this.adderss,
@@ -127,6 +130,7 @@ class ProblemModel {
       problemDetails: problemDetails ?? this.problemDetails,
       phone: phone ?? this.phone,
       problemDate: problemDate ?? this.problemDate,
+      createDate: createDate ?? this.createDate,
       porblemColor: porblemColor ?? this.porblemColor,
       enginnerName: enginnerName ?? this.enginnerName,
       details: details ?? this.details,

@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:tabib_soft_company/core/networking/api_service.dart';
-import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
-import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
-import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/sales_cubit.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/sales_state.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/sales_content_card_home_widget.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/filter_widget.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/home_skeltonizer_widget.dart';
-import 'package:tabib_soft_company/features/home/notifications/presentation/screens/notification_screen.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/presentation/screens/taday_calls_screen.dart';
 
 class SalesHomeScreen extends StatefulWidget {
@@ -23,7 +18,6 @@ class SalesHomeScreen extends StatefulWidget {
 }
 
 class _SalesHomeScreenState extends State<SalesHomeScreen> {
-  late ApiService _apiService;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String? selectedStatusId;
@@ -35,17 +29,12 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _apiService = ServicesLocator.locator<ApiService>();
     final cubit = context.read<SalesCubit>();
-    if (cubit.state.products.isEmpty || cubit.state.statuses.isEmpty) {
-      cubit.fetchProducts().then((_) {
-        cubit.fetchStatuses().then((_) {
-          cubit.fetchMeasurements(page: 1, pageSize: 20);
-        });
-      });
-    } else {
-      cubit.fetchMeasurements(page: 1, pageSize: 20);
-    }
+
+    cubit.fetchProducts();
+    cubit.fetchStatuses();
+    cubit.fetchMeasurements(page: 1, pageSize: 20);
+
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
@@ -53,30 +42,34 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
       _refreshMeasurements();
     });
 
-    // التعديل الأساسي: استخدام عتبة (threshold) بدلاً من المقارنة الدقيقة
-    _scrollController.addListener(() {
-      // تحديد عتبة 200 بكسل قبل نهاية القائمة
-      const threshold = 200.0;
-      final currentScroll = _scrollController.position.pixels;
-      final maxScroll = _scrollController.position.maxScrollExtent;
+    _scrollController.addListener(_onScroll);
+  }
 
-      // التحقق إذا وصل المستخدم قرب النهاية
-      if (currentScroll >= (maxScroll - threshold) &&
-          context.read<SalesCubit>().state.currentPage <
-              context.read<SalesCubit>().state.totalPages &&
-          context.read<SalesCubit>().state.status != SalesStatus.loadingMore &&
-          context.read<SalesCubit>().state.status != SalesStatus.loading) {
-        context.read<SalesCubit>().fetchMeasurements(
-              page: context.read<SalesCubit>().state.currentPage + 1,
-              pageSize: 20,
-              statusId: selectedStatusId,
-              productId: selectedProductId,
-              search: _searchQuery.isNotEmpty ? _searchQuery : null,
-              fromDate: fromDate != null ? _formatDateForApi(fromDate!) : null,
-              toDate: toDate != null ? _formatDateForApi(toDate!) : null,
-            );
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    const threshold = 200.0;
+
+    if (currentScroll >= (maxScroll - threshold)) {
+      final cubit = context.read<SalesCubit>();
+      final state = cubit.state;
+
+      if (state.status != SalesStatus.loadingMore &&
+          state.status != SalesStatus.loading &&
+          state.currentPage < state.totalPages) {
+        cubit.fetchMeasurements(
+          page: state.currentPage + 1,
+          pageSize: 20,
+          statusId: selectedStatusId,
+          productId: selectedProductId,
+          search: _searchQuery.isNotEmpty ? _searchQuery : null,
+          fromDate: fromDate != null ? _formatDateForApi(fromDate!) : null,
+          toDate: toDate != null ? _formatDateForApi(toDate!) : null,
+        );
       }
-    });
+    }
   }
 
   @override
@@ -88,12 +81,11 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
 
   Future<void> showFilterBottomSheet() async {
     final cubit = context.read<SalesCubit>();
-    if (cubit.state.statuses.isEmpty) {
-      await cubit.fetchStatuses();
-    }
-    if (cubit.state.products.isEmpty) {
-      await cubit.fetchProducts();
-    }
+
+    // These calls are now idempotent
+    await cubit.fetchStatuses();
+    await cubit.fetchProducts();
+
     final result = await showModalBottomSheet<Map<String, dynamic>?>(
       isScrollControlled: true,
       context: context,
@@ -108,13 +100,20 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
     );
 
     if (result != null) {
-      setState(() {
-        selectedStatusId = result['status'];
-        selectedProductId = result['productId'];
-        fromDate = result['from'];
-        toDate = result['to'];
-      });
-      _refreshMeasurements();
+      final bool changed = selectedStatusId != result['status'] ||
+          selectedProductId != result['productId'] ||
+          fromDate != result['from'] ||
+          toDate != result['to'];
+
+      if (changed) {
+        setState(() {
+          selectedStatusId = result['status'];
+          selectedProductId = result['productId'];
+          fromDate = result['from'];
+          toDate = result['to'];
+        });
+        _refreshMeasurements();
+      }
     }
   }
 
@@ -139,187 +138,6 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  // Future<bool?> _showLogoutDialog() {
-  //   return showGeneralDialog<bool>(
-  //     context: context,
-  //     barrierDismissible: true,
-  //     barrierLabel: 'تأكيد تسجيل الخروج',
-  //     barrierColor: Colors.black54.withOpacity(0.55),
-  //     transitionDuration: const Duration(milliseconds: 320),
-  //     pageBuilder: (ctx, anim1, anim2) => const SizedBox.shrink(),
-  //     transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
-  //       final curved = Curves.easeOutBack.transform(animation.value);
-  //       return Transform.scale(
-  //         scale: curved,
-  //         child: Opacity(
-  //           opacity: animation.value,
-  //           child: Center(
-  //             child: Material(
-  //               color: Colors.transparent,
-  //               child: Container(
-  //                 margin: const EdgeInsets.symmetric(horizontal: 24),
-  //                 decoration: BoxDecoration(
-  //                   color: Colors.white,
-  //                   borderRadius: BorderRadius.circular(16),
-  //                   boxShadow: [
-  //                     BoxShadow(
-  //                       color: Colors.black.withOpacity(0.18),
-  //                       blurRadius: 20,
-  //                       offset: const Offset(0, 10),
-  //                     ),
-  //                   ],
-  //                 ),
-  //                 child: Column(
-  //                   mainAxisSize: MainAxisSize.min,
-  //                   children: [
-  //                     Container(
-  //                       height: 110,
-  //                       decoration: const BoxDecoration(
-  //                         gradient: LinearGradient(
-  //                           colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
-  //                           begin: Alignment.topLeft,
-  //                           end: Alignment.bottomRight,
-  //                         ),
-  //                         borderRadius: BorderRadius.only(
-  //                           topLeft: Radius.circular(16),
-  //                           topRight: Radius.circular(16),
-  //                         ),
-  //                       ),
-  //                       child: Padding(
-  //                         padding: const EdgeInsets.symmetric(horizontal: 18.0),
-  //                         child: Row(
-  //                           crossAxisAlignment: CrossAxisAlignment.center,
-  //                           children: [
-  //                             Container(
-  //                               width: 62,
-  //                               height: 62,
-  //                               decoration: BoxDecoration(
-  //                                 color: Colors.white.withOpacity(0.12),
-  //                                 shape: BoxShape.circle,
-  //                               ),
-  //                               child: const Icon(
-  //                                 Icons.logout,
-  //                                 size: 34,
-  //                                 color: Colors.white,
-  //                               ),
-  //                             ),
-  //                             const SizedBox(width: 12),
-  //                             const Expanded(
-  //                               child: Column(
-  //                                 mainAxisAlignment: MainAxisAlignment.center,
-  //                                 crossAxisAlignment: CrossAxisAlignment.start,
-  //                                 children: [
-  //                                   Text(
-  //                                     ' تسجيل الخروج',
-  //                                     style: TextStyle(
-  //                                       color: Colors.white,
-  //                                       fontSize: 22,
-  //                                       fontWeight: FontWeight.bold,
-  //                                     ),
-  //                                   ),
-  //                                   SizedBox(height: 6),
-  //                                 ],
-  //                               ),
-  //                             ),
-  //                           ],
-  //                         ),
-  //                       ),
-  //                     ),
-  //                     const Padding(
-  //                       padding: EdgeInsets.symmetric(
-  //                           horizontal: 20.0, vertical: 18),
-  //                       child: Column(
-  //                         children: [
-  //                           Text(
-  //                             'هل أنت متأكد أنك تريد تسجيل الخروج الآن؟',
-  //                             textAlign: TextAlign.center,
-  //                             style: TextStyle(
-  //                               fontSize: 15,
-  //                               height: 1.4,
-  //                               color: Colors.black87,
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     ),
-  //                     const SizedBox(height: 8),
-  //                     Padding(
-  //                       padding: const EdgeInsets.symmetric(
-  //                           horizontal: 18.0, vertical: 12),
-  //                       child: Row(
-  //                         children: [
-  //                           Expanded(
-  //                             child: OutlinedButton(
-  //                               onPressed: () {
-  //                                 Navigator.of(dialogContext).pop(false);
-  //                               },
-  //                               style: OutlinedButton.styleFrom(
-  //                                 backgroundColor: Colors.white,
-  //                                 side: const BorderSide(
-  //                                     color: Color(0xFF1976D2), width: 1.4),
-  //                                 shape: RoundedRectangleBorder(
-  //                                     borderRadius: BorderRadius.circular(12)),
-  //                                 padding:
-  //                                     const EdgeInsets.symmetric(vertical: 14),
-  //                               ),
-  //                               child: const Row(
-  //                                 mainAxisAlignment: MainAxisAlignment.center,
-  //                                 children: [
-  //                                   Icon(Icons.close, color: Color(0xFF1976D2)),
-  //                                   SizedBox(width: 8),
-  //                                   Text(
-  //                                     'لا، إلغاء',
-  //                                     style: TextStyle(
-  //                                         color: Color(0xFF1976D2),
-  //                                         fontWeight: FontWeight.bold),
-  //                                   ),
-  //                                 ],
-  //                               ),
-  //                             ),
-  //                           ),
-  //                           const SizedBox(width: 12),
-  //                           Expanded(
-  //                             child: ElevatedButton(
-  //                               onPressed: () {
-  //                                 Navigator.of(dialogContext).pop(true);
-  //                               },
-  //                               style: ElevatedButton.styleFrom(
-  //                                 backgroundColor: const Color(0xFF0D47A1),
-  //                                 shape: RoundedRectangleBorder(
-  //                                     borderRadius: BorderRadius.circular(12)),
-  //                                 padding:
-  //                                     const EdgeInsets.symmetric(vertical: 14),
-  //                                 elevation: 6,
-  //                               ),
-  //                               child: const Row(
-  //                                 mainAxisAlignment: MainAxisAlignment.center,
-  //                                 children: [
-  //                                   Icon(Icons.logout, color: Colors.white),
-  //                                   SizedBox(width: 8),
-  //                                   Text(
-  //                                     'نعم، تسجيل الخروج',
-  //                                     style: TextStyle(
-  //                                         color: Colors.white,
-  //                                         fontWeight: FontWeight.bold),
-  //                                   ),
-  //                                 ],
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -341,31 +159,10 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
             },
           ),
           actions: [
-            // IconButton(
-            //   icon: const Icon(Icons.notifications, color: Colors.white),
-            //   onPressed: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //           builder: (context) => const NotificationsScreen()),
-            //     );
-            //   },
-            // ),
             IconButton(
               icon: const Icon(Icons.arrow_forward_ios, color: Colors.white),
               onPressed: () {
                 Navigator.of(context).pop();
-
-                // final shouldLogout = await _showLogoutDialog();
-                // if (shouldLogout == true) {
-                //   await CacheHelper.removeData(key: 'loginToken');
-                //   await CacheHelper.removeData(key: 'userName');
-                //   await CacheHelper.removeData(key: 'userRoles');
-                //   if (!mounted) return;
-                //   Navigator.of(context).pushReplacement(
-                //     MaterialPageRoute(builder: (_) => const LoginScreen()),
-                //   );
-                // }
               },
             ),
           ],

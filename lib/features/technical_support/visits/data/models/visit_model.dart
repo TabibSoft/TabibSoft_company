@@ -118,6 +118,13 @@ class VisitModel {
         for (var img in imgs) {
           if (img is String && img.isNotEmpty && img.startsWith('http')) {
             images.add(img);
+          } else if (img is Map<String, dynamic> &&
+              img['url'] != null &&
+              img['url'] is String) {
+            final String url = img['url'];
+            if (url.isNotEmpty && url.startsWith('http')) {
+              images.add(url);
+            }
           }
         }
       }

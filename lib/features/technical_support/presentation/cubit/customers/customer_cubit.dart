@@ -45,53 +45,55 @@ class CustomerCubit extends Cubit<CustomerState> {
     );
   }
 
- // ✅ غيّر نوع المعامل من int إلى String
-Future<void> fetchTechnicalSupportData(String customerId) async {
-  emit(state.copyWith(status: CustomerStatus.loading));
-  final result =
-      await _customerRepository.getTechnicalSupportData(customerId);
-  result.when(
-    success: (problem) {
-      emit(state.copyWith(
-        status: CustomerStatus.success,
-        selectedProblem: problem,
-      ));
-    },
-    failure: (error) {
-      emit(state.copyWith(
-        status: CustomerStatus.failure,
-        errorMessage: error.errMessages,
-      ));
-    },
-  );
-}
+  // ✅ غيّر نوع المعامل من int إلى String
+  Future<void> fetchTechnicalSupportData(String customerId) async {
+    emit(state.copyWith(status: CustomerStatus.loading));
+    final result =
+        await _customerRepository.getTechnicalSupportData(customerId);
+    result.when(
+      success: (problem) {
+        emit(state.copyWith(
+          status: CustomerStatus.success,
+          selectedProblem: problem,
+        ));
+      },
+      failure: (error) {
+        emit(state.copyWith(
+          status: CustomerStatus.failure,
+          errorMessage: error.errMessages,
+        ));
+      },
+    );
+  }
 
   // ✅ دالة جديدة لجلب تفاصيل المشكلة باستخدام ID (String UUID)
- Future<void> fetchProblemDetailsById(String problemId) async {
-  print('🔵 Cubit: fetchProblemDetailsById called with ID: $problemId');
-  emit(state.copyWith(status: CustomerStatus.loading));
-  
-  final result = await _customerRepository.getTechnicalSupportData(problemId);
-  
-  result.when(
-    success: (problemDetails) {
-      print('✅ Cubit: Success - Problem ID: ${problemDetails.id}');
-      print('📋 CustomerSupport count: ${problemDetails.customerSupport?.length ?? 0}');
-      print('📋 UnderTransactions count: ${problemDetails.underTransactions?.length ?? 0}');
-      emit(state.copyWith(
-        status: CustomerStatus.success,
-        selectedProblem: problemDetails,
-      ));
-    },
-    failure: (error) {
-      print('❌ Cubit: Failure - ${error.errMessages}');
-      emit(state.copyWith(
-        status: CustomerStatus.failure,
-        errorMessage: error.errMessages,
-      ));
-    },
-  );
-}
+  Future<void> fetchProblemDetailsById(String problemId) async {
+    print('🔵 Cubit: fetchProblemDetailsById called with ID: $problemId');
+    emit(state.copyWith(status: CustomerStatus.loading));
+
+    final result = await _customerRepository.getTechnicalSupportData(problemId);
+
+    result.when(
+      success: (problemDetails) {
+        print('✅ Cubit: Success - Problem ID: ${problemDetails.id}');
+        print(
+            '📋 CustomerSupport count: ${problemDetails.customerSupport?.length ?? 0}');
+        print(
+            '📋 UnderTransactions count: ${problemDetails.underTransactions?.length ?? 0}');
+        emit(state.copyWith(
+          status: CustomerStatus.success,
+          selectedProblem: problemDetails,
+        ));
+      },
+      failure: (error) {
+        print('❌ Cubit: Failure - ${error.errMessages}');
+        emit(state.copyWith(
+          status: CustomerStatus.failure,
+          errorMessage: error.errMessages,
+        ));
+      },
+    );
+  }
 
   Future<void> fetchTechSupportIssues({
     String? customerId,
@@ -225,16 +227,21 @@ Future<void> fetchTechnicalSupportData(String customerId) async {
     );
   }
 
-
-  // الدالة المعدلة لدعم الصور
+  // ⭐ دالة إنشاء Under Transaction المُحسّنة
   Future<void> createUnderTransaction({
     required String customerSupportId,
     required String customerId,
     required String note,
     required int problemStatusId,
-    List<File>? images, // إضافة معامل الصور
+    List<File>? images,
   }) async {
-    print('Creating under transaction...');
+    print('📝 Creating under transaction...');
+    print('📝 customerSupportId: $customerSupportId');
+    print('📝 customerId: $customerId');
+    print('📝 problemStatusId: $problemStatusId');
+    print('📝 note: $note');
+    print('📝 images count: ${images?.length ?? 0}');
+
     emit(state.copyWith(status: CustomerStatus.loading));
 
     final dto = CreateUnderTransaction(
@@ -242,23 +249,39 @@ Future<void> fetchTechnicalSupportData(String customerId) async {
       customerId: customerId,
       note: note,
       problemstausId: problemStatusId,
-      images: images, // تمرير الصور
+      images: images,
     );
 
     final result = await _customerRepository.createUnderTransaction(dto);
 
     result.when(
       success: (_) {
-        print('Under transaction created successfully');
+        print('✅ Under transaction created successfully');
+        // ⭐ مهم: emit success فقط، بدون تحديث البيانات
+        // الشاشة ستتحكم في التحديث عبر Navigator.pop(true)
         emit(state.copyWith(status: CustomerStatus.success));
-        resetPagination();
-        fetchTechSupportIssues();
       },
       failure: (error) {
-        print('Failed to create under transaction: ${error.errMessages}');
+        print('❌ Failed to create under transaction: ${error.errMessages}');
         emit(state.copyWith(
           status: CustomerStatus.failure,
-          errorMessage: error.errMessages ?? '',
+          errorMessage: error.errMessages ?? 'فشل في حفظ التغييرات',
+        ));
+      },
+    );
+  }
+
+  Future<void> updateUnderTransaction(String id, String note) async {
+    emit(state.copyWith(status: CustomerStatus.loading));
+    final result = await _customerRepository.updateUnderTransaction(id, note);
+    result.when(
+      success: (_) {
+        emit(state.copyWith(status: CustomerStatus.success));
+      },
+      failure: (error) {
+        emit(state.copyWith(
+          status: CustomerStatus.failure,
+          errorMessage: error.errMessages,
         ));
       },
     );
@@ -297,6 +320,8 @@ Future<void> fetchTechnicalSupportData(String customerId) async {
     bool isUrgent = false,
     List<File>? images,
   }) async {
+    print('📝 Creating new problem...');
+
     // تحميل الحالات والفئات إذا لم تكن موجودة
     if (state.problemStatusList.isEmpty) await fetchProblemStatus();
     if (state.problemCategories.isEmpty) await fetchProblemCategories();
@@ -305,6 +330,7 @@ Future<void> fetchTechnicalSupportData(String customerId) async {
     final statusValid =
         state.problemStatusList.any((s) => s.id == problemStatusId);
     if (!statusValid) {
+      print('❌ Invalid problem status ID: $problemStatusId');
       emit(state.copyWith(
         status: CustomerStatus.failure,
         errorMessage: 'حالة المشكلة غير صالحة',
@@ -317,6 +343,7 @@ Future<void> fetchTechnicalSupportData(String customerId) async {
     final categoryValid =
         state.problemCategories.any((c) => c.id == problemCategoryId);
     if (!categoryValid) {
+      print('❌ Invalid problem category ID: $problemCategoryId');
       emit(state.copyWith(
         status: CustomerStatus.failure,
         errorMessage: 'فئة المشكلة غير صالحة',
@@ -326,6 +353,7 @@ Future<void> fetchTechnicalSupportData(String customerId) async {
     }
 
     if (problemAddress.trim().isEmpty) {
+      print('❌ Problem address is empty');
       emit(state.copyWith(
         status: CustomerStatus.failure,
         errorMessage: 'يرجى كتابة عنوان المشكلة',
@@ -352,7 +380,8 @@ Future<void> fetchTechnicalSupportData(String customerId) async {
 
     result.when(
       success: (createdProblem) {
-        print('تم إنشاء المشكلة بنجاح: ${createdProblem.problemAddress}');
+        print(
+            '✅ Problem created successfully: ${createdProblem.problemAddress}');
 
         // إعادة تعيين الصفحات وتحميل البيانات من جديد
         resetPagination();
@@ -368,7 +397,7 @@ Future<void> fetchTechnicalSupportData(String customerId) async {
         fetchTechSupportIssues();
       },
       failure: (error) {
-        print('فشل إنشاء المشكلة: ${error.errMessages}');
+        print('❌ Failed to create problem: ${error.errMessages}');
         emit(state.copyWith(
           status: CustomerStatus.failure,
           errorMessage: error.errMessages ?? 'فشل في إضافة المشكلة',
@@ -378,46 +407,49 @@ Future<void> fetchTechnicalSupportData(String customerId) async {
     );
   }
 
+  // ⭐ إعادة تعيين حالة Pagination
   void resetPagination() {
+    print('🔄 Resetting pagination...');
     _currentPage = 1;
     _hasMoreData = true;
     emit(state.copyWith(techSupportIssues: [])); // إفراغ القائمة
   }
 
-  // دالة جديدة لإعادة تحميل كامل البيانات
+  // ⭐ دالة إعادة تحميل كامل البيانات - المُحسّنة
   Future<void> refreshAllData() async {
+    print('🔄 Refreshing all data...');
     resetPagination();
     await fetchTechSupportIssues();
+    print('✅ Data refresh complete');
   }
 
+  // ⭐ دالة الأرشفة/إلغاء الأرشفة - المُحسّنة
   Future<void> isArchiveProblem({
     required String problemId,
     required bool isArchive,
   }) async {
+    print('🗄️ ${isArchive ? "Archiving" : "Unarchiving"} problem: $problemId');
+
     emit(state.copyWith(status: CustomerStatus.loading));
+
     final result = await _customerRepository.isArchiveProblem(
       problemId: problemId,
       isArchive: isArchive,
     );
+
     result.when(
       success: (_) {
-        // تحديث حالة المشكلة في القائمة المحلية
-        final updatedIssues = state.techSupportIssues.map((issue) {
-          if (issue.id == problemId) {
-            return issue.copyWith(isArchive: isArchive);
-          }
-          return issue;
-        }).toList();
+        print('✅ Archive status changed successfully');
 
-        emit(state.copyWith(
-          status: CustomerStatus.success,
-          techSupportIssues: updatedIssues,
-        ));
+        // ⭐ مهم: emit success فقط
+        // الشاشة ستتحكم في التحديث عبر Navigator.pop(true)
+        emit(state.copyWith(status: CustomerStatus.success));
       },
       failure: (error) {
+        print('❌ Failed to change archive status: ${error.errMessages}');
         emit(state.copyWith(
           status: CustomerStatus.failure,
-          errorMessage: error.errMessages,
+          errorMessage: error.errMessages ?? 'فشل في تغيير حالة الأرشفة',
         ));
       },
     );
@@ -453,4 +485,10 @@ Future<void> fetchTechnicalSupportData(String customerId) async {
       return false;
     }).toList();
   }
+
+  // ⭐ دالة مساعدة للحصول على الـ current page
+  int get currentPage => _currentPage;
+
+  // ⭐ دالة مساعدة للتحقق من وجود بيانات إضافية
+  bool get hasMoreData => _hasMoreData;
 }

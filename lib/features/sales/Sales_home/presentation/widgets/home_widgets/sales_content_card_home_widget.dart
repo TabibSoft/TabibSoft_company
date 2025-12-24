@@ -1,4 +1,3 @@
-import 'dart:math' as math; // Import for pi constant
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -30,47 +29,23 @@ class SalesContactCard extends StatefulWidget {
   State<SalesContactCard> createState() => _SalesContactCardState();
 }
 
-class _SalesContactCardState extends State<SalesContactCard>
-    with TickerProviderStateMixin {
+class _SalesContactCardState extends State<SalesContactCard> {
   bool _isExpanded = false;
-  bool _hasMeasured = false;
-  double _expandedHeight = 0.0;
-  final GlobalKey _expandedKey = GlobalKey();
-  late AnimationController _animationController;
-  late Animation<double> _heightAnimation;
-  late Animation<double> _bottomOffsetAnimation;
 
-  static const double cardHeight = 170;
   static const double outerRadius = 20;
   static const double innerRadius = 35;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _animationController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
 
   String getProductName() {
     return widget.measurement.productName ?? 'غير متوفر';
   }
 
   String getLatestNote() {
-    // The SalesModel does not expose `measurementRequirement`; return the main note.
-    // If your SalesModel actually contains a differently named list of requirements
-    // (for example `measurementRequirements` or `requirements`) update this method
-    // to use the correct field and its type.
+    // In the list view API (GetAllMeasurement), the latest note will be returned in 'lastNotee'
+    if (widget.measurement.lastNotee != null &&
+        widget.measurement.lastNotee!.trim().isNotEmpty) {
+      return widget.measurement.lastNotee!;
+    }
+
     return widget.measurement.note ?? '-';
   }
 
@@ -133,50 +108,24 @@ class _SalesContactCardState extends State<SalesContactCard>
   }
 
   void _toggleExpand() {
-    if (_isExpanded) {
-      _animationController.reverse().then((_) {
-        setState(() {
-          _isExpanded = false;
-        });
-      });
-    } else {
-      setState(() {
-        _isExpanded = true;
-      });
-      _animationController.forward();
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+  }
+
+  Future<void> _makePhoneCall() async {
+    final phone = widget.measurement.customerTelephone;
+    if (phone != null && phone.trim().isNotEmpty && phone != 'غير متوفر') {
+      final Uri url = Uri(scheme: 'tel', path: phone.trim());
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_hasMeasured) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_expandedKey.currentContext != null) {
-          final RenderBox renderBox =
-              _expandedKey.currentContext!.findRenderObject() as RenderBox;
-          _expandedHeight = renderBox.size.height;
-          _heightAnimation =
-              Tween<double>(begin: 0.0, end: _expandedHeight).animate(
-            CurvedAnimation(
-              parent: _animationController,
-              curve: Curves.easeInOut,
-            ),
-          );
-          _bottomOffsetAnimation = Tween<double>(
-            begin: -7.0,
-            end: -7.0 - _expandedHeight,
-          ).animate(
-            CurvedAnimation(
-              parent: _animationController,
-              curve: Curves.easeInOut,
-            ),
-          );
-          setState(() {
-            _hasMeasured = true;
-          });
-        }
-      });
-    }
+    // إزالة AnimationController و addPostFrameCallback لتحسين الأداء
 
     final BorderRadius mainRadius = _isExpanded
         ? const BorderRadius.only(
@@ -207,326 +156,261 @@ class _SalesContactCardState extends State<SalesContactCard>
     final Color statusBg = _hexToColor(widget.measurement.statusColor);
     final Color statusFg = _textColorForBackground(statusBg);
 
-    double bottomOffset = _hasMeasured ? _bottomOffsetAnimation.value : -7.0;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return Stack(
+      clipBehavior: Clip.none,
       children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              left: 0,
-              top: 6.h,
-              bottom: bottomOffset,
-              child: Container(
-                width: 390.w,
-                decoration: BoxDecoration(
-                  color: const Color(0xff104D9D),
-                  borderRadius: BorderRadius.circular(outerRadius),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
-                      offset: Offset(4.w, 6.h),
-                      blurRadius: 12.r,
-                    ),
-                  ],
-                ),
-                child: const Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 10.0),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 8.w,
-              top: -17.h,
-              bottom: bottomOffset,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(outerRadius),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
-                      offset: Offset(4.w, 6.h),
-                      blurRadius: 6.r,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 23.h, left: 30.w, right: 2.w),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: mainRadius,
-                  border: mainBorder,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/images/pngs/new_person.png',
-                          width: 30.w,
-                          height: 30.h,
-                        ),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: Text(
-                            widget.measurement.customerName ?? 'غير معروف',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            _showChangeStatusDialog();
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 12.w, vertical: 8.h),
-                            margin: EdgeInsets.all(4.w),
-                            decoration: BoxDecoration(
-                              color: statusBg,
-                              borderRadius: BorderRadius.circular(20.r),
-                              border: Border.all(
-                                color: Colors.grey[300]!,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Text(
-                              widget.measurement.statusName ?? 'غير معروف',
-                              style: TextStyle(
-                                color: statusFg,
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 5.h),
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () async {
-                            final phone = widget.measurement.customerTelephone;
-                            if (phone != null && phone != 'غير متوفر') {
-                              final Uri url = Uri(scheme: 'tel', path: phone);
-                              if (await canLaunchUrl(url)) {
-                                await launchUrl(url);
-                              }
-                            }
-                          },
-                          child: Image.asset(
-                            'assets/images/pngs/new_call.png',
-                            width: 30.w,
-                            height: 25.h,
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: Text(
-                            widget.measurement.customerTelephone ?? 'غير متوفر',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.grey[800],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 5.h),
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/images/pngs/new_calender.png',
-                          width: 30.w,
-                          height: 25.h,
-                        ),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: Text(
-                            widget.measurement.date != null
-                                ? formatDate(
-                                    DateTime.parse(widget.measurement.date!))
-                                : 'غير متوفر',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w700,
-                              color: const Color.fromARGB(137, 41, 41, 40),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              left: 66.w,
-              bottom: 5.h,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: _toggleExpand,
-                child: SizedBox(
-                  width: 40.w,
-                  height: 40.h,
-                  child: Transform.rotate(
-                    angle: _isExpanded ? math.pi : 0,
-                    child: Image.asset("assets/images/pngs/dropdown.png"),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        if (_isExpanded)
-          SizeTransition(
-            sizeFactor: CurvedAnimation(
-              parent: _animationController,
-              curve: Curves.easeInOut,
-            ),
-            axis: Axis.vertical,
-            axisAlignment: -1.0,
-            child: Container(
-              width: double.infinity,
-              margin: EdgeInsets.only(left: 30.w, right: 2.w),
-              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(innerRadius),
-                  bottomRight: Radius.circular(innerRadius),
-                ),
-                border: expandedBorder,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'التخصص: ${getProductName()}',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-                  Text(
-                    'العنوان: ${widget.measurement.address ?? 'غير متوفر'}',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-                  Text(
-                    'الملاحظات الأخيرة: ${getLatestNote()}',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _isExpanded = false;
-                      });
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              NotesScreen(measurementId: widget.measurement.id),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff104D9D),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(60.r),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        Offstage(
-          offstage: _hasMeasured,
+        // Background Layer 1
+        Positioned(
+          left: 0,
+          top: 6.h,
+          bottom: -10.h, // Elongated to be slightly longer than the white card
           child: Container(
-            key: _expandedKey,
-            width: double.infinity,
-            margin: EdgeInsets.only(left: 30.w, right: 2.w),
-            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(innerRadius),
-                bottomRight: Radius.circular(innerRadius),
-              ),
-              border: expandedBorder,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'التخصص: ${getProductName()}',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 20.h),
-                Text(
-                  'العنوان: ${widget.measurement.address ?? 'غير متوفر'}',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 20.h),
-                Text(
-                  'الملاحظات الأخيرة: ${getLatestNote()}',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 20.h),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff104D9D),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(60.r),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.add,
-                    color: Colors.white,
-                  ),
+            width: 390.w,
+            decoration: BoxDecoration(
+              color: const Color(0xff104D9D),
+              borderRadius: BorderRadius.circular(outerRadius),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.25),
+                  offset: Offset(4.w, 6.h),
+                  blurRadius: 12.r,
                 ),
               ],
             ),
           ),
+        ),
+        // Background Layer 2
+        Positioned(
+          left: 8.w,
+          top: -17.h,
+          bottom: -10.h,
+          right: 2.w,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(outerRadius),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  offset: Offset(4.w, 6.h),
+                  blurRadius: 6.r,
+                ),
+              ],
+            ),
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Main Content
+                Padding(
+                  padding: EdgeInsets.only(top: 23.h, left: 30.w, right: 2.w),
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: mainRadius,
+                      border: mainBorder,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Image.asset(
+                              'assets/images/pngs/new_person.png',
+                              width: 30.w,
+                              height: 30.h,
+                            ),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                widget.measurement.customerName ?? 'غير معروف',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                _showChangeStatusDialog();
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w, vertical: 8.h),
+                                margin: EdgeInsets.all(4.w),
+                                decoration: BoxDecoration(
+                                  color: statusBg,
+                                  borderRadius: BorderRadius.circular(20.r),
+                                  border: Border.all(
+                                    color: Colors.grey[300]!,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Text(
+                                  widget.measurement.statusName ?? 'غير معروف',
+                                  style: TextStyle(
+                                    color: statusFg,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 5.h),
+                        GestureDetector(
+                          onTap: _makePhoneCall,
+                          child: Row(
+                            children: [
+                              Image.asset(
+                                'assets/images/pngs/new_call.png',
+                                width: 30.w,
+                                height: 25.h,
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: SelectableText(
+                                  widget.measurement.customerTelephone ??
+                                      'غير متوفر',
+                                  onTap: _makePhoneCall,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.grey[800],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 5.h),
+                        Row(
+                          children: [
+                            Image.asset(
+                              'assets/images/pngs/new_calender.png',
+                              width: 30.w,
+                              height: 25.h,
+                            ),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                widget.measurement.date != null
+                                    ? formatDate(DateTime.parse(
+                                        widget.measurement.date!))
+                                    : 'غير متوفر',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color.fromARGB(137, 41, 41, 40),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Dropdown Button
+                Positioned(
+                  left: 66.w,
+                  bottom: 5.h,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _toggleExpand,
+                    child: SizedBox(
+                      width: 40.w,
+                      height: 40.h,
+                      child: AnimatedRotation(
+                        turns: _isExpanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 300),
+                        child: Image.asset("assets/images/pngs/dropdown.png"),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Expanded Content
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: _isExpanded
+                  ? Container(
+                      width: double.infinity,
+                      margin: EdgeInsets.only(left: 30.w, right: 2.w),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 18.w, vertical: 12.h),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(innerRadius),
+                          bottomRight: Radius.circular(innerRadius),
+                        ),
+                        border: expandedBorder,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'التخصص: ${getProductName()}',
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 20.h),
+                          Text(
+                            'العنوان: ${widget.measurement.address ?? 'غير متوفر'}',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 20.h),
+                          Text(
+                            'الملاحظات الأخيرة: ${getLatestNote()}',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 20.h),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => NotesScreen(
+                                      measurementId: widget.measurement.id),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xff104D9D),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(60.r),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
         ),
       ],
     );

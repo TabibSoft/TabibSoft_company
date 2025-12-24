@@ -23,6 +23,16 @@ class TechCardContent extends StatelessWidget {
     this.onDetailsPressed,
   });
 
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return 'غير متوفر';
+    try {
+      final DateTime date = DateTime.parse(dateStr);
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
   void _makePhoneCall(BuildContext context) async {
     final phone = issue.phone ?? issue.phone;
     if (phone != null && phone.isNotEmpty && phone != 'غير متوفر') {
@@ -800,10 +810,12 @@ class TechCardContent extends StatelessWidget {
         children: [
           Positioned(
             left: 0,
+            right:
+                0, // Ensure it spans width if needed, or keep fixed width if design requires. keeping similar to original
             top: 13.h,
+            bottom: -15.h, // Dynamic height matching content + offset
             child: Container(
-              width: 390.w,
-              height: 275.h,
+              // width: 390.w, // Removed fixed width/height to rely on Positioned constraints or Stack
               decoration: BoxDecoration(
                 color: const Color(0xff104D9D),
                 borderRadius: BorderRadius.circular(25.r),
@@ -820,7 +832,7 @@ class TechCardContent extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(top: 23.h, left: 20.w, right: 0.w),
             child: Container(
-              height: 250.h,
+              // height: 250.h, // Removed fixed height
               padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 30.h),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -925,6 +937,26 @@ class TechCardContent extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+                  SizedBox(height: 10.h),
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/pngs/new_calender.png',
+                        width: 34.w,
+                        height: 34.h,
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Text(
+                          _formatDate(issue.problemDate),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Color.fromARGB(137, 41, 41, 40),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   SizedBox(height: 10.h),
                   Row(

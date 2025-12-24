@@ -23,6 +23,7 @@ class ApiConstants {
   static const String changeProblemStatus = 'Problem/ChangeProblemStatus';
 
   static const String createUnderTransaction = 'Problem/CreateUnderTransaction';
+  static const String updateUnderTransaction = 'Problem/UpdateUnderTransaction';
 
   static const String getUnderTransaction =
       'Problem/GetUnderTransaction'; // إضافة جديدة

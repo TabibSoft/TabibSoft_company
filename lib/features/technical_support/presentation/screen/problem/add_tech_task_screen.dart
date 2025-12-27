@@ -3,21 +3,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tabib_soft_company/core/networking/api_service.dart';
+import 'package:tabib_soft_company/core/networking/dio_factory.dart';
 
-import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart'; // For Report model if available or define local
+import 'package:tabib_soft_company/features/technical_support/data/model/customization/add_customization_request_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customization/situation_status_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/repo/customization_repo.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customization/add_customization_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customization/add_customization_state.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/situation_status/situation_status_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/situation_status/situation_status_state.dart';
 
 // If Report model is not public, I will define a local one or use the one from customization_task_model if applicable.
 // Checking TaskDetailsDialog imports, it uses: import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart';
 // Let's assume Report is inside it.
 
 class AddTechTaskScreen extends StatefulWidget {
-  final String customerName;
   final String? customerId;
+  final String? customerName;
+  final String? problemId;
+  final String? problemStatusId;
 
   const AddTechTaskScreen({
     super.key,
+    required this.customerId,
     required this.customerName,
-    this.customerId,
+    required this.problemId,
+    required this.problemStatusId,
   });
 
   @override
@@ -32,23 +45,27 @@ class _AddTechTaskScreenState extends State<AddTechTaskScreen> {
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 30));
 
-  String _status = 'task';
+  // Selected situation status - now stores the full model with ID
+  SituationStatusModel? _selectedStatus;
 
   final List<File> _selectedImages = [];
-  final List<Report> _reports =
-      []; // Using Report from customization_task_model
-  final List<bool> _reportsChecked = [];
+  // Using controllers to manage dynamic text fields for reports
+  final List<TextEditingController> _reportControllers = [];
 
   @override
   void initState() {
     super.initState();
-    _customerNameController.text = widget.customerName;
+    _customerNameController.text = widget.customerName ?? '';
   }
 
   @override
   void dispose() {
     _customerNameController.dispose();
     _sortController.dispose();
+    // Dispose all report controllers
+    for (var controller in _reportControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -80,180 +97,17 @@ class _AddTechTaskScreenState extends State<AddTechTaskScreen> {
     }
   }
 
-  void _showAddReportDialog() {
-    final nameCtrl = TextEditingController();
-    final noteCtrl = TextEditingController();
-    TimeOfDay? selectedTime;
-    const primaryBlue = Color(0xff16669E);
+  void _addNewReportField() {
+    setState(() {
+      _reportControllers.add(TextEditingController());
+    });
+  }
 
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
-          titlePadding: EdgeInsets.zero,
-          title: Container(
-            padding: EdgeInsets.all(20.r),
-            decoration: const BoxDecoration(
-              color: primaryBlue,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.add_task_rounded, color: Colors.white),
-                SizedBox(width: 12.w),
-                const Text(
-                  'إضافة تقرير جديد',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: InputDecoration(
-                  labelText: 'اسم التقرير',
-                  prefixIcon: const Icon(Icons.title_rounded, size: 22),
-                  hintText: 'مثلاً: تحسين واجهة المستخدم',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15.r),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: noteCtrl,
-                maxLines: 2,
-                decoration: InputDecoration(
-                  labelText: 'الملاحظات',
-                  prefixIcon: const Icon(Icons.note_alt_rounded, size: 22),
-                  hintText: 'تفاصيل إضافية حول التقرير...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15.r),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              InkWell(
-                onTap: () async {
-                  final TimeOfDay? picked = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.now(),
-                    builder: (context, child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.light(
-                            primary: primaryBlue,
-                          ),
-                        ),
-                        child: MediaQuery(
-                          data: MediaQuery.of(context)
-                              .copyWith(alwaysUse24HourFormat: false),
-                          child: child!,
-                        ),
-                      );
-                    },
-                  );
-                  if (picked != null) {
-                    setDialogState(() {
-                      selectedTime = picked;
-                    });
-                  }
-                },
-                borderRadius: BorderRadius.circular(15.r),
-                child: Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(15.r),
-                    border: Border.all(color: Colors.grey[400]!),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.access_time_filled_rounded,
-                          color: primaryBlue),
-                      SizedBox(width: 12.w),
-                      Text(
-                        selectedTime == null
-                            ? 'تحديد الوقت المناسب'
-                            : selectedTime!.format(context),
-                        style: TextStyle(
-                          fontSize: 16,
-                          color:
-                              selectedTime == null ? Colors.grey : Colors.black,
-                        ),
-                      ),
-                      const Spacer(),
-                      const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('إلغاء',
-                  style: TextStyle(
-                      color: Colors.grey, fontWeight: FontWeight.bold)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final name = nameCtrl.text.trim();
-                final note = noteCtrl.text.trim();
-
-                if (name.isEmpty || selectedTime == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('يرجى إكمال جميع الحقول الضرورية')),
-                  );
-                  return;
-                }
-
-                final timeInMinutes =
-                    selectedTime!.hour * 60 + selectedTime!.minute;
-
-                setState(() {
-                  _reports.add(Report(
-                    id: null,
-                    name: name,
-                    notes: note,
-                    finished: false,
-                    time: timeInMinutes,
-                  ));
-                  _reportsChecked.add(false);
-                });
-
-                Navigator.of(ctx).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-              ),
-              child: const Text('إضافة التقرير',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
-    );
+  void _removeReportField(int index) {
+    setState(() {
+      _reportControllers[index].dispose();
+      _reportControllers.removeAt(index);
+    });
   }
 
   @override
@@ -261,472 +115,673 @@ class _AddTechTaskScreenState extends State<AddTechTaskScreen> {
     const mainBlueColor = Color(0xFF16669E);
     const secondaryColor = Color(0xFF0B4C99);
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF3F4F6),
-        appBar: AppBar(
-          title: const Text('إضافة تذكرة جديدة',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20)),
-          backgroundColor: mainBlueColor,
-          elevation: 2,
-          iconTheme: const IconThemeData(color: Colors.white),
-          centerTitle: true,
-          shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(16))),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => AddCustomizationCubit(
+            CustomizationRepository(ApiService(DioFactory.getDio())),
+          ),
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Main Form Card
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
-                ),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                              color: mainBlueColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.note_add_outlined,
-                              color: mainBlueColor),
-                        ),
-                        const SizedBox(width: 12),
-                        Text('بيانات التذكرة',
-                            style: TextStyle(
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87)),
-                      ],
-                    ),
-                    const Divider(height: 32),
-                    _buildLabel('اسم العميل'),
-                    TextField(
-                      controller: _customerNameController,
-                      readOnly: true,
-                      decoration: _inputDecoration(
-                          hint: 'اسم العميل', prefixIcon: Icons.person_outline),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildLabel('تاريخ البدء'),
-                              _buildDatePickerField(context, _startDate, true),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildLabel('الموعد النهائي'),
-                              _buildDatePickerField(context, _endDate, false),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildLabel('الترتيب (Sort)'),
-                              TextField(
-                                controller: _sortController,
-                                keyboardType: TextInputType.number,
-                                decoration:
-                                    _inputDecoration(prefixIcon: Icons.sort),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildLabel('الحالة'),
-                              DropdownButtonFormField<String>(
-                                isExpanded: true,
-                                initialValue: _status,
-                                items: ['task', 'urgent']
-                                    .map((e) => DropdownMenuItem(
-                                        value: e,
-                                        child: Text(
-                                          e == 'task' ? ' Task' : 'Urgent',
-                                          style: TextStyle(
-                                              color: e == 'urgent'
-                                                  ? Colors.red
-                                                  : Colors.black),
-                                        )))
-                                    .toList(),
-                                onChanged: (v) => setState(() => _status = v!),
-                                decoration: _inputDecoration(
-                                    prefixIcon: Icons.flag_outlined),
-                              ),
-                            ],
-                          ),
+        BlocProvider(
+          create: (context) => SituationStatusCubit(
+            ApiService(DioFactory.getDio()),
+          )..getSituationStatuses(),
+        ),
+      ],
+      child: BlocListener<AddCustomizationCubit, AddCustomizationState>(
+        listener: (context, state) {
+          if (state is AddCustomizationLoading) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) =>
+                  const Center(child: CircularProgressIndicator()),
+            );
+          } else if (state is AddCustomizationSuccess) {
+            Navigator.of(context).pop(); // Pop loading dialog
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('تم حفظ المهمة بنجاح')),
+            );
+            Navigator.of(context).pop(); // Pop screen
+          } else if (state is AddCustomizationFailure) {
+            Navigator.of(context).pop(); // Pop loading dialog
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('خطأ في الحفظ: ${state.errorMessage}')),
+            );
+          }
+        },
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Scaffold(
+            backgroundColor: const Color(0xFFF3F4F6),
+            appBar: AppBar(
+              title: const Text('إضافة تذكرة جديدة',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20)),
+              backgroundColor: mainBlueColor,
+              elevation: 2,
+              iconTheme: const IconThemeData(color: Colors.white),
+              centerTitle: true,
+              shape: const RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.vertical(bottom: Radius.circular(16))),
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Main Form Card
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         )
                       ],
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Reports Section
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
-                ),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                  color: Colors.orange.withOpacity(0.1),
+                                  color: mainBlueColor.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8)),
-                              child: const Icon(Icons.assignment_outlined,
-                                  color: Colors.orange),
+                              child: const Icon(Icons.note_add_outlined,
+                                  color: mainBlueColor),
                             ),
                             const SizedBox(width: 12),
-                            Text('التقارير',
+                            Text('بيانات التذكرة',
                                 style: TextStyle(
                                     fontSize: 18.sp,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black87)),
                           ],
                         ),
-                        ElevatedButton.icon(
-                          onPressed: _showAddReportDialog,
-                          icon: const Icon(Icons.add, size: 18),
-                          label: const Text('إضافة تقرير'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: mainBlueColor,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                          ),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: Colors.grey.shade200),
-                          borderRadius: BorderRadius.circular(8)),
-                      child: Column(
-                        children: [
-                          if (_reports.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.all(32.0),
+                        const Divider(height: 32),
+                        _buildLabel('اسم العميل'),
+                        TextField(
+                          controller: _customerNameController,
+                          readOnly: true,
+                          decoration: _inputDecoration(
+                              hint: 'اسم العميل',
+                              prefixIcon: Icons.person_outline),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
                               child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(Icons.description_outlined,
-                                      size: 48, color: Colors.grey.shade300),
-                                  const SizedBox(height: 8),
-                                  Text('لا توجد تقارير مضافة بعد',
-                                      style: TextStyle(
-                                          color: Colors.grey.shade500)),
+                                  _buildLabel('تاريخ البدء'),
+                                  _buildDatePickerField(
+                                      context, _startDate, true),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildLabel('الموعد النهائي'),
+                                  _buildDatePickerField(
+                                      context, _endDate, false),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildLabel('الترتيب (Sort)'),
+                                  TextField(
+                                    controller: _sortController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: _inputDecoration(
+                                        prefixIcon: Icons.sort),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildLabel('الحالة'),
+                                  BlocBuilder<SituationStatusCubit,
+                                      SituationStatusState>(
+                                    builder: (context, state) {
+                                      if (state is SituationStatusLoading) {
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 16),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade50,
+                                            border: Border.all(
+                                                color: Colors.grey.shade300),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: const Center(
+                                            child: SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                  strokeWidth: 2),
+                                            ),
+                                          ),
+                                        );
+                                      } else if (state
+                                          is SituationStatusSuccess) {
+                                        final statuses = state.statuses;
+                                        return DropdownButtonFormField<
+                                            SituationStatusModel>(
+                                          isExpanded: true,
+                                          initialValue: _selectedStatus,
+                                          hint: const Text('اختر الحالة'),
+                                          items: statuses
+                                              .map((status) => DropdownMenuItem(
+                                                    value: status,
+                                                    child: Row(
+                                                      children: [
+                                                        Container(
+                                                          width: 12,
+                                                          height: 12,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: _parseColor(
+                                                                status.color),
+                                                            shape:
+                                                                BoxShape.circle,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 8),
+                                                        Text(
+                                                          status.name,
+                                                          style: TextStyle(
+                                                            color: _parseColor(
+                                                                status.color),
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ))
+                                              .toList(),
+                                          onChanged: (v) => setState(
+                                              () => _selectedStatus = v),
+                                          decoration: _inputDecoration(),
+                                        );
+                                      } else if (state
+                                          is SituationStatusFailure) {
+                                        return Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red.shade50,
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            border: Border.all(
+                                                color: Colors.red.shade200),
+                                          ),
+                                          child: Text(
+                                            'خطأ في تحميل الحالات',
+                                            style: TextStyle(
+                                                color: Colors.red.shade700),
+                                          ),
+                                        );
+                                      }
+                                      return const SizedBox.shrink();
+                                    },
+                                  ),
                                 ],
                               ),
                             )
-                          else
-                            ..._reports.asMap().entries.map((entry) {
-                              return Column(
-                                children: [
-                                  ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor:
-                                          mainBlueColor.withOpacity(0.1),
-                                      child: Text((entry.key + 1).toString(),
-                                          style: const TextStyle(
-                                              color: mainBlueColor,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                    title: Text(entry.value.name,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w600)),
-                                    subtitle: Text(entry.value.notes,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis),
-                                    trailing: IconButton(
-                                      icon: const Icon(Icons.delete_outline,
-                                          color: Colors.red),
-                                      onPressed: () => setState(() {
-                                        _reports.removeAt(entry.key);
-                                        _reportsChecked.removeAt(entry.key);
-                                      }),
-                                    ),
-                                  ),
-                                  if (entry.key != _reports.length - 1)
-                                    const Divider(
-                                        height: 1, indent: 16, endIndent: 16),
-                                ],
-                              );
-                            })
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Attachments Section
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4))
-                  ],
-                ),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                              color: Colors.purple.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.attach_file,
-                              color: Colors.purple),
-                        ),
-                        const SizedBox(width: 12),
-                        Text('المرفقات',
-                            style: TextStyle(
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: () {
-                        showModalBottomSheet(
-                            context: context,
-                            backgroundColor: Colors.transparent,
-                            builder: (context) {
-                              return Container(
-                                margin: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16)),
-                                child: Wrap(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Center(
-                                          child: Container(
-                                              width: 40,
-                                              height: 4,
-                                              decoration: BoxDecoration(
-                                                  color: Colors.grey.shade300,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          2)))),
-                                    ),
-                                    ListTile(
-                                      leading: const Icon(Icons.camera_alt,
-                                          color: mainBlueColor),
-                                      title: const Text('التقاط صورة'),
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                        _pickImage(ImageSource.camera);
-                                      },
-                                    ),
-                                    ListTile(
-                                      leading: const Icon(Icons.photo_library,
-                                          color: mainBlueColor),
-                                      title: const Text('اختيار من المعرض'),
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                        _pickImage(ImageSource.gallery);
-                                      },
-                                    ),
-                                    const SizedBox(height: 16),
-                                  ],
-                                ),
-                              );
-                            });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                            border: Border.all(
-                                color: mainBlueColor,
-                                width: 1,
-                                style: BorderStyle.solid),
-                            borderRadius: BorderRadius.circular(12),
-                            color: mainBlueColor.withOpacity(0.02)),
-                        child: Column(
-                          children: [
-                            Icon(Icons.cloud_upload_outlined,
-                                size: 40,
-                                color: mainBlueColor.withOpacity(0.7)),
-                            const SizedBox(height: 8),
-                            const Text('اضغط هنا لرفع الملفات',
-                                style: TextStyle(
-                                    color: mainBlueColor,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 4),
-                            Text('يمكنك اختيار صور من الكاميرا أو المعرض',
-                                style: TextStyle(
-                                    color: Colors.grey.shade600, fontSize: 12)),
                           ],
                         ),
-                      ),
-                    ),
-                    if (_selectedImages.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0),
-                        child: Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: _selectedImages.map((file) {
-                            return Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.file(file,
-                                      width: 100,
-                                      height: 100,
-                                      fit: BoxFit.cover),
-                                ),
-                                Positioned(
-                                  top: -8,
-                                  right: -8,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedImages.remove(file);
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.close,
-                                          color: Colors.white, size: 14),
-                                    ),
-                                  ),
-                                )
-                              ],
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.grey.shade700,
-                          side: BorderSide(color: Colors.grey.shade400),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                      child: const Text('إلغاء',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('تم الحفظ (محاكاة)')));
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.check, size: 20),
-                      label: const Text('حفظ المهمة',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: secondaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          elevation: 4),
+
+                  const SizedBox(height: 24),
+
+                  // Reports Section
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
                     ),
-                  )
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                      color: Colors.orange.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8)),
+                                  child: const Icon(Icons.assignment_outlined,
+                                      color: Colors.orange),
+                                ),
+                                const SizedBox(width: 12),
+                                Text('التقارير',
+                                    style: TextStyle(
+                                        fontSize: 18.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87)),
+                              ],
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: _addNewReportField,
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text('إضافة تقرير'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: mainBlueColor,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                              ),
+                            )
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Dynamic Reports List
+                        if (_reportControllers.isEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(32.0),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(Icons.post_add_rounded,
+                                    size: 48, color: Colors.grey.shade300),
+                                const SizedBox(height: 8),
+                                Text('اضغط على "إضافة تقرير" للبدء',
+                                    style:
+                                        TextStyle(color: Colors.grey.shade500)),
+                              ],
+                            ),
+                          )
+                        else
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _reportControllers.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 16),
+                            itemBuilder: (context, index) {
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _reportControllers[index],
+                                      maxLines: 5,
+                                      decoration: InputDecoration(
+                                        hintText: 'اكتب تفاصيل التقرير هنا...',
+                                        hintStyle: TextStyle(
+                                            color: Colors.grey.shade400),
+                                        contentPadding:
+                                            const EdgeInsets.all(16),
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey.shade300),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey.shade300),
+                                        ),
+                                        focusedBorder: const OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(12)),
+                                          borderSide: BorderSide(
+                                              color: Color(0xFF16669E),
+                                              width: 1.5),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey.shade50,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: InkWell(
+                                      onTap: () => _removeReportField(index),
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(Icons.delete_outline,
+                                            color: Colors.red, size: 24),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Attachments Section
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4))
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                  color: Colors.purple.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8)),
+                              child: const Icon(Icons.attach_file,
+                                  color: Colors.purple),
+                            ),
+                            const SizedBox(width: 12),
+                            Text('المرفقات',
+                                style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87)),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet(
+                                context: context,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) {
+                                  return Container(
+                                    margin: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
+                                    child: Wrap(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(16.0),
+                                          child: Center(
+                                              child: Container(
+                                                  width: 40,
+                                                  height: 4,
+                                                  decoration: BoxDecoration(
+                                                      color:
+                                                          Colors.grey.shade300,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              2)))),
+                                        ),
+                                        ListTile(
+                                          leading: const Icon(Icons.camera_alt,
+                                              color: mainBlueColor),
+                                          title: const Text('التقاط صورة'),
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                            _pickImage(ImageSource.camera);
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading: const Icon(
+                                              Icons.photo_library,
+                                              color: mainBlueColor),
+                                          title: const Text('اختيار من المعرض'),
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                            _pickImage(ImageSource.gallery);
+                                          },
+                                        ),
+                                        const SizedBox(height: 16),
+                                      ],
+                                    ),
+                                  );
+                                });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: mainBlueColor,
+                                    width: 1,
+                                    style: BorderStyle.solid),
+                                borderRadius: BorderRadius.circular(12),
+                                color: mainBlueColor.withOpacity(0.02)),
+                            child: Column(
+                              children: [
+                                Icon(Icons.cloud_upload_outlined,
+                                    size: 40,
+                                    color: mainBlueColor.withOpacity(0.7)),
+                                const SizedBox(height: 8),
+                                const Text('اضغط هنا لرفع الملفات',
+                                    style: TextStyle(
+                                        color: mainBlueColor,
+                                        fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 4),
+                                Text('يمكنك اختيار صور من الكاميرا أو المعرض',
+                                    style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (_selectedImages.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: _selectedImages.map((file) {
+                                return Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () =>
+                                          _showImagePreview(context, file),
+                                      child: Hero(
+                                        tag: 'image_${file.path}',
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          child: Image.file(file,
+                                              width: 100,
+                                              height: 100,
+                                              fit: BoxFit.cover),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: -8,
+                                      right: -8,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedImages.remove(file);
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.close,
+                                              color: Colors.white, size: 14),
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.grey.shade700,
+                              side: BorderSide(color: Colors.grey.shade400),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12))),
+                          child: const Text('إلغاء',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: Builder(
+                          builder: (context) {
+                            return ElevatedButton.icon(
+                              onPressed: () => _saveTask(context),
+                              icon: const Icon(Icons.check, size: 20),
+                              label: const Text('حفظ المهمة',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: secondaryColor,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                  elevation: 4),
+                            );
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 32),
                 ],
               ),
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _saveTask(BuildContext context) async {
+    // Basic Validation
+    if (_customerNameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('اسم العميل مطلوب')),
+      );
+      return;
+    }
+
+    // Validate status selection
+    if (_selectedStatus == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يرجى اختيار الحالة')),
+      );
+      return;
+    }
+
+    // Reports Mapping
+    final List<Map<String, dynamic>> formattedReports = _reportControllers
+        .where((c) => c.text.isNotEmpty)
+        .map((c) => {
+              'Note': c.text,
+              'Name':
+                  c.text.length > 20 ? '${c.text.substring(0, 20)}...' : c.text,
+              'Time': 0,
+              'Finshed': false,
+              'IsTested': false,
+            })
+        .toList();
+
+    // final userId = CacheHelper.getString(key: 'userId'); // Removed as per fix
+
+    final request = AddCustomizationRequestModel(
+      customerId: widget.customerId,
+      customerName: widget.customerName,
+      startDate: _startDate,
+      deadLine: _endDate,
+      sort: int.tryParse(_sortController.text) ?? 0,
+      statusId: _selectedStatus!.id, // Uses selected status ID from dropdown
+      customerSupportId: widget.problemId, // Uses passed Problem ID
+      images: _selectedImages,
+      reports: formattedReports,
+    );
+
+    context.read<AddCustomizationCubit>().addCustomization(request);
   }
 
   Widget _buildDatePickerField(
@@ -788,6 +843,93 @@ class _AddTechTaskScreenState extends State<AddTechTaskScreen> {
       ),
       filled: true,
       fillColor: Colors.grey.shade50,
+    );
+  }
+
+  /// Parses a hex color string (e.g., "#0000ff" or "ff8000") to a Color
+  Color _parseColor(String colorString) {
+    try {
+      String hex = colorString.replaceAll('#', '').trim();
+      if (hex.length == 6) {
+        hex = 'FF$hex'; // Add full opacity if not present
+      }
+      return Color(int.parse(hex, radix: 16));
+    } catch (e) {
+      return Colors.grey; // Default fallback color
+    }
+  }
+
+  /// Shows a full-screen preview of the selected image
+  void _showImagePreview(BuildContext context, File imageFile) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            // Full screen image with zoom capability
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: Hero(
+                    tag: 'image_${imageFile.path}',
+                    child: Image.file(
+                      imageFile,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Close button
+            Positioned(
+              top: 40,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ),
+            ),
+            // Image name at the bottom
+            Positioned(
+              bottom: 40,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  imageFile.path.split('/').last,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

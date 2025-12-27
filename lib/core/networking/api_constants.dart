@@ -58,6 +58,8 @@ class ApiConstants {
 
   static const String getAllProgrammerTasks = 'Programer/GetAll';
   static const String getProgrammerTaskById = 'Programer/GetById';
+  static const String addCustomization = 'Programer/AddCustomization';
+  static const String getSituationStatus = 'Programer/GetSitiouationStatus';
 
   static const String makeReportDone = 'Programer/MakeReportDone';
   static const String updateTask = 'Programer/UpdateTask';

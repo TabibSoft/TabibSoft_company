@@ -23,6 +23,7 @@ import 'package:tabib_soft_company/features/technical_support/data/model/problem
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/note_model.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/paginated_visit_response.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/success_response_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customization/situation_status_model.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/visit_model.dart';
 import 'api_constants.dart';
 
@@ -158,6 +159,12 @@ abstract class ApiService {
 
   @GET(ApiConstants.getProgrammerTaskById)
   Future<TaskDetailsModel> getProgrammerTaskById(@Query("id") String id);
+
+  @POST(ApiConstants.addCustomization)
+  Future<void> addCustomization(@Body() FormData formData);
+
+  @GET(ApiConstants.getSituationStatus)
+  Future<List<SituationStatusModel>> getSituationStatus();
 
   @POST(ApiConstants.makeReportDone)
   Future<void> makeReportDone(@Query("Id") String reportId);

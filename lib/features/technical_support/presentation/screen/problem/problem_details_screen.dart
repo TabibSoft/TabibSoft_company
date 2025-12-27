@@ -1625,6 +1625,11 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen> {
                                               AddTechTaskScreen(
                                             customerName: nameCtl.text,
                                             customerId: widget.issue.id,
+                                            problemId:
+                                                widget.issue.customerSupportId,
+                                            problemStatusId: widget
+                                                .issue.problemStatusId
+                                                ?.toString(),
                                           ),
                                         ),
                                       );

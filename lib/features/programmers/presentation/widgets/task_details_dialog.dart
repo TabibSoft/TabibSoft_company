@@ -550,178 +550,335 @@ class _TaskDetailsDialogState extends State<TaskDetailsDialog> {
     List<bool> checked,
   ) {
     const primaryBlue = Color(0xff16669E);
+    const accentCyan = Color(0xff20AAC9);
     final nameCtrl = TextEditingController();
-    final noteCtrl = TextEditingController();
-    TimeOfDay? selectedTime;
+    final focusNode = FocusNode();
 
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
-          titlePadding: EdgeInsets.zero,
-          title: Container(
-            padding: EdgeInsets.all(20.r),
-            decoration: const BoxDecoration(
-              color: primaryBlue,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.add_task_rounded, color: Colors.white),
-                SizedBox(width: 12.w),
-                const Text(
-                  'إضافة تقرير جديد',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: InputDecoration(
-                  labelText: 'اسم التقرير',
-                  prefixIcon: const Icon(Icons.title_rounded, size: 22),
-                  hintText: 'مثلاً: تحسين واجهة المستخدم',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15.r),
+      barrierDismissible: true,
+      barrierLabel: 'Add Report Dialog',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Container();
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+        );
+
+        return ScaleTransition(
+          scale: curvedAnimation,
+          child: FadeTransition(
+            opacity: animation,
+            child: StatefulBuilder(
+              builder: (context, setDialogState) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28.r),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: noteCtrl,
-                maxLines: 2,
-                decoration: InputDecoration(
-                  labelText: 'الملاحظات',
-                  prefixIcon: const Icon(Icons.note_alt_rounded, size: 22),
-                  hintText: 'تفاصيل إضافية حول التقرير...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15.r),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              InkWell(
-                onTap: () async {
-                  final TimeOfDay? picked = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.now(),
-                    builder: (context, child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.light(
-                            primary: primaryBlue,
+                  contentPadding: EdgeInsets.zero,
+                  content: Container(
+                    width: MediaQuery.of(context).size.width * 0.85,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28.r),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.white, Color(0xFFF8FAFC)],
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Header with gradient
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 20.h,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [primaryBlue, accentCyan],
+                              begin: Alignment.centerRight,
+                              end: Alignment.centerLeft,
+                            ),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(28.r),
+                              topRight: Radius.circular(28.r),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primaryBlue.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(10.r),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: const Icon(
+                                  Icons.post_add_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                              SizedBox(width: 14.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'إضافة تقرير جديد',
+                                      style: TextStyle(
+                                        fontSize: 18.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      'أضف وصفاً للمهمة أو التقرير',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.white.withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () => Navigator.pop(context),
+                                icon: const Icon(Icons.close_rounded),
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            ],
                           ),
                         ),
-                        child: MediaQuery(
-                          data: MediaQuery.of(context)
-                              .copyWith(alwaysUse24HourFormat: false),
-                          child: child!,
+
+                        // Content
+                        Padding(
+                          padding: EdgeInsets.all(24.r),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Text field with modern design
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16.r),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  controller: nameCtrl,
+                                  focusNode: focusNode,
+                                  maxLines: 5,
+                                  minLines: 4,
+                                  textAlignVertical: TextAlignVertical.top,
+                                  style: TextStyle(
+                                    fontSize: 15.sp,
+                                    height: 1.5,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText:
+                                        'اكتب وصف التقرير أو المهمة هنا...',
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey[400],
+                                      fontSize: 14.sp,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      borderSide: BorderSide(
+                                        color: Colors.grey[200]!,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      borderSide: const BorderSide(
+                                        color: accentCyan,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: EdgeInsets.all(16.r),
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(height: 24.h),
+
+                              // Action buttons
+                              Row(
+                                children: [
+                                  // Cancel button
+                                  Expanded(
+                                    child: TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      style: TextButton.styleFrom(
+                                        padding: EdgeInsets.symmetric(
+                                            vertical: 14.h),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12.r),
+                                          side: BorderSide(
+                                              color: Colors.grey[300]!),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'إلغاء',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15.sp,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  // Add button
+                                  Expanded(
+                                    flex: 2,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius:
+                                            BorderRadius.circular(12.r),
+                                        gradient: const LinearGradient(
+                                          colors: [primaryBlue, accentCyan],
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: primaryBlue.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ElevatedButton.icon(
+                                        onPressed: () {
+                                          final name = nameCtrl.text.trim();
+
+                                          if (name.isEmpty) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Row(
+                                                  children: [
+                                                    const Icon(
+                                                        Icons
+                                                            .warning_amber_rounded,
+                                                        color: Colors.white),
+                                                    SizedBox(width: 8.w),
+                                                    const Text(
+                                                        'يرجى إدخال وصف التقرير'),
+                                                  ],
+                                                ),
+                                                backgroundColor:
+                                                    Colors.orange[700],
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          final newReport = Report(
+                                            id: null,
+                                            name: name,
+                                            notes: '',
+                                            finished: false,
+                                            time: 0,
+                                          );
+
+                                          allReports.add(newReport);
+                                          checked.add(false);
+
+                                          Navigator.pop(context);
+                                          dialogSetState(() {});
+
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Row(
+                                                children: [
+                                                  const Icon(Icons.check_circle,
+                                                      color: Colors.white),
+                                                  SizedBox(width: 8.w),
+                                                  const Text(
+                                                      'تم إضافة التقرير بنجاح'),
+                                                ],
+                                              ),
+                                              backgroundColor:
+                                                  Colors.green[600],
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(Icons.add_rounded,
+                                            size: 20),
+                                        label: Text(
+                                          'إضافة التقرير',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15.sp,
+                                          ),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.transparent,
+                                          foregroundColor: Colors.white,
+                                          shadowColor: Colors.transparent,
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 14.h),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12.r),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      );
-                    },
-                  );
-                  if (picked != null) {
-                    setDialogState(() {
-                      selectedTime = picked;
-                    });
-                  }
-                },
-                borderRadius: BorderRadius.circular(15.r),
-                child: Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(15.r),
-                    border: Border.all(color: Colors.grey[400]!),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.access_time_filled_rounded,
-                          color: primaryBlue),
-                      SizedBox(width: 12.w),
-                      Text(
-                        selectedTime == null
-                            ? 'تحديد الوقت المناسب'
-                            : selectedTime!.format(context),
-                        style: TextStyle(
-                          fontSize: 16,
-                          color:
-                              selectedTime == null ? Colors.grey : Colors.black,
-                        ),
-                      ),
-                      const Spacer(),
-                      const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('إلغاء',
-                  style: TextStyle(
-                      color: Colors.grey, fontWeight: FontWeight.bold)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final name = nameCtrl.text.trim();
-                final note = noteCtrl.text.trim();
-
-                if (name.isEmpty || selectedTime == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('يرجى إكمال جميع الحقول الضرورية')),
-                  );
-                  return;
-                }
-
-                final timeInMinutes =
-                    selectedTime!.hour * 60 + selectedTime!.minute;
-
-                final newReport = Report(
-                  id: null,
-                  name: name,
-                  notes: note,
-                  finished: false,
-                  time: timeInMinutes,
                 );
-
-                allReports.add(newReport);
-                checked.add(false);
-
-                Navigator.of(ctx).pop();
-                dialogSetState(() {});
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-              ),
-              child: const Text('إضافة التقرير',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

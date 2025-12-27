@@ -40,13 +40,7 @@ class _SalesContactCardState extends State<SalesContactCard> {
   }
 
   String getLatestNote() {
-    // In the list view API (GetAllMeasurement), the latest note will be returned in 'lastNotee'
-    if (widget.measurement.lastNotee != null &&
-        widget.measurement.lastNotee!.trim().isNotEmpty) {
-      return widget.measurement.lastNotee!;
-    }
-
-    return widget.measurement.note ?? '-';
+    return widget.measurement.lastNotee ?? '-';
   }
 
   String formatDate(DateTime date) {

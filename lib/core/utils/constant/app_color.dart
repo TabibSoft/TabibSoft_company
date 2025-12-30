@@ -8,12 +8,53 @@ class AppColor {
   static const Color subTitleColor = Color(0xFF7D848D);
   static const Color whiteColor = Color(0xFFEFEFEF);
   static const Color whiteBlueColor = Color(0xFFD6F8FF);
-  
+
   static const Color borderColor = Color(0xFFFFC10D);
   static const Color hintColor = Color(0xFFAEAEAE);
   static const Color containerColor = Color(0xFFF8F8F8);
   static const Color borderContainerColor = Color(0xFFF5F5F5);
-    static const Color accentColor = Color(0xFF19A7CE);
+  static const Color accentColor = Color(0xFF19A7CE);
   static const Color lightBg = Color(0xFFF4F9FC);
+}
 
+class SalesColors {
+  // الألوان الأساسية
+  static const Color primaryOrange = Color(0xFFFF6D00);
+  static const Color primaryBlue = Color(0xFF1976D2);
+  static const Color secondaryBlue = Color(0xFF2196F3);
+  static const Color accentBlue = Color(0xFF64B5F6);
+  static const Color deepBlue = Color(0xFF0D47A1);
+
+  // ألوان الخلفية
+  static const Color cardBackground = Color(0xFFF8FAFF);
+  static const Color surfaceLight = Color(0xFFF0F5FF);
+
+  // ألوان النص
+  static const Color textPrimary = Color(0xFF1A2332);
+  static const Color textSecondary = Color(0xFF546E7A);
+  static const Color textMuted = Color(0xFF90A4AE);
+
+  // ألوان الحدود والظلال
+  static const Color borderLight = Color(0xFFE3F2FD);
+  static const Color borderMedium = Color(0xFFBBDEFB);
+  static const Color successGreen = Color(0xFF4CAF50);
+
+  // تدرجات
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [primaryBlue, secondaryBlue],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient accentGradient = LinearGradient(
+    colors: [secondaryBlue, accentBlue],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient headerGradient = LinearGradient(
+    colors: [deepBlue, primaryBlue, secondaryBlue],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
 }

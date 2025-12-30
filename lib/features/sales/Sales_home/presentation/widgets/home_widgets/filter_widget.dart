@@ -88,13 +88,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         child: ListView(
           controller: controller,
           children: [
-            IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(
-                Icons.close,
-                color: Color(0xff104D9D),
-              ),
-            ),
+            // IconButton(
+            //   onPressed: () => Navigator.pop(context),
+            //   icon: const Icon(
+            //     Icons.close,
+            //     color: Color(0xff104D9D),
+            //   ),
+            // ),
             const Align(
               alignment: AlignmentDirectional.center,
               // child: Text(
@@ -106,7 +106,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               //   ),
               // ),
             ),
-            SizedBox(height: 20.h),
+            // SizedBox(height: 20.h),
             Align(
               alignment: AlignmentDirectional.topStart,
               child: Text(
@@ -118,10 +118,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 ),
               ),
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: 20.h),
             if (widget.statuses.isNotEmpty)
               SizedBox(
-                height: 100.h,
+                height: 110.h,
                 child: SingleChildScrollView(
                   child: Wrap(
                     alignment: WrapAlignment.start,
@@ -188,7 +188,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             SizedBox(height: 10.h),
             if (widget.products.isNotEmpty)
               SizedBox(
-                height: 200.h,
+                height: 220.h,
                 child: SingleChildScrollView(
                   child: Wrap(
                     alignment: WrapAlignment.start,

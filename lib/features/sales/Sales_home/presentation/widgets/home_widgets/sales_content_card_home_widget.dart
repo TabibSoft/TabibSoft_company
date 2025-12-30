@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tabib_soft_company/core/networking/api_service.dart';
 import 'package:tabib_soft_company/core/services/locator/get_it_locator.dart';
+import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/filter/status_model.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/paginated_sales_model.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/data/repos/update_status_repo.dart';
@@ -12,6 +13,8 @@ import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/screens/notes/notes_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/product_model.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+/// ألوان قسم المبيعات - تدرجات زرقاء احترافية
 
 class SalesContactCard extends StatefulWidget {
   final SalesModel measurement;
@@ -29,11 +32,30 @@ class SalesContactCard extends StatefulWidget {
   State<SalesContactCard> createState() => _SalesContactCardState();
 }
 
-class _SalesContactCardState extends State<SalesContactCard> {
+class _SalesContactCardState extends State<SalesContactCard>
+    with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
+  late AnimationController _expandController;
+  late Animation<double> _expandAnimation;
 
-  static const double outerRadius = 20;
-  static const double innerRadius = 35;
+  @override
+  void initState() {
+    super.initState();
+    _expandController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _expandController,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  void dispose() {
+    _expandController.dispose();
+    super.dispose();
+  }
 
   String getProductName() {
     return widget.measurement.productName ?? 'غير متوفر';
@@ -47,8 +69,7 @@ class _SalesContactCardState extends State<SalesContactCard> {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  Color _hexToColor(String? hex,
-      {Color fallback = const Color.fromARGB(255, 255, 61, 13)}) {
+  Color _hexToColor(String? hex, {Color fallback = SalesColors.primaryOrange}) {
     if (hex == null) return fallback;
     final cleaned = hex.replaceAll('#', '').trim();
     try {
@@ -65,7 +86,7 @@ class _SalesContactCardState extends State<SalesContactCard> {
   }
 
   Color _textColorForBackground(Color bg) {
-    return bg.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+    return bg.computeLuminance() > 0.5 ? Colors.black87 : Colors.white;
   }
 
   void _showChangeStatusDialog() {
@@ -104,6 +125,11 @@ class _SalesContactCardState extends State<SalesContactCard> {
   void _toggleExpand() {
     setState(() {
       _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _expandController.forward();
+      } else {
+        _expandController.reverse();
+      }
     });
   }
 
@@ -119,294 +145,401 @@ class _SalesContactCardState extends State<SalesContactCard> {
 
   @override
   Widget build(BuildContext context) {
-    // إزالة AnimationController و addPostFrameCallback لتحسين الأداء
-
-    final BorderRadius mainRadius = _isExpanded
-        ? const BorderRadius.only(
-            topLeft: Radius.circular(innerRadius),
-            topRight: Radius.circular(innerRadius),
-          )
-        : BorderRadius.circular(innerRadius);
-
-    final Border mainBorder = _isExpanded
-        ? const Border(
-            top: BorderSide(color: Color(0xff20AAC9), width: 3.5),
-            left: BorderSide(color: Color(0xff20AAC9), width: 3.5),
-            right: BorderSide(color: Color(0xff20AAC9), width: 3.5),
-          )
-        : const Border(
-            top: BorderSide(color: Color(0xff20AAC9), width: 3.5),
-            left: BorderSide(color: Color(0xff20AAC9), width: 3.5),
-            right: BorderSide(color: Color(0xff20AAC9), width: 3.5),
-            bottom: BorderSide(color: Color(0xff20AAC9), width: 3.5),
-          );
-
-    const Border expandedBorder = Border(
-      bottom: BorderSide(color: Color(0xff20AAC9), width: 3.5),
-      left: BorderSide(color: Color(0xff20AAC9), width: 3.5),
-      right: BorderSide(color: Color(0xff20AAC9), width: 3.5),
-    );
-
     final Color statusBg = _hexToColor(widget.measurement.statusColor);
     final Color statusFg = _textColorForBackground(statusBg);
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        // Background Layer 1
-        Positioned(
-          left: 0,
-          top: 6.h,
-          bottom: -10.h, // Elongated to be slightly longer than the white card
-          child: Container(
-            width: 390.w,
-            decoration: BoxDecoration(
-              color: const Color(0xff104D9D),
-              borderRadius: BorderRadius.circular(outerRadius),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
-                  offset: Offset(4.w, 6.h),
-                  blurRadius: 12.r,
-                ),
-              ],
-            ),
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24.r),
+            boxShadow: [
+              BoxShadow(
+                color: SalesColors.primaryOrange.withOpacity(0.08),
+                blurRadius: 20.r,
+                offset: Offset(0, 8.h),
+                spreadRadius: 0,
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10.r,
+                offset: Offset(0, 4.h),
+              ),
+            ],
           ),
-        ),
-        // Background Layer 2
-        Positioned(
-          left: 8.w,
-          top: -17.h,
-          bottom: -10.h,
-          right: 2.w,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(outerRadius),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
-                  offset: Offset(4.w, 6.h),
-                  blurRadius: 6.r,
-                ),
-              ],
-            ),
-          ),
-        ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Main Content
-                Padding(
-                  padding: EdgeInsets.only(top: 23.h, left: 30.w, right: 2.w),
-                  child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: mainRadius,
-                      border: mainBorder,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Image.asset(
-                              'assets/images/pngs/new_person.png',
-                              width: 30.w,
-                              height: 30.h,
-                            ),
-                            SizedBox(width: 8.w),
-                            Expanded(
-                              child: Text(
-                                widget.measurement.customerName ?? 'غير معروف',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () {
-                                _showChangeStatusDialog();
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 12.w, vertical: 8.h),
-                                margin: EdgeInsets.all(4.w),
-                                decoration: BoxDecoration(
-                                  color: statusBg,
-                                  borderRadius: BorderRadius.circular(20.r),
-                                  border: Border.all(
-                                    color: Colors.grey[300]!,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Text(
-                                  widget.measurement.statusName ?? 'غير معروف',
-                                  style: TextStyle(
-                                    color: statusFg,
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 5.h),
-                        GestureDetector(
-                          onTap: _makePhoneCall,
-                          child: Row(
-                            children: [
-                              Image.asset(
-                                'assets/images/pngs/new_call.png',
-                                width: 30.w,
-                                height: 25.h,
-                              ),
-                              SizedBox(width: 8.w),
-                              Expanded(
-                                child: SelectableText(
-                                  widget.measurement.customerTelephone ??
-                                      'غير متوفر',
-                                  onTap: _makePhoneCall,
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.grey[800],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 5.h),
-                        Row(
-                          children: [
-                            Image.asset(
-                              'assets/images/pngs/new_calender.png',
-                              width: 30.w,
-                              height: 25.h,
-                            ),
-                            SizedBox(width: 8.w),
-                            Expanded(
-                              child: Text(
-                                widget.measurement.date != null
-                                    ? formatDate(DateTime.parse(
-                                        widget.measurement.date!))
-                                    : 'غير متوفر',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color.fromARGB(137, 41, 41, 40),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header مع التدرج البرتقالي
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                decoration: BoxDecoration(
+                  gradient: SalesColors.headerGradient,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24.r),
+                    topRight: Radius.circular(24.r),
                   ),
                 ),
-                // Dropdown Button
-                Positioned(
-                  left: 66.w,
-                  bottom: 5.h,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _toggleExpand,
-                    child: SizedBox(
-                      width: 40.w,
-                      height: 40.h,
-                      child: AnimatedRotation(
-                        turns: _isExpanded ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 300),
-                        child: Image.asset("assets/images/pngs/dropdown.png"),
+                child: Row(
+                  children: [
+                    // أيقونة العميل
+                    Container(
+                      width: 48.w,
+                      height: 48.w,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(14.r),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1.5,
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // Expanded Content
-            AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              child: _isExpanded
-                  ? Container(
-                      width: double.infinity,
-                      margin: EdgeInsets.only(left: 30.w, right: 2.w),
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 18.w, vertical: 12.h),
-                      decoration: const BoxDecoration(
+                      child: Icon(
+                        Icons.person_rounded,
                         color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(innerRadius),
-                          bottomRight: Radius.circular(innerRadius),
-                        ),
-                        border: expandedBorder,
+                        size: 26.sp,
                       ),
+                    ),
+                    SizedBox(width: 12.w),
+                    // اسم العميل
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'التخصص: ${getProductName()}',
-                            style: TextStyle(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 20.h),
-                          Text(
-                            'العنوان: ${widget.measurement.address ?? 'غير متوفر'}',
+                            widget.measurement.customerName ?? 'غير معروف',
                             style: TextStyle(
                               fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              height: 1.2,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: 20.h),
-                          Text(
-                            'الملاحظات الأخيرة: ${getLatestNote()}',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: 20.h),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => NotesScreen(
-                                      measurementId: widget.measurement.id),
+                          SizedBox(height: 4.h),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.category_rounded,
+                                size: 14.sp,
+                                color: Colors.white70,
+                              ),
+                              SizedBox(width: 4.w),
+                              Expanded(
+                                child: Text(
+                                  getProductName(),
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: SalesColors.primaryOrange,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xff104D9D),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(60.r),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // زر الحالة
+                    GestureDetector(
+                      onTap: _showChangeStatusDialog,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 8.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusBg,
+                          borderRadius: BorderRadius.circular(20.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: statusBg.withOpacity(0.4),
+                              blurRadius: 8.r,
+                              offset: Offset(0, 2.h),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.measurement.statusName ?? 'غير معروف',
+                              style: TextStyle(
+                                color: statusFg,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            child: const Icon(
-                              Icons.add,
-                              color: Colors.white,
+                            SizedBox(width: 4.w),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: statusFg,
+                              size: 16.sp,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // المحتوى الرئيسي
+              Container(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  children: [
+                    // رقم الهاتف
+                    _buildInfoRow(
+                      icon: Icons.phone_rounded,
+                      iconBgColor: const Color(0xFFE8F5E9),
+                      iconColor: const Color(0xFF4CAF50),
+                      content:
+                          widget.measurement.customerTelephone ?? 'غير متوفر',
+                      onTap: _makePhoneCall,
+                      isClickable: true,
+                    ),
+                    SizedBox(height: 12.h),
+
+                    // التاريخ
+                    _buildInfoRow(
+                      icon: Icons.calendar_today_rounded,
+                      iconBgColor: const Color(0xFFFFF3E0),
+                      iconColor: SalesColors.primaryOrange,
+                      content: widget.measurement.date != null
+                          ? formatDate(DateTime.parse(widget.measurement.date!))
+                          : 'غير متوفر',
+                    ),
+
+                    // المحتوى الموسع
+                    SizeTransition(
+                      sizeFactor: _expandAnimation,
+                      child: Column(
+                        children: [
+                          SizedBox(height: 12.h),
+                          // فاصل
+                          Container(
+                            height: 1,
+                            margin: EdgeInsets.symmetric(vertical: 8.h),
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.transparent,
+                                  SalesColors.borderMedium,
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // العنوان
+                          _buildInfoRow(
+                            icon: Icons.location_on_rounded,
+                            iconBgColor: const Color(0xFFE3F2FD),
+                            iconColor: const Color(0xFF2196F3),
+                            content: widget.measurement.address ?? 'غير متوفر',
+                          ),
+                          SizedBox(height: 12.h),
+
+                          // الملاحظات
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(14.w),
+                            decoration: BoxDecoration(
+                              color: SalesColors.surfaceLight,
+                              borderRadius: BorderRadius.circular(14.r),
+                              border: Border.all(
+                                color: SalesColors.borderLight,
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.sticky_note_2_rounded,
+                                      size: 18.sp,
+                                      color: SalesColors.primaryOrange,
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      'آخر ملاحظة',
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: SalesColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  getLatestNote(),
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: SalesColors.textPrimary,
+                                    height: 1.5,
+                                  ),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 16.h),
+
+                          // زر إضافة ملاحظة
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => NotesScreen(
+                                        measurementId: widget.measurement.id),
+                                  ),
+                                );
+                              },
+                              icon: Icon(Icons.add_rounded, size: 22.sp),
+                              label: Text(
+                                'إضافة ملاحظة',
+                                style: TextStyle(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: SalesColors.secondaryBlue,
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(vertical: 14.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14.r),
+                                ),
+                                elevation: 0,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // زر التوسيع
+              InkWell(
+                onTap: _toggleExpand,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24.r),
+                  bottomRight: Radius.circular(24.r),
+                ),
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: SalesColors.surfaceLight,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(24.r),
+                      bottomRight: Radius.circular(24.r),
+                    ),
+                    border: const Border(
+                      top: BorderSide(
+                        color: SalesColors.borderLight,
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _isExpanded ? 'عرض أقل' : 'عرض المزيد',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: SalesColors.primaryOrange,
+                        ),
+                      ),
+                      SizedBox(width: 6.w),
+                      AnimatedRotation(
+                        turns: _isExpanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 300),
+                        child: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: SalesColors.primaryOrange,
+                          size: 22.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required Color iconBgColor,
+    required Color iconColor,
+    required String content,
+    VoidCallback? onTap,
+    bool isClickable = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 42.w,
+            height: 42.w,
+            decoration: BoxDecoration(
+              color: iconBgColor,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 20.sp,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              content,
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
+                color: isClickable
+                    ? SalesColors.primaryOrange
+                    : SalesColors.textPrimary,
+                decoration: isClickable
+                    ? TextDecoration.underline
+                    : TextDecoration.none,
+                decorationColor: SalesColors.primaryOrange,
+              ),
+            ),
+          ),
+          if (isClickable)
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16.sp,
+              color: const Color.fromARGB(255, 10, 162, 238),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -438,7 +571,7 @@ class _ChangeStatusDialogState extends State<ChangeStatusDialog>
     selectedStatusId = widget.currentStatusId;
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 800),
     )..forward();
   }
 
@@ -453,272 +586,303 @@ class _ChangeStatusDialogState extends State<ChangeStatusDialog>
     return BlocBuilder<UpdateStatusCubit, UpdateStatusState>(
       builder: (context, state) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r),
-          ),
+          backgroundColor: Colors.transparent,
           child: Container(
-            padding: EdgeInsets.all(16.w),
+            constraints: BoxConstraints(
+              maxWidth: 400.w,
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(20.r),
+              borderRadius: BorderRadius.circular(28.r),
+              boxShadow: [
+                BoxShadow(
+                  color: SalesColors.primaryOrange.withOpacity(0.15),
+                  blurRadius: 30.r,
+                  offset: Offset(0, 15.h),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.close,
-                      color: Color(0xff104D9D),
+                // Header
+                Container(
+                  padding: EdgeInsets.all(20.w),
+                  decoration: BoxDecoration(
+                    gradient: SalesColors.headerGradient,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(28.r),
+                      topRight: Radius.circular(28.r),
                     ),
                   ),
-                ),
-                Text(
-                  'تغيير الحالة',
-                  style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xff104D9D),
-                  ),
-                ),
-                SizedBox(height: 20.h),
-                if (widget.statuses.isNotEmpty)
-                  Flexible(
-                    child: SingleChildScrollView(
-                      child: Wrap(
-                        alignment: WrapAlignment.start,
-                        spacing: 10.w,
-                        runSpacing: 10.h,
-                        children: widget.statuses.asMap().entries.map((entry) {
-                          int index = entry.key;
-                          StatusModel status = entry.value;
-                          final isCurrent = widget.currentStatusId == status.id;
-                          final isSelected =
-                              selectedStatusId == status.id && !isCurrent;
-
-                          final double delay = index / widget.statuses.length;
-                          final Animation<double> animation =
-                              Tween<double>(begin: 0.0, end: 1.0).animate(
-                            CurvedAnimation(
-                              parent: _animationController,
-                              curve:
-                                  Interval(delay, 1.0, curve: Curves.easeOut),
-                            ),
-                          );
-
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0, 0.5),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: _animationController,
-                                  curve: Interval(delay, 1.0,
-                                      curve: Curves.easeOut),
-                                ),
-                              ),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12.r),
-                                onTap: () {
-                                  setState(() {
-                                    selectedStatusId = status.id;
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 180),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 14.w,
-                                    vertical: 12.h,
-                                  ),
-                                  constraints: BoxConstraints(
-                                    minWidth: 110.w,
-                                    maxWidth: 250.w,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isCurrent
-                                        ? const Color(0xFFFFEBEB)
-                                        : isSelected
-                                            ? const Color(0xff104D9D)
-                                            : const Color(0xFFF7FAFB),
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    border: Border.all(
-                                      color: isCurrent
-                                          ? const Color(0xFFD32F2F)
-                                          : isSelected
-                                              ? const Color(0xFF0A3766)
-                                              : const Color(0xFFE3E7EB),
-                                      width: 1.0,
-                                    ),
-                                    boxShadow: isCurrent
-                                        ? [
-                                            BoxShadow(
-                                              color: const Color(0xFFD32F2F)
-                                                  .withOpacity(0.06),
-                                              blurRadius: 8.r,
-                                              offset: Offset(0, 4.h),
-                                            )
-                                          ]
-                                        : isSelected
-                                            ? [
-                                                BoxShadow(
-                                                  color: const Color(0xff104D9D)
-                                                      .withOpacity(0.18),
-                                                  blurRadius: 12.r,
-                                                  offset: Offset(0, 6.h),
-                                                )
-                                              ]
-                                            : [
-                                                BoxShadow(
-                                                  color: Colors.black
-                                                      .withOpacity(0.03),
-                                                  blurRadius: 6.r,
-                                                  offset: Offset(0, 2.h),
-                                                )
-                                              ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          status.name,
-                                          overflow: TextOverflow.ellipsis,
-                                          textAlign: TextAlign.right,
-                                          style: TextStyle(
-                                            color: isCurrent
-                                                ? const Color(0xFFD32F2F)
-                                                : isSelected
-                                                    ? Colors.white
-                                                    : const Color(0xff104D9D),
-                                            fontWeight: isCurrent
-                                                ? FontWeight.w600
-                                                : isSelected
-                                                    ? FontWeight.w600
-                                                    : FontWeight.w500,
-                                            fontSize: 18.sp,
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(width: 10.w),
-                                      AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 180),
-                                        width: isSelected ? 28.r : 24.r,
-                                        height: isSelected ? 28.r : 24.r,
-                                        decoration: BoxDecoration(
-                                          color: isSelected
-                                              ? Colors.white.withOpacity(0.18)
-                                              : Colors.transparent,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: isSelected
-                                            ? Container(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  shape: BoxShape.circle,
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Colors.black
-                                                          .withOpacity(0.12),
-                                                      blurRadius: 4.r,
-                                                      offset: Offset(0, 2.h),
-                                                    )
-                                                  ],
-                                                ),
-                                                child: Icon(
-                                                  Icons.check,
-                                                  size: 16.r,
-                                                  color:
-                                                      const Color(0xff104D9D),
-                                                ),
-                                              )
-                                            : isCurrent
-                                                ? Padding(
-                                                    padding:
-                                                        EdgeInsets.all(2.r),
-                                                    child: Container(
-                                                      alignment:
-                                                          Alignment.center,
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                        color:
-                                                            Color(0xFFD32F2F),
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                      child: Icon(
-                                                        Icons.circle,
-                                                        size: 8.r,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  )
-                                                : Container(
-                                                    alignment: Alignment.center,
-                                                    child: Container(
-                                                      width: 10.r,
-                                                      height: 10.r,
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                        color:
-                                                            Color(0xFFEEF5FA),
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                    ),
-                                                  ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  )
-                else
-                  const Text('لا توجد حالات متاحة'),
-                SizedBox(height: 20.h),
-                if (state.status == UpdateStatusStatus.loading)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                    child: CircularProgressIndicator(),
-                  )
-                else
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: selectedStatusId != null &&
-                              selectedStatusId != widget.currentStatusId
-                          ? () {
-                              context.read<UpdateStatusCubit>().changeStatus(
-                                    measurementId: widget.measurementId,
-                                    statusId: selectedStatusId!,
-                                  );
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff104D9D),
-                        shape: RoundedRectangleBorder(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44.w,
+                        height: 44.w,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12.r),
                         ),
-                        padding: EdgeInsets.symmetric(vertical: 15.h),
-                      ),
-                      child: Text(
-                        'تأكيد التغيير',
-                        style: TextStyle(
+                        child: Icon(
+                          Icons.swap_horiz_rounded,
                           color: Colors.white,
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w500,
+                          size: 24.sp,
                         ),
                       ),
-                    ),
+                      SizedBox(width: 14.w),
+                      Expanded(
+                        child: Text(
+                          'تغيير الحالة',
+                          style: TextStyle(
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                        ),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: Colors.white,
+                          size: 22.sp,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+
+                // Content
+                Flexible(
+                  child: Padding(
+                    padding: EdgeInsets.all(20.w),
+                    child: widget.statuses.isNotEmpty
+                        ? SingleChildScrollView(
+                            child: Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 10.w,
+                              runSpacing: 10.h,
+                              children:
+                                  widget.statuses.asMap().entries.map((entry) {
+                                int index = entry.key;
+                                StatusModel status = entry.value;
+                                final isCurrent =
+                                    widget.currentStatusId == status.id;
+                                final isSelected =
+                                    selectedStatusId == status.id && !isCurrent;
+
+                                final double delay =
+                                    index / widget.statuses.length;
+                                final Animation<double> animation =
+                                    Tween<double>(begin: 0.0, end: 1.0).animate(
+                                  CurvedAnimation(
+                                    parent: _animationController,
+                                    curve: Interval(delay, 1.0,
+                                        curve: Curves.easeOutBack),
+                                  ),
+                                );
+
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: ScaleTransition(
+                                    scale: animation,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      onTap: () {
+                                        setState(() {
+                                          selectedStatusId = status.id;
+                                        });
+                                      },
+                                      child: AnimatedContainer(
+                                        duration:
+                                            const Duration(milliseconds: 200),
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 18.w,
+                                          vertical: 14.h,
+                                        ),
+                                        constraints: BoxConstraints(
+                                          minWidth: 120.w,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: isSelected
+                                              ? SalesColors.primaryGradient
+                                              : null,
+                                          color: isCurrent
+                                              ? const Color(0xFFFFF3E0)
+                                              : isSelected
+                                                  ? null
+                                                  : Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(16.r),
+                                          border: Border.all(
+                                            color: isCurrent
+                                                ? SalesColors.primaryOrange
+                                                : isSelected
+                                                    ? Colors.transparent
+                                                    : SalesColors.borderMedium,
+                                            width: isCurrent ? 2 : 1.5,
+                                          ),
+                                          boxShadow: isSelected
+                                              ? [
+                                                  BoxShadow(
+                                                    color: SalesColors
+                                                        .primaryOrange
+                                                        .withOpacity(0.35),
+                                                    blurRadius: 12.r,
+                                                    offset: Offset(0, 6.h),
+                                                  )
+                                                ]
+                                              : [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withOpacity(0.04),
+                                                    blurRadius: 8.r,
+                                                    offset: Offset(0, 2.h),
+                                                  )
+                                                ],
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            AnimatedContainer(
+                                              duration: const Duration(
+                                                  milliseconds: 200),
+                                              width: 24.r,
+                                              height: 24.r,
+                                              decoration: BoxDecoration(
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : isCurrent
+                                                        ? SalesColors
+                                                            .primaryOrange
+                                                        : SalesColors
+                                                            .borderMedium,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: isSelected || isCurrent
+                                                  ? Icon(
+                                                      isCurrent
+                                                          ? Icons
+                                                              .check_circle_rounded
+                                                          : Icons.check_rounded,
+                                                      size: 16.r,
+                                                      color: isSelected
+                                                          ? SalesColors
+                                                              .primaryOrange
+                                                          : Colors.white,
+                                                    )
+                                                  : null,
+                                            ),
+                                            SizedBox(width: 10.w),
+                                            Flexible(
+                                              child: Text(
+                                                status.name,
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  color: isCurrent
+                                                      ? SalesColors
+                                                          .primaryOrange
+                                                      : isSelected
+                                                          ? Colors.white
+                                                          : SalesColors
+                                                              .textPrimary,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 15.sp,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          )
+                        : Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.inbox_rounded,
+                                  size: 48.sp,
+                                  color: SalesColors.textMuted,
+                                ),
+                                SizedBox(height: 12.h),
+                                Text(
+                                  'لا توجد حالات متاحة',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color: SalesColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+
+                // Footer Button
+                Container(
+                  padding: EdgeInsets.all(20.w),
+                  child: state.status == UpdateStatusStatus.loading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: SalesColors.primaryOrange,
+                            strokeWidth: 3,
+                          ),
+                        )
+                      : SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: selectedStatusId != null &&
+                                    selectedStatusId != widget.currentStatusId
+                                ? () {
+                                    context
+                                        .read<UpdateStatusCubit>()
+                                        .changeStatus(
+                                          measurementId: widget.measurementId,
+                                          statusId: selectedStatusId!,
+                                        );
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: SalesColors.primaryOrange,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: SalesColors.borderMedium,
+                              disabledForegroundColor: SalesColors.textMuted,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16.r),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 16.h),
+                              elevation: 0,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle_rounded, size: 22.sp),
+                                SizedBox(width: 10.w),
+                                Text(
+                                  'تأكيد التغيير',
+                                  style: TextStyle(
+                                    fontSize: 17.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                ),
               ],
             ),
           ),

@@ -4,6 +4,7 @@ import 'package:tabib_soft_company/core/export.dart';
 import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 import 'package:tabib_soft_company/features/auth/presentation/screens/splash_screen.dart';
 import 'package:tabib_soft_company/features/home/presentation/screens/home_screen.dart';
+import 'package:tabib_soft_company/features/sales/today_calls/presentation/screens/taday_calls_screen.dart';
 
 class AppRouter {
   Route? onGenerateRoute(RouteSettings routeSettings) {
@@ -16,7 +17,7 @@ class AppRouter {
             return const SplashScreen();
           },
         );
-        case loginScreen:
+      case loginScreen:
         return MaterialPageRoute(
           builder: (_) {
             return BlocProvider(
@@ -30,6 +31,13 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) {
             return const HomeScreen();
+          },
+        );
+
+      case todayCallsScreen:
+        return MaterialPageRoute(
+          builder: (_) {
+            return const TodayCallsScreen();
           },
         );
     }

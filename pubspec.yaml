@@ -5,7 +5,7 @@ description: "A new Flutter project."
 publish_to: 'none'
 
 
-version: 1.0.0+2
+version: 1.0.0+1
 
 environment:
   sdk: '>=3.4.4 <4.0.0'
@@ -95,6 +95,7 @@ dependencies:
   googleapis: ^13.2.0
   pull_to_refresh: ^2.0.0
   photo_view: ^0.15.0
+  timezone: ^0.10.1
 
 
 dev_dependencies:

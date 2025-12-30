@@ -8,6 +8,8 @@ import 'package:tabib_soft_company/core/utils/widgets/custom_nav_bar_widget.dart
 import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -66,8 +68,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     if (confirm == true) {
+      // 1. Delete FCM Token to stop notifications
+      await FirebaseMessaging.instance.deleteToken();
+
+      // 2. Clear all user session data
       await CacheHelper.removeData(key: 'loginToken');
       await CacheHelper.removeData(key: 'userName');
+      await CacheHelper.removeData(key: 'userId');
+      await CacheHelper.removeData(key: 'userRoles');
+
+      if (!context.mounted) return;
 
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),

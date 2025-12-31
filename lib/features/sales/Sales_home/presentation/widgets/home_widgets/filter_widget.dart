@@ -88,25 +88,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         child: ListView(
           controller: controller,
           children: [
-            // IconButton(
-            //   onPressed: () => Navigator.pop(context),
-            //   icon: const Icon(
-            //     Icons.close,
-            //     color: Color(0xff104D9D),
-            //   ),
-            // ),
             const Align(
               alignment: AlignmentDirectional.center,
-              // child: Text(
-              //   'فلتر',
-              //   style: TextStyle(
-              //     fontSize: 20.sp,
-              //     fontWeight: FontWeight.w600,
-              //     color: const Color(0xff104D9D),
-              //   ),
-              // ),
             ),
-            // SizedBox(height: 20.h),
             Align(
               alignment: AlignmentDirectional.topStart,
               child: Text(

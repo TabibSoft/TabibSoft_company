@@ -58,3 +58,38 @@ class SalesColors {
     end: Alignment.centerRight,
   );
 }
+
+class TechColors {
+  // Premium Blue Palette
+  static const Color primaryDark = Color(0xFF0A2647);
+  static const Color primaryMid = Color(0xFF144272);
+  static const Color accentCyan = Color(0xFF2C7DA0);
+  static const Color accentLight = Color(0xFF89C2D9);
+
+  // Surfaces & Backgrounds
+  static const Color surfaceLight = Color(0xFFF8FAFC);
+  static const Color cardBg = Color(0xFFFFFFFF);
+
+  // Semantic Colors
+  static const Color successGreen = Color(0xFF10B981);
+  static const Color warningOrange = Color(0xFFF59E0B);
+  static const Color errorRed = Color(0xFFEF4444);
+
+  // Gradients
+  static const LinearGradient premiumGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      primaryDark,
+      primaryMid,
+      accentCyan,
+    ],
+    stops: [0.0, 0.5, 1.0],
+  );
+
+  static const LinearGradient cardGradient = LinearGradient(
+    colors: [accentCyan, primaryMid],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+}

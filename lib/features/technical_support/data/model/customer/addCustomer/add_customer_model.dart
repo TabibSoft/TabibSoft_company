@@ -9,6 +9,10 @@ class AddCustomerModel {
   final String engineerId;
   final String productId;
   final String? location;
+  @JsonKey(name: 'GovernmentId')
+  final String? governmentId;
+  @JsonKey(name: 'CityId')
+  final String? cityId;
   final String? createdUser;
   final String? lastEditUser;
   final DateTime? createdDate;
@@ -20,6 +24,8 @@ class AddCustomerModel {
     required this.engineerId,
     required this.productId,
     this.location,
+    this.governmentId,
+    this.cityId,
     this.createdUser,
     this.lastEditUser,
     this.createdDate,

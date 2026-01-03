@@ -28,25 +28,23 @@ class VisitNoteCard extends StatelessWidget {
     final String createdDate =
         note['createdDate']?.toString() ?? note['date']?.toString() ?? '';
 
-    final Color cardColor =
-        isRead ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1);
-
-    final Color borderColor = isRead ? Colors.green : Colors.red;
-
-    final Color statusIconColor = isRead ? Colors.green : Colors.red;
+    // Clean Styling
+    final Color borderColor =
+        isRead ? Colors.grey.withOpacity(0.3) : const Color(0xFFFFB74D);
+    final Color statusColor = isRead ? Colors.green : Colors.orange;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      padding: const EdgeInsets.all(15),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: borderColor.withOpacity(0.3), width: 1.5),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: isRead ? 1 : 1.5),
         boxShadow: [
           BoxShadow(
-            color: borderColor.withOpacity(0.1),
+            color: Colors.grey.withOpacity(0.08),
             blurRadius: 10,
-            offset: const Offset(0, 3),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -56,19 +54,22 @@ class VisitNoteCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Status Icon
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: statusIconColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+                  color: statusColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  isRead ? Icons.check_circle : Icons.circle_outlined,
-                  color: statusIconColor,
+                  isRead
+                      ? Icons.done_all_rounded
+                      : Icons.mark_chat_unread_rounded,
+                  color: statusColor,
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,19 +78,20 @@ class VisitNoteCard extends StatelessWidget {
                       noteText,
                       style: const TextStyle(
                         fontSize: 15,
-                        color: Colors.black87,
+                        color: Color(0xFF2D3436),
                         height: 1.5,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(
-                          Icons.access_time,
+                          Icons.schedule_rounded,
                           size: 14,
-                          color: Colors.grey[600],
+                          color: Colors.grey[500],
                         ),
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 6),
                         Text(
                           formatDate(createdDate),
                           style: TextStyle(
@@ -102,71 +104,78 @@ class VisitNoteCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              if (!isRead && noteId.isNotEmpty)
-                InkWell(
-                  onTap: () => onMarkAsRead(noteId, index),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.visibility,
-                      color: Colors.blue,
-                      size: 22,
-                    ),
-                  ),
-                ),
-              const SizedBox(width: 8),
-              if (noteId.isNotEmpty)
-                InkWell(
-                  onTap: () => onDelete(noteId, index),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.red,
-                      size: 22,
-                    ),
-                  ),
-                ),
             ],
           ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: statusIconColor.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
+
+          if (noteId.isNotEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(height: 1),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+
+          // Actions Row
+          if (noteId.isNotEmpty)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Icon(
-                  isRead ? Icons.visibility : Icons.visibility_off,
-                  size: 14,
-                  color: statusIconColor,
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  isRead ? 'تم القراءة' : 'غير مقروءة',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: statusIconColor,
-                    fontWeight: FontWeight.bold,
+                if (!isRead)
+                  InkWell(
+                    onTap: () => onMarkAsRead(noteId, index),
+                    borderRadius: BorderRadius.circular(30),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE3F2FD),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.visibility_outlined,
+                              size: 18, color: Color(0xFF1565C0)),
+                          SizedBox(width: 6),
+                          Text(
+                            "تحديد كمقروء",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF1565C0),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                const Spacer(),
+                InkWell(
+                  onTap: () => onDelete(noteId, index),
+                  borderRadius: BorderRadius.circular(30),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFEBEE),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.delete_outline_rounded,
+                            size: 18, color: Color(0xFFC62828)),
+                        SizedBox(width: 6),
+                        Text(
+                          "حذف",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFC62828),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
         ],
       ),
     );

@@ -16,7 +16,7 @@ VisitModel _$VisitModelFromJson(Map<String, dynamic> json) => VisitModel(
       visitId: json['visitId'] as String,
       engineerName: json['engineerName'] as String? ?? 'غير محدد',
       proudctName: json['proudctName'] as String? ?? '--',
-      adress: json['adress'] as String? ?? 'غير محدد',
+      adress: json['adress'] as String? ?? 'لا يوجد عنوان تفصيلي',
       location: json['location'] as String? ?? 'غير محدد',
       status: json['status'] as String? ?? 'غير محدد',
       statusId: json['statusId'] as String? ?? '',

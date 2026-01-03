@@ -19,77 +19,91 @@ class SimpleNoteCard extends StatelessWidget {
     final String id = note['id']?.toString() ?? '';
 
     return Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(16.r),
       decoration: BoxDecoration(
-        color: isRead ? Colors.grey[50] : Colors.blue[50],
+        color: isRead
+            ? Colors.white
+            : const Color(0xFFFFFDE7), // Light yellow for unread
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: isRead ? Colors.grey[300]! : Colors.blue[400]!,
-          width: 1.8,
-        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.grey.withOpacity(0.06),
             blurRadius: 10,
-            offset: const Offset(0, 3),
+            offset: const Offset(0, 4),
           ),
         ],
+        border: isRead
+            ? Border.all(color: Colors.grey.shade100)
+            : Border.all(color: const Color(0xFFFFF59D)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // أيقونة الحالة + الضغط لتغييرها
+          // Icon State
           GestureDetector(
             onTap: onMarkAsRead,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
+            child: Container(
               padding: EdgeInsets.all(10.r),
               decoration: BoxDecoration(
-                color: isRead
-                    ? Colors.green.withOpacity(0.15)
-                    : Colors.orange.withOpacity(0.15),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isRead ? Colors.green : Colors.orange,
-                  width: 2,
-                ),
+                color:
+                    isRead ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+                borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(
-                isRead ? Icons.mark_email_read : Icons.mark_email_unread,
-                color: isRead ? Colors.green[700] : Colors.orange[700],
-                size: 26.r,
+                isRead
+                    ? Icons.check_circle_outline_rounded
+                    : Icons.mark_chat_unread_outlined,
+                color: isRead ? Colors.green[600] : Colors.orange[800],
+                size: 22.r,
               ),
             ),
           ),
 
           SizedBox(width: 14.w),
 
-          // نص الملاحظة
+          // Note Text
           Expanded(
-            child: Text(
-              note['note'] ?? '',
-              style: TextStyle(
-                fontSize: 15.5.sp,
-                height: 1.5,
-                color: Colors.black87,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  note['note'] ?? '',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    height: 1.5,
+                    color: const Color(0xFF455A64),
+                    fontWeight: isRead ? FontWeight.normal : FontWeight.w600,
+                  ),
+                ),
+                if (!isRead)
+                  Padding(
+                    padding: EdgeInsets.only(top: 4.h),
+                    child: Text(
+                      "ملاحظة جديدة",
+                      style: TextStyle(
+                          fontSize: 10.sp,
+                          color: Colors.orange[800],
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+              ],
             ),
           ),
 
           SizedBox(width: 10.w),
 
-          // زر الحذف
+          // Delete Button
           if (id.isNotEmpty && onDelete != null)
-            GestureDetector(
-              onTap: onDelete,
-              child: Container(
-                padding: EdgeInsets.all(8.r),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  shape: BoxShape.circle,
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onDelete,
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: EdgeInsets.all(6.r),
+                  child: Icon(Icons.close_rounded,
+                      color: Colors.grey[400], size: 20.r),
                 ),
-                child: Icon(Icons.delete_outline,
-                    color: Colors.red[600], size: 22.r),
               ),
             ),
         ],

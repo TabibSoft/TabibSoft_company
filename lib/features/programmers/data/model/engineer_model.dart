@@ -16,7 +16,7 @@ class EngineerModel {
     required this.telephone,
   });
 
-  factory EngineerModel.fromJson(Map<String, dynamic> json) => _$EngineerModelFromJson(json);
+  factory EngineerModel.fromJson(Map<String, dynamic> json) =>
+      _$EngineerModelFromJson(json);
   Map<String, dynamic> toJson() => _$EngineerModelToJson(this);
 }
-

@@ -166,11 +166,10 @@ class _NotesScreenState extends State<NotesScreen> {
                 title: const Text('معرض الصور'),
                 onTap: () async {
                   Navigator.pop(bc);
-                  final XFile? image =
-                      await picker.pickImage(source: ImageSource.gallery);
-                  if (image != null) {
+                  final List<XFile> images = await picker.pickMultiImage();
+                  if (images.isNotEmpty) {
                     setState(() {
-                      _imagePaths.add(image.path);
+                      _imagePaths.addAll(images.map((x) => x.path));
                     });
                   }
                 },

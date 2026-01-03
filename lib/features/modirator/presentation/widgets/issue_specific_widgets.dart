@@ -47,6 +47,7 @@ class ClientNameField extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<CustomerCubit, CustomerState>(
@@ -403,10 +404,10 @@ class StatusDropdown extends StatelessWidget {
 }
 
 class ImagePickerWidget extends StatelessWidget {
-  final Function(File) onImagePicked;
+  final Function(List<File>) onImagesPicked;
   const ImagePickerWidget({
     super.key,
-    required this.onImagePicked,
+    required this.onImagesPicked,
   });
   @override
   Widget build(BuildContext context) {
@@ -418,7 +419,7 @@ class ImagePickerWidget extends StatelessWidget {
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           builder: (_) => ImagePickerBottomSheet(
-            onImagePicked: onImagePicked,
+            onImagesPicked: onImagesPicked,
           ),
         );
       },
@@ -432,10 +433,10 @@ class ImagePickerWidget extends StatelessWidget {
 }
 
 class ImagePickerBottomSheet extends StatelessWidget {
-  final Function(File) onImagePicked;
+  final Function(List<File>) onImagesPicked;
   const ImagePickerBottomSheet({
     super.key,
-    required this.onImagePicked,
+    required this.onImagesPicked,
   });
   @override
   Widget build(BuildContext context) {
@@ -450,7 +451,7 @@ class ImagePickerBottomSheet extends StatelessWidget {
               final pickedFile =
                   await picker.pickImage(source: ImageSource.camera);
               if (pickedFile != null && pickedFile.path.isNotEmpty) {
-                onImagePicked(File(pickedFile.path));
+                onImagesPicked([File(pickedFile.path)]);
                 Navigator.of(context).pop();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -464,10 +465,9 @@ class ImagePickerBottomSheet extends StatelessWidget {
             title: const Text('المعرض'),
             onTap: () async {
               final picker = ImagePicker();
-              final pickedFile =
-                  await picker.pickImage(source: ImageSource.gallery);
-              if (pickedFile != null && pickedFile.path.isNotEmpty) {
-                onImagePicked(File(pickedFile.path));
+              final pickedFiles = await picker.pickMultiImage();
+              if (pickedFiles.isNotEmpty) {
+                onImagesPicked(pickedFiles.map((e) => File(e.path)).toList());
                 Navigator.of(context).pop();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(

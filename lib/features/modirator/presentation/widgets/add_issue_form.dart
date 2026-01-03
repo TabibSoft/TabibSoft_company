@@ -182,7 +182,7 @@ class _AddIssueFormState extends State<AddIssueForm> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await showModalBottomSheet<XFile?>(
+    final result = await showModalBottomSheet<dynamic>(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -220,8 +220,8 @@ class _AddIssueFormState extends State<AddIssueForm> {
               ),
               title: const Text('المعرض',
                   style: TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () async => Navigator.pop(
-                  context, await picker.pickImage(source: ImageSource.gallery)),
+              onTap: () async =>
+                  Navigator.pop(context, await picker.pickMultiImage()),
             ),
             const SizedBox(height: 10),
           ],
@@ -229,8 +229,14 @@ class _AddIssueFormState extends State<AddIssueForm> {
       ),
     );
 
-    if (pickedFile != null) {
-      setState(() => images.add(File(pickedFile.path)));
+    if (result != null) {
+      setState(() {
+        if (result is List<XFile>) {
+          images.addAll(result.map((f) => File(f.path)));
+        } else if (result is XFile) {
+          images.add(File(result.path));
+        }
+      });
     }
   }
 

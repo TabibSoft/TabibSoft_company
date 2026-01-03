@@ -148,15 +148,19 @@ class _AddProblemScreenState extends State<AddProblemScreen>
 
   Future<void> pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await showModalBottomSheet<XFile?>(
+    final result = await showModalBottomSheet<dynamic>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => _buildImagePickerBottomSheet(picker),
     );
 
-    if (pickedFile != null) {
+    if (result != null) {
       setState(() {
-        images.add(File(pickedFile.path));
+        if (result is List<XFile>) {
+          images.addAll(result.map((f) => File(f.path)));
+        } else if (result is XFile) {
+          images.add(File(result.path));
+        }
       });
     }
   }
@@ -203,8 +207,8 @@ class _AddProblemScreenState extends State<AddProblemScreen>
                 icon: Icons.photo_library_rounded,
                 label: 'المعرض',
                 color: TechColors.primaryMid,
-                onTap: () async => Navigator.pop(context,
-                    await picker.pickImage(source: ImageSource.gallery)),
+                onTap: () async =>
+                    Navigator.pop(context, await picker.pickMultiImage()),
               ),
             ],
           ),
@@ -1139,14 +1143,27 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _locationController = TextEditingController();
+  final _locationController =
+      TextEditingController(); // This will now hold city/gov name
+  final _govController = TextEditingController();
+  final _cityController = TextEditingController();
   final _engineerController = TextEditingController();
   final _productController = TextEditingController();
 
   bool _showEngineerDropdown = false;
   bool _showProductDropdown = false;
+  bool _showGovDropdown = false;
+  bool _showCityDropdown = false;
+
+  String _engineerSearch = '';
+  String _productSearch = '';
+  String _govSearch = '';
+  String _citySearch = '';
+
   String? _selectedEngineerId;
   String? _selectedProductId;
+  String? _selectedGovId;
+  String? _selectedCityId;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -1174,6 +1191,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
 
     context.read<EngineerCubit>().fetchEngineers();
     context.read<ProductCubit>().fetchProducts();
+    context.read<AddCustomerCubit>().fetchGovernments();
   }
 
   @override
@@ -1182,6 +1200,8 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
     _nameController.dispose();
     _phoneController.dispose();
     _locationController.dispose();
+    _govController.dispose();
+    _cityController.dispose();
     _engineerController.dispose();
     _productController.dispose();
     super.dispose();
@@ -1201,9 +1221,11 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
         telephone: _phoneController.text.trim(),
         engineerId: _selectedEngineerId ?? '',
         productId: _selectedProductId ?? '',
-        location: _locationController.text.isNotEmpty
-            ? _locationController.text.trim()
-            : null,
+        location: _cityController.text.isNotEmpty
+            ? "${_govController.text} - ${_cityController.text}"
+            : _govController.text,
+        governmentId: _selectedGovId,
+        cityId: _selectedCityId,
         createdDate: DateTime.now(),
       );
       context.read<AddCustomerCubit>().addCustomer(customer);
@@ -1368,12 +1390,148 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
                             isPhone: true,
                           ),
                           SizedBox(height: 16.h),
-                          _buildModernField(
-                            label: 'العنوان',
-                            controller: _locationController,
+
+                          // Government Dropdown
+                          _buildModernDropdown(
+                            label: 'المحافظة',
+                            controller: _govController,
+                            icon: Icons.map_rounded,
+                            isVisible: _showGovDropdown,
+                            onChanged: (val) =>
+                                setState(() => _govSearch = val),
+                            onTap: () => setState(() {
+                              _showGovDropdown = !_showGovDropdown;
+                              if (_showGovDropdown) _govSearch = '';
+                              _showCityDropdown = false;
+                              _showEngineerDropdown = false;
+                              _showProductDropdown = false;
+                            }),
+                            child:
+                                BlocBuilder<AddCustomerCubit, AddCustomerState>(
+                              builder: (context, state) {
+                                if (state.status ==
+                                    AddCustomerStatus.loadingGovernments) {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                }
+                                final filteredGovs = state.governments
+                                    .where((gov) => gov.name
+                                        .toLowerCase()
+                                        .contains(_govSearch.toLowerCase()))
+                                    .toList();
+                                if (filteredGovs.isEmpty) {
+                                  return Center(
+                                      child: Text('لا توجد نتائج',
+                                          style: TextStyle(fontSize: 14.sp)));
+                                }
+                                return ListView.builder(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                                  itemCount: filteredGovs.length,
+                                  itemBuilder: (context, index) {
+                                    final gov = filteredGovs[index];
+                                    final isSelected = _selectedGovId == gov.id;
+                                    return _buildDropdownItem(
+                                      title: gov.name,
+                                      icon: Icons.location_city_rounded,
+                                      isSelected: isSelected,
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedGovId = gov.id;
+                                          _govController.text = gov.name;
+                                          _showGovDropdown = false;
+                                          _govSearch = '';
+                                          // Reset city when gov changes
+                                          _selectedCityId = null;
+                                          _cityController.clear();
+                                        });
+                                        context
+                                            .read<AddCustomerCubit>()
+                                            .fetchCities(gov.id);
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                          SizedBox(height: 16.h),
+
+                          // City Dropdown
+                          _buildModernDropdown(
+                            label: 'المدينة / المركز',
+                            controller: _cityController,
                             icon: Icons.location_on_rounded,
-                            hint: 'أدخل العنوان',
-                            isOptional: true,
+                            isVisible: _showCityDropdown,
+                            onChanged: (val) =>
+                                setState(() => _citySearch = val),
+                            onTap: () {
+                              if (_selectedGovId == null) {
+                                Fluttertoast.showToast(
+                                  msg: "يرجى اختيار المحافظة أولاً",
+                                  backgroundColor: Colors.red,
+                                  gravity: ToastGravity.TOP,
+                                );
+                                return;
+                              }
+                              setState(() {
+                                _showCityDropdown = !_showCityDropdown;
+                                if (_showCityDropdown) _citySearch = '';
+                                _showGovDropdown = false;
+                                _showEngineerDropdown = false;
+                                _showProductDropdown = false;
+                              });
+                            },
+                            child:
+                                BlocBuilder<AddCustomerCubit, AddCustomerState>(
+                              builder: (context, state) {
+                                if (state.status ==
+                                    AddCustomerStatus.loadingCities) {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                }
+                                final filteredCities = state.cities
+                                    .where((city) => city.name
+                                        .toLowerCase()
+                                        .contains(_citySearch.toLowerCase()))
+                                    .toList();
+
+                                if (filteredCities.isEmpty &&
+                                    state.cities.isNotEmpty) {
+                                  return Center(
+                                      child: Text('لا توجد نتائج',
+                                          style: TextStyle(fontSize: 14.sp)));
+                                }
+                                if (state.cities.isEmpty) {
+                                  return Center(
+                                      child: Text('يرجى اختيار المحافظة أولاً',
+                                          style: TextStyle(fontSize: 14.sp)));
+                                }
+                                return ListView.builder(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                                  itemCount: filteredCities.length,
+                                  itemBuilder: (context, index) {
+                                    final city = filteredCities[index];
+                                    final isSelected =
+                                        _selectedCityId == city.id;
+                                    return _buildDropdownItem(
+                                      title: city.name,
+                                      icon: Icons.location_on_rounded,
+                                      isSelected: isSelected,
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedCityId = city.id;
+                                          _cityController.text = city.name;
+                                          _showCityDropdown = false;
+                                          _citySearch = '';
+                                        });
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                           ),
                           SizedBox(height: 24.h),
 
@@ -1387,12 +1545,28 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
                             controller: _engineerController,
                             icon: Icons.engineering_rounded,
                             isVisible: _showEngineerDropdown,
+                            onChanged: (val) =>
+                                setState(() => _engineerSearch = val),
                             onTap: () => setState(() {
                               _showEngineerDropdown = !_showEngineerDropdown;
+                              if (_showEngineerDropdown) _engineerSearch = '';
                               _showProductDropdown = false;
                             }),
                             child: BlocBuilder<EngineerCubit, EngineerState>(
                               builder: (context, state) {
+                                final filteredEngineers = state.engineers
+                                    .where((eng) => eng.name
+                                        .toLowerCase()
+                                        .contains(
+                                            _engineerSearch.toLowerCase()))
+                                    .toList();
+
+                                if (filteredEngineers.isEmpty &&
+                                    state.engineers.isNotEmpty) {
+                                  return Center(
+                                      child: Text('لا توجد نتائج',
+                                          style: TextStyle(fontSize: 14.sp)));
+                                }
                                 if (state.engineers.isEmpty) {
                                   return Center(
                                     child: Padding(
@@ -1410,9 +1584,9 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
                                 return ListView.builder(
                                   shrinkWrap: true,
                                   padding: EdgeInsets.symmetric(vertical: 8.h),
-                                  itemCount: state.engineers.length,
+                                  itemCount: filteredEngineers.length,
                                   itemBuilder: (context, index) {
-                                    final eng = state.engineers[index];
+                                    final eng = filteredEngineers[index];
                                     final isSelected =
                                         _selectedEngineerId == eng.id;
                                     return _buildDropdownItem(
@@ -1425,6 +1599,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
                                           _selectedEngineerId = eng.id;
                                           _engineerController.text = eng.name;
                                           _showEngineerDropdown = false;
+                                          _engineerSearch = '';
                                         });
                                       },
                                     );
@@ -1441,12 +1616,27 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
                             controller: _productController,
                             icon: Icons.inventory_2_rounded,
                             isVisible: _showProductDropdown,
+                            onChanged: (val) =>
+                                setState(() => _productSearch = val),
                             onTap: () => setState(() {
                               _showProductDropdown = !_showProductDropdown;
+                              if (_showProductDropdown) _productSearch = '';
                               _showEngineerDropdown = false;
                             }),
                             child: BlocBuilder<ProductCubit, ProductState>(
                               builder: (context, state) {
+                                final filteredProducts = state.products
+                                    .where((prod) => prod.name
+                                        .toLowerCase()
+                                        .contains(_productSearch.toLowerCase()))
+                                    .toList();
+
+                                if (filteredProducts.isEmpty &&
+                                    state.products.isNotEmpty) {
+                                  return Center(
+                                      child: Text('لا توجد نتائج',
+                                          style: TextStyle(fontSize: 14.sp)));
+                                }
                                 if (state.products.isEmpty) {
                                   return Center(
                                     child: Padding(
@@ -1464,9 +1654,9 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
                                 return ListView.builder(
                                   shrinkWrap: true,
                                   padding: EdgeInsets.symmetric(vertical: 8.h),
-                                  itemCount: state.products.length,
+                                  itemCount: filteredProducts.length,
                                   itemBuilder: (context, index) {
-                                    final prod = state.products[index];
+                                    final prod = filteredProducts[index];
                                     final isSelected = _selectedProductId ==
                                         prod.id.toString();
                                     return _buildDropdownItem(
@@ -1479,6 +1669,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
                                               prod.id.toString();
                                           _productController.text = prod.name;
                                           _showProductDropdown = false;
+                                          _productSearch = '';
                                         });
                                       },
                                     );
@@ -1668,6 +1859,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
     required bool isVisible,
     required VoidCallback onTap,
     required Widget child,
+    Function(String)? onChanged,
   }) {
     return Column(
       children: [
@@ -1707,16 +1899,38 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
                         ),
                       ),
                       SizedBox(height: 2.h),
-                      Text(
-                        controller.text.isEmpty ? 'اختر...' : controller.text,
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                          color: controller.text.isEmpty
-                              ? Colors.grey[400]
-                              : TechColors.primaryDark,
+                      if (isVisible)
+                        TextField(
+                          controller: controller,
+                          onChanged: onChanged,
+                          autofocus: true,
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: TechColors.primaryDark,
+                          ),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            border: InputBorder.none,
+                            hintText: 'ابحث هنا...',
+                            hintStyle: TextStyle(
+                              fontSize: 15.sp,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        )
+                      else
+                        Text(
+                          controller.text.isEmpty ? 'اختر...' : controller.text,
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: controller.text.isEmpty
+                                ? Colors.grey[400]
+                                : TechColors.primaryDark,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),

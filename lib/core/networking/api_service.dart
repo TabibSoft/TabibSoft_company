@@ -16,15 +16,15 @@ import 'package:tabib_soft_company/features/technical_support/data/model/custome
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/product_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/support_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
-import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/tech_support_response.dart'; // إضافة الاستيراد
-import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/create_under_transaction.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/tech_support_response.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_category_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/problem_status/problem_status_model.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/note_model.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/paginated_visit_response.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/models/success_response_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customization/situation_status_model.dart';
-import 'package:tabib_soft_company/features/technical_support/visits/data/models/visit_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/government_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/city_model.dart';
 import 'api_constants.dart';
 
 part 'api_service.g.dart';
@@ -63,16 +63,9 @@ abstract class ApiService {
 
   @GET(ApiConstants.getProblemStatus)
   Future<List<ProblemStatusModel>> getProblemStatus();
-//   @GET(ApiConstants.getUnderTransaction)
-// Future<List<UnderTransactionModel>> getUnderTransaction({
-//   @Query("CustomerSupportId") required String customerSupportId,
-// });
 
   @GET(ApiConstants.getAllProblemCategories)
   Future<List<ProblemCategoryModel>> getAllProblemCategories();
-
-// @GET(ApiConstants.getAllSitiuation)
-//   Future<List<ProblemStatusModel>> getAllSitiuation();
 
   @POST(ApiConstants.changeProblemStatus)
   Future<void> changeProblemStatus({
@@ -85,8 +78,6 @@ abstract class ApiService {
     @Query("CustomerId") required String customerId,
   });
 
-  // تم تعديل هذه الدالة لتستخدم MultiPart
-
   @POST(ApiConstants.createUnderTransaction)
   @MultiPart()
   Future<void> createUnderTransaction(
@@ -94,7 +85,7 @@ abstract class ApiService {
     @Part(name: "CustomerId") String customerId,
     @Part(name: "Note") String note,
     @Part(name: "ProblemstausId") int problemStatusId,
-    @Part() List<MultipartFile>? images, // إزالة name لإرسالها كـ array
+    @Part() List<MultipartFile>? images,
   );
 
   @POST(ApiConstants.updateUnderTransaction)
@@ -172,10 +163,10 @@ abstract class ApiService {
   @POST(ApiConstants.updateTask)
   Future<void> updateTask(@Body() TaskUpdateModel task);
 
-  @GET(ApiConstants.getTodayCalls) // Added new method
+  @GET(ApiConstants.getTodayCalls)
   Future<List<TodayCallModel>> getTodayCalls();
 
-  @POST(ApiConstants.changeStatus) // Added new method for changing status
+  @POST(ApiConstants.changeStatus)
   Future<void> changeStatus({
     @Query("measurementId") required String measurementId,
     @Query("statusId") required String statusId,
@@ -184,7 +175,7 @@ abstract class ApiService {
   @GET(ApiConstants.getAllStatuses)
   Future<List<StatusModel>> getAllStatuses();
 
-  @GET(ApiConstants.getNotifications) // Added for fetching notifications
+  @GET(ApiConstants.getNotifications)
   Future<List<NotificationModel>> getNotifications();
 
   @POST(ApiConstants.addSubscription)
@@ -228,6 +219,11 @@ abstract class ApiService {
   @POST(ApiConstants.isArchive)
   Future<void> isArchive({
     @Query("ProblemId") required String problemId,
-    // @Query("IsArchive") required bool isArchive,
   });
+
+  @GET(ApiConstants.getGovernments)
+  Future<List<GovernmentModel>> getGovernments();
+
+  @GET(ApiConstants.getCities)
+  Future<List<CityModel>> getCities(@Query("Id") String governmentId);
 }

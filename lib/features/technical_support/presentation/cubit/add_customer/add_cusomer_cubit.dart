@@ -27,4 +27,46 @@ class AddCustomerCubit extends Cubit<AddCustomerState> {
       },
     );
   }
+
+  Future<void> fetchGovernments() async {
+    emit(state.copyWith(status: AddCustomerStatus.loadingGovernments));
+    final result = await _addCustomerRepository.getGovernments();
+    result.when(
+      success: (governments) {
+        emit(state.copyWith(
+          status: AddCustomerStatus.initial,
+          governments: governments,
+        ));
+      },
+      failure: (error) {
+        emit(state.copyWith(
+          status: AddCustomerStatus.failure,
+          errorMessage: error.errMessages,
+        ));
+      },
+    );
+  }
+
+  Future<void> fetchCities(String governmentId) async {
+    emit(state.copyWith(status: AddCustomerStatus.loadingCities));
+    final result = await _addCustomerRepository.getCities(governmentId);
+    result.when(
+      success: (cities) {
+        emit(state.copyWith(
+          status: AddCustomerStatus.initial,
+          cities: cities,
+        ));
+      },
+      failure: (error) {
+        emit(state.copyWith(
+          status: AddCustomerStatus.failure,
+          errorMessage: error.errMessages,
+        ));
+      },
+    );
+  }
+
+  void resetCities() {
+    emit(state.copyWith(cities: []));
+  }
 }

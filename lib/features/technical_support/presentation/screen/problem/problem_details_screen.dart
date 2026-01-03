@@ -126,7 +126,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
 
   Future<void> pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await showModalBottomSheet<XFile?>(
+    final result = await showModalBottomSheet<dynamic>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
@@ -178,8 +178,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
                 title: const Text('اختيار من المعرض',
                     style: TextStyle(fontWeight: FontWeight.w600)),
                 onTap: () async {
-                  Navigator.pop(context,
-                      await picker.pickImage(source: ImageSource.gallery));
+                  Navigator.pop(context, await picker.pickMultiImage());
                 },
               ),
               SizedBox(height: 10.h),
@@ -189,9 +188,13 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
       },
     );
 
-    if (pickedFile != null) {
+    if (result != null) {
       setState(() {
-        selectedImages.add(File(pickedFile.path));
+        if (result is List<XFile>) {
+          selectedImages.addAll(result.map((file) => File(file.path)));
+        } else if (result is XFile) {
+          selectedImages.add(File(result.path));
+        }
       });
     }
   }

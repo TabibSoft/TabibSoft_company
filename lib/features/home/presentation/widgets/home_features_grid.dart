@@ -21,65 +21,69 @@ class HomeFeaturesGrid extends StatelessWidget {
     final bool isTracker = userRoles.contains('TRACKER');
 
     return Positioned(
-      top: size.height * 0.30,
-      left: 16,
-      right: 16,
-      bottom: 20,
+      top: size.height * 0.32, // Adjusted for new header height
+      left: 20,
+      right: 20,
+      bottom: 0,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(36),
+            topRight: Radius.circular(36),
+          ),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 6))
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 30,
+              offset: const Offset(0, -5),
+            )
           ],
         ),
         child: GridView.count(
           physics: const BouncingScrollPhysics(),
           crossAxisCount: 2,
-          mainAxisSpacing: 14,
-          crossAxisSpacing: 14,
-          childAspectRatio: 1.03,
+          mainAxisSpacing: 18,
+          crossAxisSpacing: 18,
+          childAspectRatio: 1.05,
           children: [
             // الإدارة
-            _buildFeatureTile(
-              context: context,
+            HomeButton(
+              index: 0,
               iconPath: 'assets/images/pngs/manager.png',
               label: 'الإدارة',
               enabled: isAdmin || userRoles.contains('MANAGEMENT'),
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const ManagementScreen())),
-              primaryColor: AppColor.accentColor,
+              primaryColor: TechColors.primaryDark,
             ),
 
             // المبيعات
-            _buildFeatureTile(
-              context: context,
+            HomeButton(
+              index: 1,
               iconPath: 'assets/images/pngs/sales.png',
               label: 'المبيعات',
               enabled: isAdmin || userRoles.contains('SALSE'),
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const SalesHomeScreen())),
-              primaryColor: AppColor.primaryColor,
+              primaryColor: TechColors.accentCyan,
             ),
 
             // المبرمجين
-            _buildFeatureTile(
-              context: context,
+            HomeButton(
+              index: 2,
               iconPath: 'assets/images/pngs/developers.png',
               label: 'المبرمجين',
               enabled: isAdmin || userRoles.contains('PROGRAMMER'),
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const ProgrammersScreen())),
-              primaryColor: AppColor.primaryColor,
+              primaryColor: TechColors.primaryMid,
             ),
 
             // الدعم الفني
-            _buildFeatureTile(
-              context: context,
+            HomeButton(
+              index: 3,
               iconPath: 'assets/images/pngs/technical_support.png',
               label: 'الدعم الفني',
               enabled: isAdmin || userRoles.contains('SUPPORT'),
@@ -87,23 +91,23 @@ class HomeFeaturesGrid extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (_) => const TechnicalSupportChoiseScreen())),
-              primaryColor: AppColor.accentColor,
+              primaryColor: TechColors.accentCyan,
             ),
 
             // الوسيط
-            _buildFeatureTile(
-              context: context,
+            HomeButton(
+              index: 4,
               iconPath: 'assets/images/pngs/icons8-find-user-40 1.png',
               label: 'الوسيط',
               enabled: isAdmin || isModerator,
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const ModeratorScreen())),
-              primaryColor: AppColor.accentColor,
+              primaryColor: TechColors.primaryDark,
             ),
 
             // المتابعة
-            _buildFeatureTile(
-              context: context,
+            HomeButton(
+              index: 5,
               iconPath: 'assets/images/pngs/icons8-scroll-up-40 1.png',
               label: 'المتابعة',
               enabled: isAdmin || isTracker,
@@ -114,28 +118,12 @@ class HomeFeaturesGrid extends StatelessWidget {
                   );
                 }
               },
-              primaryColor: AppColor.primaryColor,
+              primaryColor: TechColors.primaryMid,
             ),
+            const SizedBox(height: 80), // Padding for bottom
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildFeatureTile({
-    required BuildContext context,
-    required String iconPath,
-    required String label,
-    required VoidCallback onTap,
-    required bool enabled,
-    required Color primaryColor,
-  }) {
-    return HomeButton(
-      iconPath: iconPath,
-      label: label,
-      onTap: onTap,
-      enabled: enabled,
-      primaryColor: primaryColor,
     );
   }
 }

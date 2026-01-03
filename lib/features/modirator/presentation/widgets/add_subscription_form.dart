@@ -6,10 +6,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/features/modirator/export.dart';
+
 class AddSubscriptionForm extends StatefulWidget {
   final VoidCallback onSaved;
   final VoidCallback? onClientTap;
-  const AddSubscriptionForm({super.key, required this.onSaved, this.onClientTap});
+  const AddSubscriptionForm(
+      {super.key, required this.onSaved, this.onClientTap});
 
   @override
   State<AddSubscriptionForm> createState() => _AddSubscriptionFormState();
@@ -72,10 +74,9 @@ class _AddSubscriptionFormState extends State<AddSubscriptionForm> {
               title: const Text('معرض الصور'),
               onTap: () async {
                 Navigator.pop(context);
-                final file =
-                    await _picker.pickImage(source: ImageSource.gallery);
-                if (file != null) {
-                  setState(() => _imagePaths.add(file.path));
+                final files = await _picker.pickMultiImage();
+                if (files.isNotEmpty) {
+                  setState(() => _imagePaths.addAll(files.map((f) => f.path)));
                 }
               },
             ),

@@ -27,7 +27,7 @@ class VisitModel {
   @JsonKey(defaultValue: '--')
   final String proudctName;
 
-  @JsonKey(defaultValue: 'غير محدد')
+  @JsonKey(defaultValue: 'لا يوجد عنوان تفصيلي')
   final String? adress;
 
   @JsonKey(defaultValue: 'غير محدد')

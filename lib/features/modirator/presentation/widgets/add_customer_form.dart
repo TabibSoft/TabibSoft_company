@@ -18,18 +18,26 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
   final _name = TextEditingController();
   final _phone = TextEditingController();
   final _location = TextEditingController();
+  final _govController = TextEditingController();
+  final _cityController = TextEditingController();
   final _engineer = TextEditingController();
   final _product = TextEditingController();
   bool _showEngineerDropdown = false;
   bool _showProductDropdown = false;
+  bool _showGovDropdown = false;
+  bool _showCityDropdown = false;
+
   String? _selectedEngineerId;
   String? _selectedProductId;
+  String? _selectedGovId;
+  String? _selectedCityId;
 
   @override
   void initState() {
     super.initState();
     context.read<EngineerCubit>().fetchEngineers();
     context.read<ProductCubit>().fetchProducts();
+    context.read<AddCustomerCubit>().fetchGovernments();
   }
 
   @override
@@ -37,6 +45,8 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
     _name.dispose();
     _phone.dispose();
     _location.dispose();
+    _govController.dispose();
+    _cityController.dispose();
     _engineer.dispose();
     _product.dispose();
     super.dispose();
@@ -66,7 +76,11 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
         telephone: phoneText,
         engineerId: _selectedEngineerId ?? '',
         productId: _selectedProductId ?? '',
-        location: _location.text.isNotEmpty ? _location.text : null,
+        location: _cityController.text.isNotEmpty
+            ? "${_govController.text} - ${_cityController.text}"
+            : _govController.text,
+        governmentId: _selectedGovId,
+        cityId: _selectedCityId,
       );
       context.read<AddCustomerCubit>().addCustomer(customer);
     }
@@ -129,7 +143,136 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
               ),
             ),
 
-            RowField(label: 'الموقع', child: boxedText(_location)),
+            // Government Dropdown
+            RowField(
+              label: 'المحافظة',
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _showGovDropdown = !_showGovDropdown;
+                    _showCityDropdown = false;
+                    _showEngineerDropdown = false;
+                    _showProductDropdown = false;
+                  });
+                },
+                child: Container(
+                  height: 52,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff104D9D),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _govController.text.isEmpty
+                          ? 'اختر المحافظة'
+                          : _govController.text,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_showGovDropdown)
+              SizedBox(
+                height: 200.h,
+                child: BlocBuilder<AddCustomerCubit, AddCustomerState>(
+                  builder: (context, state) {
+                    if (state.status == AddCustomerStatus.loadingGovernments) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    return ListView.builder(
+                      itemCount: state.governments.length,
+                      itemBuilder: (context, index) {
+                        final gov = state.governments[index];
+                        return ListTile(
+                          title: Text(gov.name),
+                          onTap: () {
+                            setState(() {
+                              _govController.text = gov.name;
+                              _selectedGovId = gov.id;
+                              _showGovDropdown = false;
+                              _selectedCityId = null;
+                              _cityController.clear();
+                            });
+                            context
+                                .read<AddCustomerCubit>()
+                                .fetchCities(gov.id);
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+
+            // City Dropdown
+            RowField(
+              label: 'المدينة',
+              child: InkWell(
+                onTap: () {
+                  if (_selectedGovId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('يرجى اختيار المحافظة أولاً')),
+                    );
+                    return;
+                  }
+                  setState(() {
+                    _showCityDropdown = !_showCityDropdown;
+                    _showGovDropdown = false;
+                    _showEngineerDropdown = false;
+                    _showProductDropdown = false;
+                  });
+                },
+                child: Container(
+                  height: 52,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff104D9D),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _cityController.text.isEmpty
+                          ? 'اختر المدينة'
+                          : _cityController.text,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_showCityDropdown)
+              SizedBox(
+                height: 200.h,
+                child: BlocBuilder<AddCustomerCubit, AddCustomerState>(
+                  builder: (context, state) {
+                    if (state.status == AddCustomerStatus.loadingCities) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (state.cities.isEmpty) {
+                      return const Center(child: Text('لا توجد مدن'));
+                    }
+                    return ListView.builder(
+                      itemCount: state.cities.length,
+                      itemBuilder: (context, index) {
+                        final city = state.cities[index];
+                        return ListTile(
+                          title: Text(city.name),
+                          onTap: () {
+                            setState(() {
+                              _cityController.text = city.name;
+                              _selectedCityId = city.id;
+                              _showCityDropdown = false;
+                            });
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
             RowField(label: 'المهندس', child: _engineerDropdown()),
 
             if (_showEngineerDropdown)

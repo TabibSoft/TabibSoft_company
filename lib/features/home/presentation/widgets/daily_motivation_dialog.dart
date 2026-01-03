@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 
 class DailyMotivationDialog extends StatefulWidget {
   final String message;
@@ -20,14 +21,16 @@ class _DailyMotivationDialogState extends State<DailyMotivationDialog>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 700),
     );
     _scaleAnimation = CurvedAnimation(
       parent: _controller,
       curve: Curves.elasticOut,
     );
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.0, 0.6, curve: Curves.easeIn)),
     );
     _controller.forward();
   }
@@ -38,135 +41,102 @@ class _DailyMotivationDialogState extends State<DailyMotivationDialog>
     super.dispose();
   }
 
-  // =========================================================================
-  // بناء واجهة الحوار التحفيزية (Motivation Dialog Build)
-  // يعتمد على التصميم النظيف، والتباين العالي، والعناصر العائمة
-  // =========================================================================
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Material(
-        color: Colors.transparent, // خلفية شفافة للحوار نفسه
+        color: Colors.transparent,
         child: ScaleTransition(
-          scale: _scaleAnimation, // حركة تكبير عند الظهور
+          scale: _scaleAnimation,
           child: FadeTransition(
-            opacity: _opacityAnimation, // تأثير تلاشي
+            opacity: _opacityAnimation,
             child: Stack(
-              clipBehavior: Clip.none, // للسماح للأيقونة بالخروج عن حدود الكارد
+              clipBehavior: Clip.none,
               alignment: Alignment.topCenter,
               children: [
-                // 1. حاوية المحتوى الرئيسية (Main Content Card)
+                // Main Container
                 Container(
-                  width: MediaQuery.of(context).size.width * 0.88, // عرض 88%
-                  margin: const EdgeInsets.only(
-                      top: 45), // ترك مساحة للأيقونة العائمة
-                  padding:
-                      const EdgeInsets.fromLTRB(25, 65, 25, 25), // حواشي داخلية
+                  width: MediaQuery.of(context).size.width * 0.85,
+                  margin: const EdgeInsets.only(top: 40),
+                  padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
                   decoration: BoxDecoration(
-                    color: Colors
-                        .white, // خلفية بيضاء نقية (White Background) - حل مشكلة التباين
-                    borderRadius:
-                        BorderRadius.circular(32), // حواف دائرية ناعمة
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(32),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0F5FA8).withOpacity(0.25),
-                        blurRadius: 60,
+                        color: TechColors.primaryDark.withOpacity(0.3),
+                        blurRadius: 40,
                         offset: const Offset(0, 20),
-                        spreadRadius: 5,
                       ),
                     ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // علامة تنصيص علوية (Top Quote Icon)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.format_quote_rounded,
-                              size: 36, color: Colors.grey.withOpacity(0.15)),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
+                      // Fancy Quote Icons
+                      Icon(Icons.format_quote_rounded,
+                          size: 40,
+                          color: TechColors.accentCyan.withOpacity(0.1)),
 
-                      // 2. نص الرسالة التحفيزية (The Message Text)
-                      // استخدام خط واضح ولون غامق لضمان القراءة
+                      const SizedBox(height: 12),
+
+                      // Motivation Text
                       Text(
-                        // استخدام نص احتياطي في حالة فراغ الرسالة
                         (widget.message.isEmpty)
                             ? "يومك جميل ومليء بالإنجازات! 🌟"
                             : widget.message,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 21, // حجم خط كبير
-                          height: 1.6, // تباعد أسطر مريح
-                          color: Color(
-                              0xFF2D3436), // لون أسود فحمي للتباين العالي (Black-Charcoal)
-                          fontWeight: FontWeight.w700, // سمك خط عريض
-                          fontFamily: 'Amiri',
+                          fontSize: 20,
+                          height: 1.5,
+                          color: Color(0xFF2D3436),
+                          fontWeight: FontWeight.w800,
+                          fontFamily:
+                              'Cairo', // Using Cairo as standard for app
                         ),
                       ),
-                      const SizedBox(height: 10),
 
-                      // علامة تنصيص سفلية (Bottom Quote Icon)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Transform.rotate(
-                            angle: 3.14, // تدوير الأيقونة
-                            child: Icon(Icons.format_quote_rounded,
-                                size: 36, color: Colors.grey.withOpacity(0.15)),
-                          ),
-                        ],
+                      const SizedBox(height: 12),
+
+                      Transform.rotate(
+                        angle: 3.14,
+                        child: Icon(Icons.format_quote_rounded,
+                            size: 40,
+                            color: TechColors.accentCyan.withOpacity(0.1)),
                       ),
-                      const SizedBox(height: 35),
 
-                      // 3. زر الإجراء (Action Button)
-                      // زر بتدرج لوني يعطي طابع الحداثة والنشاط
-                      Container(
-                        width: double.infinity,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFF0F5FA8),
-                              Color(0xFF00C6FF)
-                            ], // تدرج أزرق وسماوي
-                            begin: Alignment.centerRight,
-                            end: Alignment.centerLeft,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF0F5FA8).withOpacity(0.35),
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
+                      const SizedBox(height: 30),
+
+                      // Action Button
+                      GestureDetector(
+                        onTap: () {
+                          if (widget.onClose != null) {
+                            widget.onClose!();
+                          } else {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: TechColors.premiumGradient,
                             borderRadius: BorderRadius.circular(20),
-                            onTap: () {
-                              if (widget.onClose != null) {
-                                widget.onClose!();
-                              } else {
-                                Navigator.of(context).pop();
-                              }
-                            },
-                            splashColor:
-                                Colors.white.withOpacity(0.2), // تأثير ضغطة
-                            child: const Center(
-                              child: Text(
-                                'يلا بينا نشوف شغلنا 🚀', // نص الزر
-                                style: TextStyle(
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.bold,
-                                  color:
-                                      Colors.white, // نص أبيض على خلفية متدرجة
-                                  letterSpacing: 0.5,
-                                ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: TechColors.accentCyan.withOpacity(0.3),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'يلا بينا نشوف شغلنا 🚀',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                           ),
@@ -176,40 +146,34 @@ class _DailyMotivationDialogState extends State<DailyMotivationDialog>
                   ),
                 ),
 
-                // 4. الأيقونة العائمة (Floating Header Icon)
-                // تظهر فوق الكارد كعنصر جمالي بارز
+                // Floating Icon Header
                 Positioned(
                   top: 0,
                   child: Container(
-                    padding: const EdgeInsets.all(22),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFCC00), // لون أصفر ذهبي (Golden)
-                      shape: BoxShape.circle,
                       gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFFFFCC00),
-                          Color(0xFFFF9500)
-                        ], // تدرج ذهبي وبرتقالي
+                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
+                      shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFFCC00).withOpacity(0.5),
-                          blurRadius: 25,
-                          offset: const Offset(0, 12),
+                          color: const Color(0xFFFFA500).withOpacity(0.4),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
                         ),
                         const BoxShadow(
                           color: Colors.white,
+                          spreadRadius: 6,
                           blurRadius: 0,
-                          spreadRadius:
-                              8, // حدود بيضاء تفصل الأيقونة عن الخلفية
                         ),
                       ],
                     ),
                     child: const Icon(
-                      Icons.auto_awesome, // أيقونة النجوم/السحر
-                      size: 48,
+                      Icons.auto_awesome_rounded,
+                      size: 42,
                       color: Colors.white,
                     ),
                   ),

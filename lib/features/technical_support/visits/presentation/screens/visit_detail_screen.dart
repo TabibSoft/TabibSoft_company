@@ -56,8 +56,9 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
   }
 
   // اختيار صورة من الكاميرا أو المعرض
+  // اختيار صورة من الكاميرا أو المعرض
   Future<void> _pickImage() async {
-    final source = await showModalBottomSheet<ImageSource>(
+    final result = await showModalBottomSheet<dynamic>(
       context: context,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
@@ -79,7 +80,11 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                   child: const Icon(Icons.camera_alt, color: Colors.blue)),
               title: const Text('الكاميرا',
                   style: TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
+              onTap: () async {
+                final picked = await _picker.pickImage(
+                    source: ImageSource.camera, imageQuality: 85);
+                if (context.mounted) Navigator.pop(context, picked);
+              },
             ),
             ListTile(
               leading: CircleAvatar(
@@ -87,21 +92,26 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                   child: const Icon(Icons.photo_library, color: Colors.blue)),
               title: const Text('المعرض',
                   style: TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
+              onTap: () async {
+                final picked = await _picker.pickMultiImage(imageQuality: 85);
+                if (context.mounted) Navigator.pop(context, picked);
+              },
             ),
           ],
         ),
       ),
     );
 
-    if (source == null) return;
+    if (result == null) return;
 
-    final picked = await _picker.pickImage(source: source, imageQuality: 85);
-    if (picked != null) {
-      setState(() {
-        _selectedImages.add(File(picked.path));
-      });
-    }
+    setState(() {
+      if (result is List<XFile>) {
+        // Filter out any duplicates if necessary or just add all
+        _selectedImages.addAll(result.map((f) => File(f.path)));
+      } else if (result is XFile) {
+        _selectedImages.add(File(result.path));
+      }
+    });
   }
 
   // حذف صورة محلية
@@ -271,33 +281,24 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
 
   Widget _buildSectionHeader({required String title, required IconData icon}) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12.h, top: 4.h),
+      padding: EdgeInsets.fromLTRB(8.w, 20.h, 8.w, 12.h),
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(8.r),
+            padding: EdgeInsets.all(10.r),
             decoration: BoxDecoration(
-              color: const Color(0xFF16669E).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10.r),
+              color: const Color(0xFF16669E).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12.r),
             ),
-            child: Icon(icon, color: const Color(0xFF16669E), size: 22.r),
+            child: Icon(icon, color: const Color(0xFF16669E), size: 24.r),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 14.w),
           Text(
             title,
             style: TextStyle(
               fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF2C3E50),
-            ),
-          ),
-          const Spacer(),
-          Container(
-            width: 40.w,
-            height: 2.h,
-            decoration: BoxDecoration(
-              color: const Color(0xFF16669E).withOpacity(0.3),
-              borderRadius: BorderRadius.circular(10.r),
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF2D3436),
             ),
           ),
         ],
@@ -308,15 +309,15 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
   Widget _buildCard({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16.r),
+      padding: EdgeInsets.all(20.r),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -332,14 +333,14 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF7F9FC),
       body: RefreshIndicator(
         onRefresh: _refreshData,
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverAppBar(
-              expandedHeight: 120.h,
+              expandedHeight: 140.h,
               pinned: true,
               stretch: true,
               backgroundColor: const Color(0xFF16669E),
@@ -347,8 +348,8 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                 title: Text(
                   'تفاصيل الزيارة',
                   style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -356,10 +357,36 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                 background: Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFF16669E), Color(0xFF20AAC9)],
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
+                      colors: [
+                        Color(0xFF1565C0),
+                        Color(0xFF1E88E5),
+                        Color(0xFF42A5F5)
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        right: -50,
+                        top: -50,
+                        child: Icon(
+                          Icons.settings_outlined,
+                          size: 200,
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                      Positioned(
+                        left: -30,
+                        bottom: -30,
+                        child: Icon(
+                          Icons.article_outlined,
+                          size: 150,
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -371,20 +398,22 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                   // الملاحظات السابقة
                   _buildSectionHeader(
                     title: 'الملاحظات السابقة (${_previousNotes.length})',
-                    icon: Icons.history,
+                    icon: Icons.history_edu_rounded,
                   ),
                   _buildCard(
                     child: _previousNotes.isEmpty
                         ? Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20.h),
+                            padding: EdgeInsets.symmetric(vertical: 24.h),
                             child: Center(
                               child: Column(
                                 children: [
-                                  Icon(Icons.notes_rounded,
-                                      size: 40.r, color: Colors.grey[300]),
-                                  SizedBox(height: 8.h),
-                                  const Text('لا توجد ملاحظات سابقة',
-                                      style: TextStyle(color: Colors.grey)),
+                                  Icon(Icons.mark_chat_read_outlined,
+                                      size: 48.r, color: Colors.grey[300]),
+                                  SizedBox(height: 12.h),
+                                  Text('لا توجد ملاحظات سابقة',
+                                      style: TextStyle(
+                                          color: Colors.grey[500],
+                                          fontSize: 14.sp)),
                                 ],
                               ),
                             ),
@@ -393,7 +422,7 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: _previousNotes.length,
-                            separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                            separatorBuilder: (_, __) => SizedBox(height: 16.h),
                             itemBuilder: (_, i) {
                               final n = _previousNotes[i];
                               final bool isRead = n['isRead'] == true;
@@ -468,82 +497,78 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                   // زر إضافة ملاحظة
                   ElevatedButton.icon(
                     onPressed: _showAddNoteDialog,
-                    icon: Icon(Icons.add_comment_rounded, size: 22.r),
+                    icon: Icon(Icons.add_comment_rounded, size: 20.r),
                     label: Text(
                       'إضافة ملاحظة سريعة',
                       style: TextStyle(
-                          fontSize: 16.sp, fontWeight: FontWeight.bold),
+                          fontSize: 15.sp, fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF20AAC9),
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(vertical: 14.h),
-                      elevation: 0,
+                      elevation: 2,
+                      shadowColor: const Color(0xFF20AAC9).withOpacity(0.3),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.r)),
+                          borderRadius: BorderRadius.circular(16.r)),
                     ),
                   ),
 
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 16.h),
 
                   // ملاحظة عامة
                   _buildSectionHeader(
                     title: 'تقرير الزيارة',
-                    icon: Icons.edit_note_rounded,
+                    icon: Icons.assignment_outlined,
                   ),
                   _buildCard(
                     child: Column(
                       children: [
                         TextField(
                           controller: _globalNoteController,
-                          maxLines: 4,
-                          style: TextStyle(fontSize: 15.sp),
+                          maxLines: 5,
+                          style: TextStyle(
+                              fontSize: 15.sp,
+                              height: 1.5,
+                              color: const Color(0xFF2D3436)),
                           decoration: InputDecoration(
                             hintText: 'اكتب تفاصيل ما تم خلال الزيارة...',
                             hintStyle: TextStyle(color: Colors.grey[400]),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15.r),
-                              borderSide: BorderSide(color: Colors.grey[200]!),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15.r),
-                              borderSide: BorderSide(color: Colors.grey[100]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15.r),
-                              borderSide: const BorderSide(
-                                  color: Color(0xFF16669E), width: 1.5),
+                              borderRadius: BorderRadius.circular(16.r),
+                              borderSide: BorderSide.none,
                             ),
                             filled: true,
-                            fillColor: const Color(0xFFF1F5F9),
+                            fillColor: const Color(0xFFF8F9FA),
+                            contentPadding: EdgeInsets.all(16.r),
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 16.h),
 
                   // الصور
                   _buildSectionHeader(
                     title: 'المرفقات (${allImages.length})',
-                    icon: Icons.collections_rounded,
+                    icon: Icons.perm_media_outlined,
                   ),
                   _buildCard(
                     child: Column(
                       children: [
                         if (allImages.isEmpty)
                           Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20.h),
+                            padding: EdgeInsets.symmetric(vertical: 24.h),
                             child: Column(
                               children: [
-                                Icon(Icons.add_a_photo_outlined,
-                                    size: 50.r, color: Colors.grey[300]),
+                                Icon(Icons.add_photo_alternate_outlined,
+                                    size: 48.r, color: Colors.grey[300]),
                                 SizedBox(height: 12.h),
                                 Text(
                                   'لا توجد صور مرفقة',
                                   style: TextStyle(
-                                      color: Colors.grey[400], fontSize: 14.sp),
+                                      color: Colors.grey[400], fontSize: 13.sp),
                                 ),
                               ],
                             ),
@@ -555,8 +580,8 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 3,
-                              crossAxisSpacing: 10.w,
-                              mainAxisSpacing: 10.h,
+                              crossAxisSpacing: 12.w,
+                              mainAxisSpacing: 12.h,
                             ),
                             itemCount: allImages.length,
                             itemBuilder: (_, i) {
@@ -567,11 +592,12 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                                     _showFullScreenImage(path, i, allImages),
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12.r),
+                                    borderRadius: BorderRadius.circular(16.r),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 5,
+                                        color: Colors.black.withOpacity(0.08),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
                                       ),
                                     ],
                                   ),
@@ -582,7 +608,7 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                                         tag: 'img_$i',
                                         child: ClipRRect(
                                           borderRadius:
-                                              BorderRadius.circular(12.r),
+                                              BorderRadius.circular(16.r),
                                           child: isNetwork
                                               ? Image.network(path,
                                                   fit: BoxFit.cover)
@@ -598,14 +624,20 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                                             onTap: () => _removeLocalImage(
                                                 i - _uploadedImageUrls.length),
                                             child: Container(
-                                              padding: EdgeInsets.all(4.r),
-                                              decoration: const BoxDecoration(
-                                                color: Colors.red,
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: Icon(Icons.close,
+                                              padding: EdgeInsets.all(6.r),
+                                              decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black
+                                                          .withOpacity(0.1),
+                                                      blurRadius: 4,
+                                                    ),
+                                                  ]),
+                                              child: Icon(Icons.close_rounded,
                                                   size: 14.r,
-                                                  color: Colors.white),
+                                                  color: Colors.red),
                                             ),
                                           ),
                                         ),
@@ -615,24 +647,25 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                               );
                             },
                           ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 20.h),
                         OutlinedButton.icon(
                           onPressed: _pickImage,
-                          icon: const Icon(Icons.add_photo_alternate_rounded),
+                          icon: const Icon(Icons.add_a_photo_rounded),
                           label: const Text('إضافة صور جديدة'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF16669E),
-                            side: const BorderSide(color: Color(0xFF16669E)),
-                            minimumSize: Size(double.infinity, 45.h),
+                            side: const BorderSide(
+                                color: Color(0xFF16669E), width: 1.5),
+                            minimumSize: Size(double.infinity, 50.h),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r)),
+                                borderRadius: BorderRadius.circular(16.r)),
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  SizedBox(height: 40.h),
+                  SizedBox(height: 48.h),
 
                   // الأزرار الرئيسية
                   Row(
@@ -641,13 +674,14 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _markAsDone,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green[600],
+                            backgroundColor: const Color(0xFF43A047),
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(vertical: 16.h),
                             elevation: 4,
-                            shadowColor: Colors.green.withOpacity(0.3),
+                            shadowColor:
+                                const Color(0xFF43A047).withOpacity(0.3),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18.r)),
+                                borderRadius: BorderRadius.circular(20.r)),
                           ),
                           child: _isLoading
                               ? SizedBox(
@@ -657,11 +691,11 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                                       color: Colors.white, strokeWidth: 2))
                               : Text('إنهاء الزيارة',
                                   style: TextStyle(
-                                      fontSize: 17.sp,
-                                      fontWeight: FontWeight.bold)),
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w800)),
                         ),
                       ),
-                      SizedBox(width: 12.w),
+                      SizedBox(width: 16.w),
                       Expanded(
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _saveVisitDetail,
@@ -673,7 +707,7 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                             shadowColor:
                                 const Color(0xFF16669E).withOpacity(0.3),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18.r)),
+                                borderRadius: BorderRadius.circular(20.r)),
                           ),
                           child: _isLoading
                               ? SizedBox(
@@ -683,8 +717,8 @@ class _VisitDetailScreenState extends State<VisitDetailScreen> {
                                       color: Colors.white, strokeWidth: 2))
                               : Text('حفظ الإجراء',
                                   style: TextStyle(
-                                      fontSize: 17.sp,
-                                      fontWeight: FontWeight.bold)),
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w800)),
                         ),
                       ),
                     ],

@@ -1,7 +1,7 @@
-// lib/features/home/notifications/presentation/screens/notification_detail_screen_anyRole.dart
-
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:tabib_soft_company/features/home/notifications/data/model/notification_model.dart';
 
 class NotificationDetailScreenAnyRole extends StatelessWidget {
@@ -13,147 +13,199 @@ class NotificationDetailScreenAnyRole extends StatelessWidget {
   });
 
   String _formatDate(DateTime date) {
-    return DateFormat('dd/MM/yyyy HH:mm:ss').format(date);
+    return DateFormat('dd MMMM yyyy - hh:mm a', 'ar').format(date);
   }
 
   @override
   Widget build(BuildContext context) {
-    const bool isRead = false; // لأن المستخدم فتحها = مقروءة الآن
     final String formattedDate = _formatDate(notification.date);
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.topRight,
-            colors: [
-              Color(0xff104D9D),
-              Color(0xFF20AAC9),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              Center(
-                child: Image.asset(
-                  'assets/images/pngs/TS_Logo0.png',
-                  width: 140,
-                  height: 80,
-                  fit: BoxFit.contain,
-                ),
+      backgroundColor: TechColors.surfaceLight,
+      body: Stack(
+        children: [
+          // Premium Header
+          Container(
+            height: 300.h,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: TechColors.premiumGradient,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(50),
+                bottomRight: Radius.circular(50),
               ),
-              const SizedBox(height: 30),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF3F5F6),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(28),
-                      topRight: Radius.circular(28),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -60,
+                  right: -60,
+                  child: Container(
+                    width: 200.r,
+                    height: 200.r,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      shape: BoxShape.circle,
                     ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // كارت تفاصيل الإشعار
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 20),
-                          decoration: BoxDecoration(
+                ),
+              ],
+            ),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                // AppBar
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new,
+                            color: Colors.white),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const Expanded(
+                        child: Text(
+                          'تفاصيل الإشعار',
+                          style: TextStyle(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      SizedBox(width: 48.w),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                // Logo
+                Hero(
+                  tag: 'app_logo',
+                  child: Image.asset(
+                    'assets/images/pngs/TS_Logo0.png',
+                    width: 120.w,
+                    height: 70.h,
+                    color: Colors.white,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                SizedBox(height: 40.h),
+                // Detail Card
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    margin: EdgeInsets.symmetric(horizontal: 20.w),
+                    padding: EdgeInsets.all(24.r),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 25,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Row(
+                              Container(
+                                padding: EdgeInsets.all(10.r),
+                                decoration: BoxDecoration(
+                                  color: TechColors.accentCyan.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(Icons.notifications_active_rounded,
+                                    color: TechColors.accentCyan, size: 24.r),
+                              ),
+                              SizedBox(width: 14.w),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    width: 12,
-                                    height: 12,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.blue,
-                                      shape: BoxShape.circle,
+                                  Text(
+                                    'إشعار من النظام',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[500],
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'إشعار جديد',
+                                  Text(
+                                    'هام',
                                     style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xff104D9D),
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: TechColors.errorRed,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
-                              Text(
-                                notification.title ?? 'بدون عنوان',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                notification.body ?? 'لا يوجد محتوى',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  height: 1.6,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  formattedDate,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
-                        ),
-
-                        const Spacer(),
-
-                        const SizedBox(height: 30),
-                      ],
+                          SizedBox(height: 24.h),
+                          Divider(color: Colors.grey[100], thickness: 1.5),
+                          SizedBox(height: 24.h),
+                          Text(
+                            notification.title ?? 'بدون عنوان',
+                            style: TextStyle(
+                              fontSize: 22.sp,
+                              fontWeight: FontWeight.w800,
+                              color: TechColors.primaryDark,
+                              height: 1.3,
+                            ),
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            notification.body ?? 'لا يوجد محتوى',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              height: 1.8,
+                              color: Colors.grey[700],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 40.h),
+                          Container(
+                            padding: EdgeInsets.all(16.r),
+                            decoration: BoxDecoration(
+                              color: TechColors.surfaceLight,
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.calendar_month_rounded,
+                                    color: TechColors.accentCyan, size: 20.r),
+                                SizedBox(width: 10.w),
+                                Text(
+                                  formattedDate,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: TechColors.primaryMid,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+                SizedBox(height: 30.h),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -87,4 +87,7 @@ class ApiConstants {
   static const String makeNoteRead = 'Problem/MakeNoteRead';
 
   static const String isArchive = 'Problem/IsArchive';
+
+  static const String getCities = 'Customer/GetCities';
+  static const String getGovernments = 'Customer/GetGovernments';
 }

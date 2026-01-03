@@ -13,6 +13,8 @@ AddCustomerModel _$AddCustomerModelFromJson(Map<String, dynamic> json) =>
       engineerId: json['engineerId'] as String,
       productId: json['productId'] as String,
       location: json['location'] as String?,
+      governmentId: json['GovernmentId'] as String?,
+      cityId: json['CityId'] as String?,
       createdUser: json['createdUser'] as String?,
       lastEditUser: json['lastEditUser'] as String?,
       createdDate: json['createdDate'] == null
@@ -30,6 +32,8 @@ Map<String, dynamic> _$AddCustomerModelToJson(AddCustomerModel instance) =>
       'engineerId': instance.engineerId,
       'productId': instance.productId,
       if (instance.location case final value?) 'location': value,
+      if (instance.governmentId case final value?) 'GovernmentId': value,
+      if (instance.cityId case final value?) 'CityId': value,
       if (instance.createdUser case final value?) 'createdUser': value,
       if (instance.lastEditUser case final value?) 'lastEditUser': value,
       if (instance.createdDate?.toIso8601String() case final value?)

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_cubit.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/cubit/task_state.dart';
@@ -90,90 +91,208 @@ class _ProgrammersScreenState extends State<ProgrammersScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    const mainBlueColor = Color(0xFF16669E);
-    const sheetColor = Color(0xFFF5F7FA);
+    const primaryColor = ProgrammerColors.primaryDark;
+    const accentColor = ProgrammerColors.accentOrange;
+    const secondaryAccent = ProgrammerColors.accentBlue;
+    const backgroundColor = ProgrammerColors.backgroundLight;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: mainBlueColor,
+        backgroundColor: primaryColor,
         body: SafeArea(
           bottom: false,
           child: Column(
             children: [
-              const SizedBox(height: 20),
-              Center(
-                child: Image.asset(
-                  'assets/images/pngs/TS_Logo0.png',
-                  width: 110,
-                  height: 110,
-                  fit: BoxFit.contain,
-                  color: Colors.white.withOpacity(0.4),
-                  cacheWidth: 220, // Cache for performance
-                  cacheHeight: 220,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Search Bar
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+              // Modern Header Section
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                child: Column(
+                  children: [
+                    // Top Row with Logo and Title
+                    Row(
+                      children: [
+                        // Logo with Glow Effect
+                        Container(
+                          padding: EdgeInsets.all(12.r),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                accentColor.withOpacity(0.2),
+                                secondaryAccent.withOpacity(0.1),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16.r),
+                            border: Border.all(
+                              color: accentColor.withOpacity(0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Image.asset(
+                            'assets/images/pngs/TS_Logo0.png',
+                            width: 40.w,
+                            height: 40.h,
+                            fit: BoxFit.contain,
+                            color: Colors.white,
+                            cacheWidth: 80,
+                            cacheHeight: 80,
+                          ),
+                        ),
+                        SizedBox(width: 16.w),
+                        // Title Section
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'قسم المبرمجين',
+                                style: TextStyle(
+                                  fontSize: 22.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                            ],
+                          ),
+                        ),
+                        // Stats Badge
+                        BlocBuilder<TaskCubit, TaskState>(
+                          builder: (context, state) {
+                            final totalTasks = state.tasks.fold<int>(
+                              0,
+                              (sum, task) => sum + task.customization.length,
+                            );
+                            return Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 14.w,
+                                vertical: 8.h,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: ProgrammerColors.accentGradient,
+                                borderRadius: BorderRadius.circular(20.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: secondaryAccent.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.code_rounded,
+                                    color: Colors.white,
+                                    size: 16.r,
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Text(
+                                    '$totalTasks',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20.h),
+                    // Modern Search Bar
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.15),
+                          width: 1,
+                        ),
                       ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    textInputAction: TextInputAction.search,
-                    decoration: InputDecoration(
-                      hintText: 'ابحث باسم الطبيب أو اسم التاسك...',
-                      hintStyle: TextStyle(color: Colors.grey.shade400),
-                      prefixIcon:
-                          const Icon(Icons.search, color: mainBlueColor),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear,
-                                  color: Colors.grey.shade400),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _searchQuery = '';
-                                });
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 14.h,
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: _onSearchChanged,
+                        textInputAction: TextInputAction.search,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15.sp,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'ابحث عن مهمة، مشروع، أو مطور...',
+                          hintStyle: TextStyle(
+                            color: Colors.white38,
+                            fontSize: 14.sp,
+                          ),
+                          prefixIcon: Container(
+                            padding: EdgeInsets.all(12.r),
+                            child: Icon(
+                              Icons.search_rounded,
+                              color: accentColor,
+                              size: 22.r,
+                            ),
+                          ),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: Container(
+                                    padding: EdgeInsets.all(4.r),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white10,
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                    child: Icon(
+                                      Icons.close_rounded,
+                                      color: Colors.white60,
+                                      size: 18.r,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() {
+                                      _searchQuery = '';
+                                    });
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 16.h,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 8.h),
+              // Main Content Area
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: sheetColor,
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
                     borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30),
-                      topRight: Radius.circular(30),
+                      topLeft: Radius.circular(32.r),
+                      topRight: Radius.circular(32.r),
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, -5),
+                      ),
+                    ],
                   ),
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(30),
-                      topRight: Radius.circular(30),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(32.r),
+                      topRight: Radius.circular(32.r),
                     ),
                     child: BlocBuilder<TaskCubit, TaskState>(
                       buildWhen: (previous, current) =>
@@ -184,11 +303,13 @@ class _ProgrammersScreenState extends State<ProgrammersScreen>
                           return Skeletonizer(
                             enabled: true,
                             child: ListView.builder(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16.w,
-                                vertical: 20.h,
+                              padding: EdgeInsets.only(
+                                left: 16.w,
+                                right: 16.w,
+                                top: 24.h,
+                                bottom: 100.h,
                               ),
-                              itemCount: 6,
+                              itemCount: 5,
                               itemBuilder: (context, index) =>
                                   const TaskCardSkeleton(),
                             ),
@@ -204,20 +325,39 @@ class _ProgrammersScreenState extends State<ProgrammersScreen>
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  _searchQuery.isNotEmpty
-                                      ? Icons.search_off
-                                      : Icons.assignment_outlined,
-                                  size: 60,
-                                  color: Colors.grey.shade300,
+                                Container(
+                                  padding: EdgeInsets.all(24.r),
+                                  decoration: BoxDecoration(
+                                    color: ProgrammerColors.accentBlue
+                                        .withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    _searchQuery.isNotEmpty
+                                        ? Icons.search_off_rounded
+                                        : Icons.code_off_rounded,
+                                    size: 56.r,
+                                    color: ProgrammerColors.accentBlue,
+                                  ),
                                 ),
-                                SizedBox(height: 16.h),
+                                SizedBox(height: 20.h),
                                 Text(
                                   _searchQuery.isNotEmpty
                                       ? 'لا توجد نتائج للبحث'
                                       : 'لا توجد مهام متاحة',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: ProgrammerColors.primaryDark,
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  _searchQuery.isNotEmpty
+                                      ? 'جرب البحث بكلمات مختلفة'
+                                      : 'ستظهر المهام الجديدة هنا',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
                                     color: Colors.grey.shade500,
                                   ),
                                 ),
@@ -231,28 +371,79 @@ class _ProgrammersScreenState extends State<ProgrammersScreen>
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  size: 60,
-                                  color: Colors.red.shade300,
-                                ),
-                                SizedBox(height: 16.h),
-                                Text(
-                                  state.errorMessage ?? 'حدث خطأ',
-                                  style: TextStyle(
-                                    fontSize: 16,
+                                Container(
+                                  padding: EdgeInsets.all(24.r),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.error_outline_rounded,
+                                    size: 56.r,
                                     color: Colors.red.shade400,
                                   ),
                                 ),
-                                SizedBox(height: 16.h),
-                                ElevatedButton.icon(
-                                  onPressed: () =>
-                                      context.read<TaskCubit>().fetchTasks(),
-                                  icon: const Icon(Icons.refresh),
-                                  label: const Text('إعادة المحاولة'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: mainBlueColor,
-                                    foregroundColor: Colors.white,
+                                SizedBox(height: 20.h),
+                                Text(
+                                  'حدث خطأ',
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: ProgrammerColors.primaryDark,
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 40.w),
+                                  child: Text(
+                                    state.errorMessage ?? 'تعذر تحميل البيانات',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 24.h),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: ProgrammerColors.accentGradient,
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: ProgrammerColors.accentBlue
+                                            .withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ElevatedButton.icon(
+                                    onPressed: () =>
+                                        context.read<TaskCubit>().fetchTasks(),
+                                    icon: const Icon(Icons.refresh_rounded,
+                                        size: 20),
+                                    label: Text(
+                                      'إعادة المحاولة',
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      foregroundColor: Colors.white,
+                                      shadowColor: Colors.transparent,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 24.w,
+                                        vertical: 12.h,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12.r),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -264,16 +455,18 @@ class _ProgrammersScreenState extends State<ProgrammersScreen>
                           onRefresh: () async {
                             await context.read<TaskCubit>().fetchTasks();
                           },
-                          color: mainBlueColor,
+                          color: ProgrammerColors.accentOrange,
+                          backgroundColor: Colors.white,
                           child: ListView.builder(
                             physics: const AlwaysScrollableScrollPhysics(
                               parent: BouncingScrollPhysics(),
                             ),
-                            cacheExtent:
-                                500, // Cache more items for smoother scrolling
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 20.h,
+                            cacheExtent: 500,
+                            padding: EdgeInsets.only(
+                              left: 16.w,
+                              right: 16.w,
+                              top: 24.h,
+                              bottom: 100.h,
                             ),
                             itemCount: customizations.length,
                             itemBuilder: (context, index) {

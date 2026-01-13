@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:tabib_soft_company/features/programmers/data/model/customization_task_model.dart';
 
 class TaskCardSkeleton extends StatelessWidget {
@@ -7,57 +8,71 @@ class TaskCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: 0,
-            top: 13.h,
-            child: Container(
-              width: 390.w,
-              height: 220.h,
-              decoration: BoxDecoration(
-                color: const Color(0xff104D9D),
-                borderRadius: BorderRadius.circular(25.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
-                    offset: Offset(4.w, 6.h),
-                    blurRadius: 12.r,
-                  ),
-                ],
-              ),
-            ),
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.all(20.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          Padding(
-            padding: EdgeInsets.only(top: 23.h, left: 20.w, right: 0.w),
-            child: Container(
-              height: 190.h,
-              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 20.h),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48.w,
+                height: 48.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                        height: 18.h, width: 180.w, color: Colors.grey[200]),
+                    SizedBox(height: 8.h),
+                    Container(
+                        height: 14.h, width: 120.w, color: Colors.grey[200]),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20.h),
+          Container(
+              height: 8.h,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30.r),
-                border: Border.all(color: const Color(0xff20AAC9), width: 4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                      height: 24.h, width: 250.w, color: Colors.grey[300]),
-                  SizedBox(height: 12.h),
-                  Container(
-                      height: 18.h, width: 200.w, color: Colors.grey[300]),
-                  SizedBox(height: 10.h),
-                  Container(
-                      height: 18.h, width: 180.w, color: Colors.grey[300]),
-                  const Spacer(),
-                  Container(
-                      width: 100.w, height: 32.h, color: Colors.grey[300]),
-                ],
-              ),
-            ),
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4.r))),
+          SizedBox(height: 16.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                  width: 80.w,
+                  height: 28.h,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8.r))),
+              Container(
+                  width: 100.w,
+                  height: 36.h,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(10.r))),
+            ],
           ),
         ],
       ),
@@ -75,21 +90,28 @@ class TaskCard extends StatelessWidget {
     required this.onDetailsTap,
   });
 
+  // Use centralized ProgrammerColors palette
+  static const _primaryDark = ProgrammerColors.primaryDark;
+  static const _accentOrange = ProgrammerColors.accentOrange;
+  static const _accentBlue = ProgrammerColors.accentBlue;
+
   @override
   Widget build(BuildContext context) {
     // تنسيق التاريخ
     String formattedDeadline = '';
+    bool isOverdue = false;
     if (customization.deadLine != null && customization.deadLine!.isNotEmpty) {
       try {
         final date = DateTime.parse(customization.deadLine!);
         formattedDeadline = '${date.day}/${date.month}/${date.year}';
+        isOverdue = date.isBefore(DateTime.now());
       } catch (e) {
         formattedDeadline = customization.deadLine!;
       }
     }
 
     // تحديد اللون من situationStatus
-    Color statusColor = const Color(0xff0000ff);
+    Color statusColor = _accentBlue;
     String statusName = 'مهمة';
 
     if (customization.situationStatus != null) {
@@ -105,7 +127,7 @@ class TaskCard extends StatelessWidget {
             ),
           );
         } catch (e) {
-          statusColor = const Color(0xff0000ff);
+          statusColor = _accentBlue;
         }
       }
     }
@@ -115,6 +137,7 @@ class TaskCard extends StatelessWidget {
     final finishedReports =
         customization.reports.where((r) => r.finished).length;
     final progress = totalReports > 0 ? finishedReports / totalReports : 0.0;
+    final isCompleted = progress == 1.0;
 
     // عنوان المهمة (أول تقرير أو رسالة افتراضية)
     String taskTitle = 'مهمة برمجية';
@@ -122,244 +145,337 @@ class TaskCard extends StatelessWidget {
       taskTitle = customization.reports.first.name;
     }
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // الظل الخلفي الأزرق
-          Positioned(
-            left: 0,
-            top: 13.h,
-            child: Container(
-              width: 390.w,
-              height: 260.h,
-              decoration: BoxDecoration(
-                color: const Color(0xff104D9D),
-                borderRadius: BorderRadius.circular(25.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
-                    offset: Offset(4.w, 6.h),
-                    blurRadius: 12.r,
-                  ),
-                ],
-              ),
-            ),
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
-          // الكارد الأساسي
-          Padding(
-            padding: EdgeInsets.only(top: 23.h, left: 20.w, right: 0.w),
-            child: Container(
-              height: 240.h,
-              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 20.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30.r),
-                border: Border.all(color: const Color(0xff20AAC9), width: 4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // عنوان المهمة
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.task_alt,
-                        color: const Color(0xff178CBB),
-                        size: 28.r,
-                      ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: Text(
-                          taskTitle,
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.black87,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20.r),
+        child: InkWell(
+          onTap: onDetailsTap,
+          borderRadius: BorderRadius.circular(20.r),
+          child: Container(
+            padding: EdgeInsets.all(20.r),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Task Icon Container
+                    Container(
+                      padding: EdgeInsets.all(12.r),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isCompleted
+                              ? [
+                                  ProgrammerColors.accentOrange,
+                                  const Color(0xFFFFB74D)
+                                ]
+                              : [
+                                  ProgrammerColors.accentBlue,
+                                  const Color(0xFF19B2E6)
+                                ],
+                          begin: Alignment.topRight,
+                          end: Alignment.bottomLeft,
+                        ),
+                        borderRadius: BorderRadius.circular(14.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isCompleted ? _accentOrange : _accentBlue)
+                                .withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // اسم المهندس
-                  if (customization.engName.isNotEmpty)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.engineering_rounded,
-                          color: const Color(0xff178CBB),
-                          size: 24.r,
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Text(
-                            customization.engName,
+                      child: Icon(
+                        isCompleted
+                            ? Icons.check_circle_rounded
+                            : Icons.code_rounded,
+                        color: Colors.white,
+                        size: 24.r,
+                      ),
+                    ),
+                    SizedBox(width: 14.w),
+                    // Title & Project Name
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            taskTitle,
                             style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.bold,
+                              color: _primaryDark,
+                              height: 1.3,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
-                    ),
-
-                  if (customization.engName.isNotEmpty) SizedBox(height: 10.h),
-
-                  // التقدم
-                  if (totalReports > 0)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.pie_chart,
-                          color: Colors.green,
-                          size: 24.r,
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          SizedBox(height: 6.h),
+                          Row(
                             children: [
-                              Text(
-                                'التقدم: $finishedReports من $totalReports',
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
+                              Icon(
+                                Icons.folder_outlined,
+                                size: 14.r,
+                                color: Colors.grey[500],
                               ),
-                              SizedBox(height: 4.h),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8.r),
-                                child: LinearProgressIndicator(
-                                  value: progress,
-                                  minHeight: 8.h,
-                                  backgroundColor: Colors.grey[300],
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    progress == 1.0
-                                        ? Colors.green
-                                        : const Color(0xff178CBB),
+                              SizedBox(width: 4.w),
+                              Expanded(
+                                child: Text(
+                                  customization.projectName,
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: Colors.grey[600],
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-
-                  if (totalReports > 0) SizedBox(height: 10.h),
-
-                  // الموعد النهائي
-                  if (formattedDeadline.isNotEmpty)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today_rounded,
-                          color: Colors.red,
-                          size: 22.r,
-                        ),
-                        SizedBox(width: 10.w),
-                        Text(
-                          'الموعد: $formattedDeadline',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                  const Spacer(),
-
-                  // حالة المشروع
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 14.w,
-                      vertical: 6.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(
-                        color: statusColor,
-                        width: 1.5,
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.circle,
-                          size: 10.r,
+                    // Status Badge
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 6.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(
+                          color: statusColor.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        statusName,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
                           color: statusColor,
                         ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          statusName,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.bold,
-                            color: statusColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // زر التفاصيل
-          Positioned(
-            left: 110.w,
-            bottom: -5.h,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF20AAC9), Color(0xFF1E96BA)],
-                ),
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF20AAC9).withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(30),
-                  onTap: onDetailsTap,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 36.w,
-                      vertical: 12.h,
-                    ),
-                    child: Text(
-                      'تفاصيل',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ),
+
+                SizedBox(height: 18.h),
+
+                // Progress Bar Section
+                if (totalReports > 0) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'التقدم',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 3.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (isCompleted ? _accentOrange : _accentBlue)
+                              .withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Text(
+                          '$finishedReports / $totalReports',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            color: isCompleted ? _accentOrange : _accentBlue,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10.h),
+                  Stack(
+                    children: [
+                      // Background
+                      Container(
+                        height: 6.h,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(3.r),
+                        ),
+                      ),
+                      // Progress
+                      FractionallySizedBox(
+                        widthFactor: progress,
+                        child: Container(
+                          height: 6.h,
+                          decoration: BoxDecoration(
+                            gradient: isCompleted
+                                ? ProgrammerColors.orangeGradient
+                                : ProgrammerColors.accentGradient,
+                            borderRadius: BorderRadius.circular(3.r),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                ],
+
+                // Bottom Info Row
+                Row(
+                  children: [
+                    // Engineer Info
+                    if (customization.engName.isNotEmpty) ...[
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 6.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: ProgrammerColors.backgroundLight,
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.person_outline_rounded,
+                              size: 16.r,
+                              color: _primaryDark,
+                            ),
+                            SizedBox(width: 6.w),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: 100.w),
+                              child: Text(
+                                customization.engName,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: _primaryDark,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                    ],
+
+                    // Deadline
+                    if (formattedDeadline.isNotEmpty) ...[
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 6.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isOverdue
+                              ? ProgrammerColors.overdueRed.withOpacity(0.1)
+                              : ProgrammerColors.backgroundLight,
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.schedule_rounded,
+                              size: 14.r,
+                              color: isOverdue
+                                  ? ProgrammerColors.overdueRed
+                                  : Colors.grey[600],
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              formattedDeadline,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
+                                color: isOverdue
+                                    ? ProgrammerColors.overdueRed
+                                    : Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    const Spacer(),
+
+                    // Details Button
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: ProgrammerColors.accentGradient,
+                        borderRadius: BorderRadius.circular(10.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _accentBlue.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: onDetailsTap,
+                          borderRadius: BorderRadius.circular(10.r),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 10.h,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'التفاصيل',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(width: 4.w),
+                                Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  color: Colors.white,
+                                  size: 12.r,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

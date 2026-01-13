@@ -12,7 +12,6 @@ class StatusModel {
   final String? lastEditUser;
   final String? createdDate;
   final String? lastEditDate;
-
   StatusModel({
     required this.id,
     required this.name,

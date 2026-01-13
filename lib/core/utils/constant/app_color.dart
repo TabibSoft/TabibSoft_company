@@ -93,3 +93,46 @@ class TechColors {
     end: Alignment.bottomRight,
   );
 }
+
+class ProgrammerColors {
+  // Main Colors (Aligned with App overall palette)
+  static const Color primaryDark = Color(0xFF00337C); // AppColor.primaryColor
+  static const Color accentOrange =
+      Color(0xFFF4A800); // AppColor.secondaryColor
+  static const Color accentBlue = Color(0xFF19A7CE); // AppColor.accentColor
+  static const Color deepBlue = Color(0xFF001233); // AppColor.titleColor
+
+  // Backgrounds
+  static const Color backgroundLight = Color(0xFFF4F9FC); // AppColor.lightBg
+  static const Color surfaceWhite = Color(0xFFFFFFFF);
+
+  // Text
+  static const Color textPrimary = Color(0xFF001233);
+  static const Color textSecondary = Color(0xFF7D848D);
+  static const Color textMuted = Color(0xFFAEAEAE);
+
+  // Accents & Semantic
+  static const Color overdueRed = Color(0xFFE53935);
+  static const Color successGreen = Color(0xFF4CAF50);
+  static const Color orangeLight = Color(0xFFFFF7E6);
+  static const Color blueLight = Color(0xFFE1F5FE);
+
+  // Gradients
+  static const LinearGradient headerGradient = LinearGradient(
+    colors: [primaryDark, Color(0xFF00409A)],
+    begin: Alignment.topRight,
+    end: Alignment.bottomLeft,
+  );
+
+  static const LinearGradient accentGradient = LinearGradient(
+    colors: [accentBlue, Color(0xFF19B2E6)],
+    begin: Alignment.topRight,
+    end: Alignment.bottomLeft,
+  );
+
+  static const LinearGradient orangeGradient = LinearGradient(
+    colors: [accentOrange, Color(0xFFFFB74D)],
+    begin: Alignment.topRight,
+    end: Alignment.bottomLeft,
+  );
+}

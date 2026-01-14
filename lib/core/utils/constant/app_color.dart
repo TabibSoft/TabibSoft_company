@@ -136,3 +136,39 @@ class ProgrammerColors {
     end: Alignment.bottomLeft,
   );
 }
+
+class WhatsAppColors {
+  // Primary WhatsApp Colors
+  static const Color primaryGreen = Color(0xFF25D366);
+  static const Color secondaryGreen = Color(0xFF128C7E);
+  static const Color darkGreen = Color(0xFF075E54);
+  static const Color lightGreen = Color(0xFFDCF8C6);
+
+  // Backgrounds
+  static const Color chatBackground = Color(0xFFECE5DD);
+  static const Color surfaceLight = Color(0xFFF8FAFC);
+  static const Color cardBg = Color(0xFFFFFFFF);
+
+  // Text Colors
+  static const Color textPrimary = Color(0xFF1A2332);
+  static const Color textSecondary = Color(0xFF546E7A);
+  static const Color textMuted = Color(0xFF90A4AE);
+
+  // Semantic Colors
+  static const Color errorRed = Color(0xFFEF4444);
+  static const Color successGreen = Color(0xFF10B981);
+
+  // Gradients
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primaryGreen, secondaryGreen, darkGreen],
+    stops: [0.0, 0.5, 1.0],
+  );
+
+  static const LinearGradient headerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primaryGreen, secondaryGreen],
+  );
+}

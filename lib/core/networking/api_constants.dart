@@ -90,4 +90,18 @@ class ApiConstants {
 
   static const String getCities = 'Customer/GetCities';
   static const String getGovernments = 'Customer/GetGovernments';
+
+  // WhatsApp API - Port 7261
+  static const String whatsAppBaseUrl =
+      'https://tabibsoft.ddns.net:7261/api/WhatsApp';
+  static const String whatsAppInstances = '/instances';
+  static const String whatsAppNewMessages = '/new-messages';
+  static const String whatsAppSendMessage = '/send-message';
+  static const String whatsAppBulkMessage = '/bulk-message';
+  static const String whatsAppBulkJobs = '/bulk-messages';
+  static const String whatsAppChatMessages = '/chat-messages';
+  static const String whatsAppContacts = '/contacts';
+  static const String whatsAppHealth = '/health';
 }
+//171b7d44-57d9-4eac-4e90-08de535c797c
+//

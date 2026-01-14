@@ -25,6 +25,7 @@ import 'package:tabib_soft_company/features/technical_support/visits/data/models
 import 'package:tabib_soft_company/features/technical_support/data/model/customization/situation_status_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/government_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/city_model.dart';
+import 'package:tabib_soft_company/features/technical_support/data/model/whatsapp/whatsapp_models.dart';
 import 'api_constants.dart';
 
 part 'api_service.g.dart';
@@ -226,4 +227,38 @@ abstract class ApiService {
 
   @GET(ApiConstants.getCities)
   Future<List<CityModel>> getCities(@Query("Id") String governmentId);
+
+  // WhatsApp API Methods
+  @GET(ApiConstants.whatsAppBaseUrl + ApiConstants.whatsAppInstances)
+  Future<WhatsAppInstancesResponse> getWhatsAppInstances(
+      @Query("customerId") String customerId);
+
+  @POST(ApiConstants.whatsAppBaseUrl + ApiConstants.whatsAppNewMessages)
+  Future<WhatsAppMessagesResponse> getWhatsAppNewMessages(
+      @Body() Map<String, dynamic> body);
+
+  @POST(ApiConstants.whatsAppBaseUrl + ApiConstants.whatsAppChatMessages)
+  Future<ChatMessagesResponse> getWhatsAppChatMessages(
+      @Body() Map<String, dynamic> body);
+
+  @POST(ApiConstants.whatsAppBaseUrl + ApiConstants.whatsAppSendMessage)
+  Future<SendMessageResponse> sendWhatsAppMessage(
+      @Body() SendMessageRequest request);
+
+  @POST(ApiConstants.whatsAppBaseUrl + ApiConstants.whatsAppBulkMessage)
+  Future<SendMessageResponse> sendWhatsAppBulkMessage(
+      @Body() BulkMessageRequest request);
+
+  @GET(ApiConstants.whatsAppBaseUrl + ApiConstants.whatsAppBulkJobs)
+  Future<WhatsAppBulkJobsResponse> getWhatsAppBulkJobs(
+      @Query("customerId") String customerId);
+
+  @GET(ApiConstants.whatsAppBaseUrl +
+      ApiConstants.whatsAppBulkMessage +
+      "/{jobId}")
+  Future<WhatsAppBulkJobDetailsResponse> getWhatsAppBulkJobDetails(
+      @Path("jobId") String jobId);
+
+  @GET(ApiConstants.whatsAppBaseUrl + ApiConstants.whatsAppHealth)
+  Future<void> checkWhatsAppHealth();
 }

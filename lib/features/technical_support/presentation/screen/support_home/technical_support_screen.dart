@@ -7,6 +7,7 @@ import 'package:tabib_soft_company/features/technical_support/export.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/problem/problem_model.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/problem_details_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/widget/new/tech_card_content.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/whatsapp.dart';
 import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 
 class TechnicalSupportScreen extends StatefulWidget {
@@ -274,7 +275,8 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
                                 fit: BoxFit.contain,
                               ),
                             ),
-                            SizedBox(width: 48.w), // Balance the row
+                            // WhatsApp Button
+                            _buildWhatsAppHeaderButton(),
                           ],
                         ),
                         SizedBox(height: 16.h),
@@ -735,6 +737,49 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildWhatsAppHeaderButton() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 400),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14.r),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const WhatsappPage()),
+                  );
+                },
+                child: Padding(
+                  padding: EdgeInsets.all(12.r),
+                  child: Image.asset(
+                    'assets/images/pngs/icons8-whatsapp-48 3.png',
+                    width: 22.r,
+                    height: 22.r,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

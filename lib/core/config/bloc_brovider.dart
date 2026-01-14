@@ -17,6 +17,8 @@ import 'package:tabib_soft_company/features/technical_support/presentation/cubit
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/product_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/data/repo/whatsapp_repository.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/whatsapp/whatsapp_cubit.dart';
 
 Widget buildAppWithProviders({required Widget child}) {
   return MultiBlocProvider(
@@ -27,13 +29,17 @@ Widget buildAppWithProviders({required Widget child}) {
       BlocProvider<TaskCubit>(create: (_) => ServicesLocator.taskCubit),
       BlocProvider<ReportCubit>(create: (_) => ServicesLocator.reportCubit),
       BlocProvider<SalesCubit>(create: (_) => ServicesLocator.salesCubit),
-      BlocProvider<AddCustomerCubit>(create: (_) => ServicesLocator.addCustomerCubit),
+      BlocProvider<AddCustomerCubit>(
+          create: (_) => ServicesLocator.addCustomerCubit),
       BlocProvider<ProductCubit>(create: (_) => ServicesLocator.productCubit),
       BlocProvider<LoginCubit>(create: (_) => ServicesLocator.loginCubit),
-      BlocProvider<SalesDetailsCubit>(create: (_) => ServicesLocator.locator<SalesDetailsCubit>()),
+      BlocProvider<SalesDetailsCubit>(
+          create: (_) => ServicesLocator.locator<SalesDetailsCubit>()),
       BlocProvider<AddNoteCubit>(create: (_) => ServicesLocator.addNoteCubit),
-      BlocProvider<NotificationCubit>(create: (_) => ServicesLocator.notificationCubit),
-      BlocProvider<TodayCallsCubit>(create: (_) => ServicesLocator.todayCallsCubit),
+      BlocProvider<NotificationCubit>(
+          create: (_) => ServicesLocator.notificationCubit),
+      BlocProvider<TodayCallsCubit>(
+          create: (_) => ServicesLocator.todayCallsCubit),
       BlocProvider<AddSubscriptionCubit>(
         create: (_) => ServicesLocator.addSubscriptionCubit,
       ),
@@ -42,6 +48,12 @@ Widget buildAppWithProviders({required Widget child}) {
       ),
       BlocProvider<VisitCubit>(
         create: (_) => ServicesLocator.visitCubit..fetchVisits(),
+      ),
+      BlocProvider<WhatsAppCubit>(
+        create: (_) => WhatsAppCubit(
+          repository: WhatsAppRepository(),
+          customerId: '6857e4ca-b3a2-4562-6f0a-08dd8633b87e',
+        )..initialize(),
       ),
     ],
     child: child,

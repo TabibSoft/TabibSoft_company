@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:tabib_soft_company/features/auth/data/models/login_response.dart';
@@ -253,12 +254,23 @@ abstract class ApiService {
   Future<WhatsAppBulkJobsResponse> getWhatsAppBulkJobs(
       @Query("customerId") String customerId);
 
-  @GET(ApiConstants.whatsAppBaseUrl +
-      ApiConstants.whatsAppBulkMessage +
-      "/{jobId}")
+  @GET(
+      "${ApiConstants.whatsAppBaseUrl}${ApiConstants.whatsAppBulkMessage}/{jobId}")
   Future<WhatsAppBulkJobDetailsResponse> getWhatsAppBulkJobDetails(
       @Path("jobId") String jobId);
 
   @GET(ApiConstants.whatsAppBaseUrl + ApiConstants.whatsAppHealth)
   Future<void> checkWhatsAppHealth();
+
+  @POST(ApiConstants.whatsAppBaseUrl + ApiConstants.whatsAppTypingStart)
+  Future<TypingResponse> typingStart(@Body() TypingRequest request);
+
+  @POST(ApiConstants.whatsAppBaseUrl + ApiConstants.whatsAppTypingStop)
+  Future<TypingResponse> typingStop(@Body() TypingRequest request);
+
+  @POST(ApiConstants.whatsAppBaseUrl + ApiConstants.whatsAppUploadMedia)
+  @MultiPart()
+  Future<WhatsAppUploadResponse> uploadWhatsAppMedia(
+    @Part(name: "file") File file,
+  );
 }

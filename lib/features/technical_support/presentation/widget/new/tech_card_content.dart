@@ -327,7 +327,7 @@ class _TechCardContentState extends State<TechCardContent>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    engineer.name,
+                                    engineer.name ?? '',
                                     style: TextStyle(
                                       fontSize: 17.sp,
                                       fontWeight: FontWeight.w700,
@@ -344,7 +344,7 @@ class _TechCardContentState extends State<TechCardContent>
                                       ),
                                       SizedBox(width: 4.w),
                                       Text(
-                                        engineer.telephone,
+                                        engineer.telephone ?? '',
                                         style: TextStyle(
                                           fontSize: 13.sp,
                                           color: Colors.grey[600],
@@ -589,7 +589,7 @@ class _TechCardContentState extends State<TechCardContent>
                             if (!context.mounted) return;
 
                             if (confirmed == true) {
-                              _assignProblem(context, engineer.id);
+                              _assignProblem(context, engineer.id ?? '');
                             }
                           },
                         );
@@ -1465,7 +1465,7 @@ class _EngineerCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        engineer.name,
+                        engineer.name ?? '',
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
@@ -1482,7 +1482,7 @@ class _EngineerCard extends StatelessWidget {
                           ),
                           SizedBox(width: 4.w),
                           Text(
-                            engineer.telephone,
+                            engineer.telephone ?? '',
                             style: TextStyle(
                               fontSize: 13.sp,
                               color: Colors.grey[600],

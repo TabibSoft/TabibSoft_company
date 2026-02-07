@@ -9,6 +9,7 @@ enum WhatsAppStatus {
   error,
   sendingMessage,
   loadingBulkJobDetails,
+  uploadingMedia,
 }
 
 class WhatsAppState extends Equatable {

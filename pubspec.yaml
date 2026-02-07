@@ -45,6 +45,7 @@ dependencies:
   
 
   # ---------- Local Storage ----------
+  flutter_contacts: ^1.1.9+2
   shared_preferences: ^2.3.2
 
 

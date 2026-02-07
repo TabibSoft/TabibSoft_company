@@ -273,9 +273,9 @@ class DirectionDropdown extends StatelessWidget {
                     physics: const ClampingScrollPhysics(),
                     children: state.engineers.map((engineer) {
                       return ListTile(
-                        title: Text(engineer.name),
+                        title: Text(engineer.name ?? ''),
                         onTap: () {
-                          controller.text = engineer.name;
+                          controller.text = engineer.name ?? '';
                           onToggleDropdown();
                         },
                       );

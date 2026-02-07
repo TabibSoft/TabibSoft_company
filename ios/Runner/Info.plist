@@ -45,6 +45,8 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSContactsUsageDescription</key>
+	<string>This app requires access to your contacts to allow you to select phone numbers for messaging.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>

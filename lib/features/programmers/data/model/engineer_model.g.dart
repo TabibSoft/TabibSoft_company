@@ -8,16 +8,16 @@ part of 'engineer_model.dart';
 
 EngineerModel _$EngineerModelFromJson(Map<String, dynamic> json) =>
     EngineerModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      address: json['address'] as String,
-      telephone: json['telephone'] as String,
+      id: json['id'] as String?,
+      name: json['name'] as String?,
+      address: json['address'] as String?,
+      telephone: json['telephone'] as String?,
     );
 
 Map<String, dynamic> _$EngineerModelToJson(EngineerModel instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
-      'address': instance.address,
+      'address': instance.name,
       'telephone': instance.telephone,
     };

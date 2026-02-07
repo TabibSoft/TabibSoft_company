@@ -1,10 +1,15 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/whatsapp/whatsapp_models.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/whatsapp/whatsapp_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/whatsapp/whatsapp_state.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 
 class WhatsappPage extends StatelessWidget {
   const WhatsappPage({super.key});
@@ -661,19 +666,25 @@ class _ConversationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final lastMessage =
         conversation.messages.isNotEmpty ? conversation.messages.last : null;
+    final hasUnread = conversation.messageCount > 0;
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: hasUnread ? Colors.white : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: hasUnread
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+        border: hasUnread
+            ? null
+            : Border.all(color: Colors.grey.shade200, width: 1),
       ),
       child: Material(
         color: Colors.transparent,
@@ -698,8 +709,17 @@ class _ConversationCard extends StatelessWidget {
                 Container(
                   width: 56.w,
                   height: 56.h,
-                  decoration: const BoxDecoration(
-                    gradient: WhatsAppColors.headerGradient,
+                  decoration: BoxDecoration(
+                    gradient: hasUnread
+                        ? WhatsAppColors.headerGradient
+                        : LinearGradient(
+                            colors: [
+                              Colors.grey.shade400,
+                              Colors.grey.shade600
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -732,7 +752,9 @@ class _ConversationCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w700,
-                                color: WhatsAppColors.textPrimary,
+                                color: hasUnread
+                                    ? WhatsAppColors.textPrimary
+                                    : Colors.grey.shade600,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -756,13 +778,15 @@ class _ConversationCard extends StatelessWidget {
                               lastMessage?.body ?? 'لا توجد رسائل',
                               style: TextStyle(
                                 fontSize: 13.sp,
-                                color: Colors.grey.shade600,
+                                color: hasUnread
+                                    ? Colors.grey.shade600
+                                    : Colors.grey.shade500,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (conversation.messageCount > 0)
+                          if (hasUnread)
                             Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 8.w,
@@ -1052,6 +1076,11 @@ class ChatDetailScreen extends StatefulWidget {
 
 class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
+  XFile? _selectedImage;
+  Timer? _typingTimer;
+  bool _isTyping = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -1064,20 +1093,103 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   void dispose() {
+    // استخدمنا cubit محفوظ لضمان وصول صحيح في dispose
+    context.read<WhatsAppCubit>().clearCurrentChat();
     _messageController.dispose();
+    _typingTimer?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
+  void _onTextChanged(String value) {
+    if (!_isTyping && value.isNotEmpty) {
+      _isTyping = true;
+      context
+          .read<WhatsAppCubit>()
+          .startTyping(widget.conversation.phoneNumber ?? '');
+    }
 
-    final success = await context.read<WhatsAppCubit>().sendMessage(
-          toNumber: widget.conversation.phoneNumber ?? '',
-          message: _messageController.text.trim(),
-        );
+    _typingTimer?.cancel();
+    _typingTimer = Timer(const Duration(seconds: 2), () {
+      if (_isTyping) {
+        _isTyping = false;
+        context
+            .read<WhatsAppCubit>()
+            .stopTyping(widget.conversation.phoneNumber ?? '');
+      }
+    });
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() {
+          _selectedImage = image;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطأ في اختيار الصورة: $e')),
+      );
+    }
+  }
+
+  Future<void> _sendMessage() async {
+    final messageText = _messageController.text.trim();
+    if (messageText.isEmpty && _selectedImage == null) return;
+
+    final cubit = context.read<WhatsAppCubit>();
+    String? mediaUrl;
+    String? caption;
+
+    if (_selectedImage != null) {
+      // الرفع إلى نقطة النهاية المتوقعة من الباك إند
+      final uploadedUrl = await cubit.uploadMedia(File(_selectedImage!.path));
+      if (uploadedUrl == null) {
+        // فشل الرفع، التنبيه سيظهر من الكيوبيت
+        return;
+      }
+      mediaUrl = uploadedUrl;
+      caption = messageText.isNotEmpty ? messageText : null;
+    }
+
+    final success = await cubit.sendMessage(
+      toNumber: widget.conversation.phoneNumber ?? '',
+      message: messageText.isNotEmpty ? messageText : null,
+      mediaUrl: mediaUrl,
+      caption: caption,
+    );
 
     if (success && mounted) {
       _messageController.clear();
+      setState(() {
+        _selectedImage = null;
+      });
+      // Small delay to ensure the list is refreshed
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _scrollToBottom();
+        }
+      });
+
+      // Reset typing status after successful send
+      _isTyping = false;
+      _typingTimer?.cancel();
+      context
+          .read<WhatsAppCubit>()
+          .stopTyping(widget.conversation.phoneNumber ?? '');
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('تم إرسال الرسالة بنجاح'),
@@ -1156,44 +1268,95 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           children: [
             // Messages list
             Expanded(
-              child: BlocBuilder<WhatsAppCubit, WhatsAppState>(
-                builder: (context, state) {
-                  if (state.status == WhatsAppStatus.loadingMessages) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: WhatsAppColors.primaryGreen,
-                      ),
-                    );
-                  }
-
-                  final messages = state.currentChatMessages.isNotEmpty
-                      ? state.currentChatMessages
-                      : widget.conversation.messages;
-
-                  if (messages.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'لا توجد رسائل',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final message = messages[index];
-                      return _MessageBubble(message: message);
-                    },
-                  );
+              child: BlocListener<WhatsAppCubit, WhatsAppState>(
+                listenWhen: (previous, current) =>
+                    previous.currentChatMessages.length !=
+                    current.currentChatMessages.length,
+                listener: (context, state) {
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    if (mounted) {
+                      _scrollToBottom();
+                    }
+                  });
                 },
+                child: BlocBuilder<WhatsAppCubit, WhatsAppState>(
+                  builder: (context, state) {
+                    if (state.status == WhatsAppStatus.loadingMessages &&
+                        state.currentChatMessages.isEmpty) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: WhatsAppColors.primaryGreen,
+                        ),
+                      );
+                    }
+
+                    final messages = state.currentChatMessages.isNotEmpty
+                        ? state.currentChatMessages
+                        : widget.conversation.messages;
+
+                    if (messages.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'لا توجد رسائل',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      controller: _scrollController,
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 16.w, vertical: 16.h),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[index];
+                        return _MessageBubble(message: message);
+                      },
+                    );
+                  },
+                ),
               ),
             ),
+
+            // Image Preview (if selected)
+            if (_selectedImage != null)
+              Container(
+                padding: EdgeInsets.all(8.r),
+                color: Colors.grey.shade200,
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: Image.file(
+                        File(_selectedImage!.path),
+                        height: 100.h,
+                        width: 100.w,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedImage = null),
+                        child: Container(
+                          padding: EdgeInsets.all(2.r),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.close,
+                              size: 16.r, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // Input area
             Container(
               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
@@ -1209,6 +1372,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               ),
               child: Row(
                 children: [
+                  IconButton(
+                    icon:
+                        Icon(Icons.image_outlined, color: Colors.grey.shade600),
+                    onPressed: _pickImage,
+                  ),
                   Expanded(
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -1218,8 +1386,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       ),
                       child: TextField(
                         controller: _messageController,
+                        onChanged: _onTextChanged,
                         decoration: InputDecoration(
-                          hintText: 'اكتب رسالة...',
+                          hintText: _selectedImage != null
+                              ? 'إضافة تعليق...'
+                              : 'اكتب رسالة...',
                           border: InputBorder.none,
                           hintStyle: TextStyle(color: Colors.grey.shade500),
                         ),
@@ -1385,6 +1556,8 @@ class _SendMessageSheetState extends State<SendMessageSheet> {
   final _messageController = TextEditingController();
   final _phoneListController = TextEditingController();
   late bool _isBulkMode;
+  XFile? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -1400,10 +1573,35 @@ class _SendMessageSheetState extends State<SendMessageSheet> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImage = image;
+      });
+    }
+  }
+
   Future<void> _sendMessage() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate() && _selectedImage == null) return;
+    if (!_isBulkMode && _phoneController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يرجى إدخال رقم الهاتف')),
+      );
+      return;
+    }
 
     final cubit = context.read<WhatsAppCubit>();
+    String? mediaUrl;
+    String? caption;
+
+    if (_selectedImage != null) {
+      final uploadedUrl = await cubit.uploadMedia(File(_selectedImage!.path));
+      if (uploadedUrl == null) return;
+      mediaUrl = uploadedUrl;
+      caption = _messageController.text.trim();
+    }
+
     bool success;
 
     if (_isBulkMode) {
@@ -1414,8 +1612,10 @@ class _SendMessageSheetState extends State<SendMessageSheet> {
           .toList();
 
       success = await cubit.sendBulkMessage(
-        phoneNumbers: phoneNumbers.map(_formatPhoneForApi).toList(),
-        message: _messageController.text.trim(),
+        phoneNumbers: phoneNumbers,
+        message: _selectedImage != null ? null : _messageController.text.trim(),
+        mediaUrl: mediaUrl,
+        caption: caption,
       );
 
       if (success && mounted) {
@@ -1429,10 +1629,11 @@ class _SendMessageSheetState extends State<SendMessageSheet> {
       }
     } else {
       success = await cubit.sendMessage(
-        toNumber: _formatPhoneForApi(_phoneController.text.trim()),
-        message: _messageController.text.trim(),
+        toNumber: _phoneController.text.trim(),
+        message: _selectedImage != null ? null : _messageController.text.trim(),
+        mediaUrl: mediaUrl,
+        caption: caption,
       );
-
       if (success && mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1455,15 +1656,42 @@ class _SendMessageSheetState extends State<SendMessageSheet> {
     }
   }
 
-  String _formatPhoneForApi(String phone) {
-    String cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+  Future<void> _pickContacts() async {
+    if (await FlutterContacts.requestPermission()) {
+      final contacts = await FlutterContacts.getContacts(
+          withProperties: true, withPhoto: false);
 
-    // Egyptian numbers: 01xxxxxxxxx -> 201xxxxxxxxx
-    if (cleanPhone.length == 11 && cleanPhone.startsWith('01')) {
-      return '2$cleanPhone';
+      if (!mounted) return;
+
+      final selectedContacts = await showDialog<List<String>>(
+        context: context,
+        builder: (context) => _ContactPickerDialog(
+          contacts: contacts,
+          isSingleSelection: !_isBulkMode,
+        ),
+      );
+
+      if (selectedContacts != null && selectedContacts.isNotEmpty) {
+        if (_isBulkMode) {
+          final currentText = _phoneListController.text;
+          final newNumbers = selectedContacts.join('\n');
+          _phoneListController.text =
+              currentText.isEmpty ? newNumbers : '$currentText\n$newNumbers';
+        } else {
+          // If in single mode but selected contacts, pick the first one
+          _phoneController.text = selectedContacts.first;
+        }
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('يرجى السماح بالوصول لجهات الاتصال'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-
-    return cleanPhone;
   }
 
   @override
@@ -1636,6 +1864,20 @@ class _SendMessageSheetState extends State<SendMessageSheet> {
                       return null;
                     },
                   ),
+                Padding(
+                  padding: EdgeInsets.only(top: 8.h),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: _pickContacts,
+                      icon: const Icon(Icons.contacts_rounded),
+                      label: const Text('تحديد من جهات الاتصال'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: WhatsAppColors.primaryGreen,
+                      ),
+                    ),
+                  ),
+                ),
                 SizedBox(height: 16.h),
                 // Message input
                 TextFormField(
@@ -1663,14 +1905,56 @@ class _SendMessageSheetState extends State<SendMessageSheet> {
                     return null;
                   },
                 ),
+                SizedBox(height: 16.h),
+                // Attachment Button
+                Row(
+                  children: [
+                    TextButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.image_rounded),
+                      label: const Text('إرفاق صورة'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: WhatsAppColors.primaryGreen,
+                      ),
+                    ),
+                    if (_selectedImage != null) ...[
+                      SizedBox(width: 8.w),
+                      Stack(
+                        children: [
+                          Container(
+                            width: 60.w,
+                            height: 60.h,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8.r),
+                              image: DecorationImage(
+                                image: FileImage(File(_selectedImage!.path)),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: -10,
+                            right: -10,
+                            child: IconButton(
+                              onPressed: () =>
+                                  setState(() => _selectedImage = null),
+                              icon: const Icon(Icons.cancel, color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
                 SizedBox(height: 24.h),
                 // Send button
                 BlocBuilder<WhatsAppCubit, WhatsAppState>(
                   builder: (context, state) {
-                    final isSending =
-                        state.status == WhatsAppStatus.sendingMessage;
+                    final isLoading =
+                        state.status == WhatsAppStatus.sendingMessage ||
+                            state.status == WhatsAppStatus.uploadingMedia;
                     return ElevatedButton(
-                      onPressed: isSending ? null : _sendMessage,
+                      onPressed: isLoading ? null : _sendMessage,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: WhatsAppColors.primaryGreen,
                         foregroundColor: Colors.white,
@@ -1680,28 +1964,22 @@ class _SendMessageSheetState extends State<SendMessageSheet> {
                         ),
                         elevation: 0,
                       ),
-                      child: isSending
+                      child: isLoading
                           ? SizedBox(
-                              width: 24.w,
-                              height: 24.h,
+                              height: 20.h,
+                              width: 20.h,
                               child: const CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Colors.white,
                               ),
                             )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.send_rounded, size: 20.r),
-                                SizedBox(width: 8.w),
-                                Text(
-                                  _isBulkMode ? 'إرسال للجميع' : 'إرسال',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                          : Text(
+                              'إرسال الآن',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                     );
                   },
@@ -1737,6 +2015,12 @@ class _BulkJobDetailScreenState extends State<BulkJobDetailScreen> {
     if (widget.job.jobId != null) {
       context.read<WhatsAppCubit>().fetchBulkJobDetails(widget.job.jobId!);
     }
+  }
+
+  @override
+  void dispose() {
+    context.read<WhatsAppCubit>().clearBulkJobDetails();
+    super.dispose();
   }
 
   @override
@@ -2291,5 +2575,187 @@ class _BulkJobDetailScreenState extends State<BulkJobDetailScreen> {
     } catch (e) {
       return dateTime;
     }
+  }
+}
+
+class _ContactPickerDialog extends StatefulWidget {
+  final List<Contact> contacts;
+  final bool isSingleSelection;
+
+  const _ContactPickerDialog({
+    required this.contacts,
+    this.isSingleSelection = false,
+  });
+
+  @override
+  State<_ContactPickerDialog> createState() => _ContactPickerDialogState();
+}
+
+class _ContactPickerDialogState extends State<_ContactPickerDialog> {
+  late List<Contact> _filteredContacts;
+  final Set<String> _selectedPhones = {};
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredContacts = widget.contacts;
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredContacts = widget.contacts.where((contact) {
+        final name = contact.displayName.toLowerCase();
+        final phones = contact.phones.map((p) => p.number).join(' ');
+        return name.contains(query) || phones.contains(query);
+      }).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(16.r),
+              child: Column(
+                children: [
+                  Text(
+                    widget.isSingleSelection
+                        ? 'تحديد جهة اتصال'
+                        : 'تحديد جهات الاتصال',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      color: WhatsAppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'بحث...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _filteredContacts.length,
+                itemBuilder: (context, index) {
+                  final contact = _filteredContacts[index];
+                  if (contact.phones.isEmpty) return const SizedBox.shrink();
+
+                  final phone = contact.phones.first.number;
+                  final isSelected = _selectedPhones.contains(phone);
+
+                  if (widget.isSingleSelection) {
+                    return ListTile(
+                      onTap: () {
+                        Navigator.pop(context, [phone]);
+                      },
+                      title: Text(contact.displayName),
+                      subtitle: Text(phone),
+                      leading: CircleAvatar(
+                        backgroundColor:
+                            WhatsAppColors.primaryGreen.withOpacity(0.1),
+                        child: Text(
+                          contact.displayName.isNotEmpty
+                              ? contact.displayName[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                              color: WhatsAppColors.primaryGreen),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return CheckboxListTile(
+                    value: isSelected,
+                    onChanged: (checked) {
+                      setState(() {
+                        if (checked == true) {
+                          _selectedPhones.add(phone);
+                        } else {
+                          _selectedPhones.remove(phone);
+                        }
+                      });
+                    },
+                    title: Text(contact.displayName),
+                    subtitle: Text(phone),
+                    activeColor: WhatsAppColors.primaryGreen,
+                  );
+                },
+              ),
+            ),
+            if (!widget.isSingleSelection)
+              Padding(
+                padding: EdgeInsets.all(16.r),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'إلغاء',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            Navigator.pop(context, _selectedPhones.toList()),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: WhatsAppColors.primaryGreen,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                        ),
+                        child: Text('إضافة (${_selectedPhones.length})'),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Padding(
+                padding: EdgeInsets.all(16.r),
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'إلغاء',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }

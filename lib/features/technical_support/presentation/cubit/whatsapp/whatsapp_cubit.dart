@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/whatsapp/whatsapp_models.dart';
 import 'package:tabib_soft_company/features/technical_support/data/repo/whatsapp_repository.dart';
@@ -7,6 +9,8 @@ import 'package:tabib_soft_company/features/technical_support/presentation/cubit
 class WhatsAppCubit extends Cubit<WhatsAppState> {
   final WhatsAppRepository _repository;
   final String customerId;
+  Timer? _refreshTimer;
+  bool _isFetching = false;
 
   WhatsAppCubit({
     required WhatsAppRepository repository,
@@ -14,6 +18,67 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
   })  : _repository = repository,
         super(const WhatsAppState()) {
     developer.log('onCreate -- WhatsAppCubit', name: 'WhatsAppCubit');
+    startPolling();
+  }
+
+  @override
+  Future<void> close() {
+    stopPolling();
+    return super.close();
+  }
+
+  /// Start periodic polling for new messages
+  void startPolling() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (!isClosed && state.status != WhatsAppStatus.initial) {
+        // Refresh conversations and current chat
+        fetchMessages(isBackground: true);
+
+        // Refresh bulk jobs list every 20s
+        if (timer.tick % 2 == 0) {
+          fetchBulkJobs(isBackground: true);
+        }
+
+        // Refresh current bulk job details if viewing one
+        final currentJobId = state.currentBulkJobDetails?.job?.jobId;
+        if (currentJobId != null) {
+          fetchBulkJobDetails(currentJobId, isBackground: true);
+        }
+      }
+    });
+  }
+
+  /// Stop polling
+  void stopPolling() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+  }
+
+  /// Upload media for WhatsApp
+  Future<String?> uploadMedia(File file) async {
+    emit(state.copyWith(status: WhatsAppStatus.uploadingMedia));
+
+    try {
+      final response = await _repository.uploadMedia(file);
+
+      if (response.success && response.url != null) {
+        emit(state.copyWith(status: WhatsAppStatus.success));
+        return response.url;
+      } else {
+        emit(state.copyWith(
+          status: WhatsAppStatus.error,
+          errorMessage: response.message ?? 'فشل رفع الملف',
+        ));
+        return null;
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: WhatsAppStatus.error,
+        errorMessage: 'خطأ في رفع الملف: $e',
+      ));
+      return null;
+    }
   }
 
   @override
@@ -75,15 +140,14 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
   }
 
   /// Fetch new messages
-  Future<void> fetchMessages() async {
-    // تجنب الطلبات المتكررة إذا كان هناك طلب جاري للرسائل فقط
-    if (state.status == WhatsAppStatus.loadingMessages) {
-      developer.log('Already loading messages, skipping duplicate request',
-          name: 'WhatsAppCubit');
-      return;
-    }
+  Future<void> fetchMessages({bool isBackground = false}) async {
+    // تجنب الطلبات المتكررة
+    if (_isFetching) return;
 
-    emit(state.copyWith(status: WhatsAppStatus.loadingMessages));
+    _isFetching = true;
+    if (!isBackground) {
+      emit(state.copyWith(status: WhatsAppStatus.loadingMessages));
+    }
 
     try {
       final response = await _repository.getNewMessages(
@@ -91,40 +155,98 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
         instanceId: state.currentInstanceId,
       );
 
-      developer.log(
-          'Messages response: success=${response.success}, conversations=${response.conversations.length}',
-          name: 'WhatsAppCubit');
-
       if (response.success) {
+        final currentConversations =
+            List<WhatsAppConversation>.from(state.conversations);
+        bool chatUpdated = false;
+        List<WhatsAppMessage> updatedChatMessages =
+            List<WhatsAppMessage>.from(state.currentChatMessages);
+
+        for (final newConv in response.conversations) {
+          final index = currentConversations
+              .indexWhere((c) => c.phoneNumber == newConv.phoneNumber);
+
+          if (index != -1) {
+            currentConversations[index] = newConv;
+          } else {
+            currentConversations.add(newConv);
+          }
+
+          // If this is the currently selected chat, update messages
+          if (state.selectedPhoneNumber != null &&
+              (newConv.phoneNumber == state.selectedPhoneNumber)) {
+            // Append new messages that are not already in updatedChatMessages
+            for (final msg in newConv.messages) {
+              if (!updatedChatMessages.any((m) => m.id == msg.id)) {
+                updatedChatMessages.add(msg);
+                chatUpdated = true;
+              }
+            }
+          }
+        }
+
+        // Sort by last message time
+        try {
+          currentConversations.sort((a, b) {
+            if (a.lastMessageTime == null) return 1;
+            if (b.lastMessageTime == null) return -1;
+            return b.lastMessageTime!.compareTo(a.lastMessageTime!);
+          });
+        } catch (e) {
+          developer.log('Error sorting conversations',
+              error: e, name: 'WhatsAppCubit');
+        }
+
+        if (chatUpdated) {
+          // Sort chat messages by time
+          updatedChatMessages.sort((a, b) =>
+              (a.messageDateTime ?? '').compareTo(b.messageDateTime ?? ''));
+        }
+
         emit(state.copyWith(
           status: WhatsAppStatus.success,
-          conversations: response.conversations,
+          conversations: currentConversations,
+          currentChatMessages:
+              chatUpdated ? updatedChatMessages : state.currentChatMessages,
           messageCount: response.messageCount,
-          conversationCount: response.conversationCount,
+          conversationCount: currentConversations.length,
         ));
       } else {
-        emit(state.copyWith(
-          status: WhatsAppStatus.error,
-          errorMessage:
-              response.errorMessage ?? response.message ?? 'فشل في جلب الرسائل',
-        ));
+        if (!isBackground) {
+          emit(state.copyWith(
+            status: WhatsAppStatus.error,
+            errorMessage: response.errorMessage ??
+                response.message ??
+                'فشل في جلب الرسائل',
+          ));
+        }
       }
     } catch (e, stackTrace) {
       developer.log('Error in fetchMessages: $e',
           name: 'WhatsAppCubit', error: e, stackTrace: stackTrace);
-      emit(state.copyWith(
-        status: WhatsAppStatus.error,
-        errorMessage: 'خطأ في جلب الرسائل: $e',
-      ));
+      if (!isBackground) {
+        emit(state.copyWith(
+          status: WhatsAppStatus.error,
+          errorMessage: 'خطأ في جلب الرسائل: $e',
+        ));
+      }
+    } finally {
+      _isFetching = false;
     }
   }
 
   /// Fetch chat messages for a specific contact
   Future<void> fetchChatMessages(String phoneNumber,
       {String? contactName}) async {
+    // Format number for API
+    String formattedNumber = phoneNumber.replaceAll(RegExp(r'\D'), '');
+    if (formattedNumber.length == 11 && formattedNumber.startsWith('01')) {
+      formattedNumber = '2$formattedNumber';
+    }
+
     emit(state.copyWith(
       status: WhatsAppStatus.loadingMessages,
-      selectedPhoneNumber: phoneNumber,
+      selectedPhoneNumber: formattedNumber,
       selectedContactName: contactName,
     ));
 
@@ -132,18 +254,39 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
       final response = await _repository.getChatMessages(
         customerId: customerId,
         instanceId: state.currentInstanceId,
-        phoneNumber: phoneNumber,
+        phoneNumber: formattedNumber,
       );
 
       if (response.success) {
+        // Update the conversation in the main list
+        final updatedConversations =
+            List<WhatsAppConversation>.from(state.conversations);
+        final index = updatedConversations.indexWhere((c) =>
+            c.phoneNumber == formattedNumber || c.phoneNumber == phoneNumber);
+
+        if (index != -1) {
+          final oldConv = updatedConversations[index];
+          updatedConversations[index] = WhatsAppConversation(
+            phoneNumber: oldConv.phoneNumber,
+            contactName: response.contactName ?? oldConv.contactName,
+            messageCount: 0, // Mark as read locally
+            lastMessageTime: response.messages.isNotEmpty
+                ? response.messages.last.messageDateTime
+                : oldConv.lastMessageTime,
+            messages: response.messages,
+          );
+        }
+
         emit(state.copyWith(
           status: WhatsAppStatus.success,
           currentChatMessages: response.messages,
+          conversations: updatedConversations,
         ));
       } else {
         // Use existing conversation messages if API fails
         final conversation = state.conversations.firstWhere(
-          (c) => c.phoneNumber == phoneNumber,
+          (c) =>
+              c.phoneNumber == formattedNumber || c.phoneNumber == phoneNumber,
           orElse: () => WhatsAppConversation(),
         );
         emit(state.copyWith(
@@ -154,7 +297,7 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
     } catch (e) {
       // Use existing conversation messages if API fails
       final conversation = state.conversations.firstWhere(
-        (c) => c.phoneNumber == phoneNumber,
+        (c) => c.phoneNumber == formattedNumber || c.phoneNumber == phoneNumber,
         orElse: () => WhatsAppConversation(),
       );
       emit(state.copyWith(
@@ -165,16 +308,13 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
   }
 
   /// Fetch bulk jobs
-  Future<void> fetchBulkJobs() async {
-    // تجنب الطلبات المتكررة إذا كان هناك طلب جاري
-    if (state.status == WhatsAppStatus.loading ||
-        state.status == WhatsAppStatus.loadingMessages) {
-      developer.log('Already loading bulk jobs, skipping duplicate request',
-          name: 'WhatsAppCubit');
-      return;
-    }
+  Future<void> fetchBulkJobs({bool isBackground = false}) async {
+    // تجنب الطلبات المتكررة
+    if (_isFetching && !isBackground) return;
 
-    emit(state.copyWith(status: WhatsAppStatus.loading));
+    if (!isBackground) {
+      emit(state.copyWith(status: WhatsAppStatus.loading));
+    }
 
     try {
       final response = await _repository.getBulkJobs(customerId);
@@ -185,24 +325,31 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
           bulkJobs: response.jobs,
         ));
       } else {
-        emit(state.copyWith(
-          status: WhatsAppStatus.error,
-          errorMessage: response.message ?? 'فشل في جلب سجل الرسائل الجماعية',
-        ));
+        if (!isBackground) {
+          emit(state.copyWith(
+            status: WhatsAppStatus.error,
+            errorMessage: response.message ?? 'فشل في جلب سجل الرسائل الجماعية',
+          ));
+        }
       }
     } catch (e) {
       developer.log('Error in fetchBulkJobs: $e',
           name: 'WhatsAppCubit', error: e);
-      emit(state.copyWith(
-        status: WhatsAppStatus.error,
-        errorMessage: 'خطأ في جلب سجل الرسائل الجماعية: $e',
-      ));
+      if (!isBackground) {
+        emit(state.copyWith(
+          status: WhatsAppStatus.error,
+          errorMessage: 'خطأ في جلب سجل الرسائل الجماعية: $e',
+        ));
+      }
     }
   }
 
   /// Fetch bulk job details
-  Future<void> fetchBulkJobDetails(String jobId) async {
-    emit(state.copyWith(status: WhatsAppStatus.loadingBulkJobDetails));
+  Future<void> fetchBulkJobDetails(String jobId,
+      {bool isBackground = false}) async {
+    if (!isBackground) {
+      emit(state.copyWith(status: WhatsAppStatus.loadingBulkJobDetails));
+    }
 
     try {
       final response = await _repository.getBulkJobDetails(jobId);
@@ -213,24 +360,28 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
           currentBulkJobDetails: response,
         ));
       } else {
-        emit(state.copyWith(
-          status: WhatsAppStatus.error,
-          errorMessage:
-              response.message ?? 'فشل في جلب تفاصيل الرسالة الجماعية',
-        ));
+        if (!isBackground) {
+          emit(state.copyWith(
+            status: WhatsAppStatus.error,
+            errorMessage:
+                response.message ?? 'فشل في جلب تفاصيل الرسالة الجماعية',
+          ));
+        }
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: WhatsAppStatus.error,
-        errorMessage: 'خطأ في جلب تفاصيل الرسالة الجماعية: $e',
-      ));
+      if (!isBackground) {
+        emit(state.copyWith(
+          status: WhatsAppStatus.error,
+          errorMessage: 'خطأ في جلب تفاصيل الرسالة الجماعية: $e',
+        ));
+      }
     }
   }
 
   /// Send a single message
   Future<bool> sendMessage({
     required String toNumber,
-    required String message,
+    String? message,
     String? mediaUrl,
     String? caption,
     bool isGroup = false,
@@ -238,10 +389,16 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
     emit(state.copyWith(status: WhatsAppStatus.sendingMessage));
 
     try {
+      // Format number for API
+      String formattedNumber = toNumber.replaceAll(RegExp(r'\D'), '');
+      if (formattedNumber.length == 11 && formattedNumber.startsWith('01')) {
+        formattedNumber = '2$formattedNumber';
+      }
+
       final request = SendMessageRequest(
         customerId: customerId,
         instanceId: state.currentInstanceId,
-        toNumber: toNumber,
+        toNumber: formattedNumber,
         message: message,
         mediaUrl: mediaUrl,
         caption: caption,
@@ -275,7 +432,7 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
   /// Send bulk messages
   Future<bool> sendBulkMessage({
     required List<String> phoneNumbers,
-    required String message,
+    String? message,
     String? jobName,
     String? mediaUrl,
     String? caption,
@@ -286,8 +443,13 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
     try {
       // تحويل أرقام الهواتف إلى recipients
       final recipients = phoneNumbers.map((phone) {
+        // Format number for API
+        String formattedNumber = phone.replaceAll(RegExp(r'\D'), '');
+        if (formattedNumber.length == 11 && formattedNumber.startsWith('01')) {
+          formattedNumber = '2$formattedNumber';
+        }
         return WhatsAppRecipient(
-          phoneNumber: phone,
+          phoneNumber: formattedNumber,
           name: null,
         );
       }).toList();
@@ -333,6 +495,51 @@ class WhatsAppCubit extends Cubit<WhatsAppState> {
       selectedPhoneNumber: null,
       selectedContactName: null,
     ));
+  }
+
+  /// Start typing indicator
+  Future<void> startTyping(String phoneNumber) async {
+    try {
+      // Format number for API
+      String formattedNumber = phoneNumber.replaceAll(RegExp(r'\D'), '');
+      if (formattedNumber.length == 11 && formattedNumber.startsWith('01')) {
+        formattedNumber = '2$formattedNumber';
+      }
+
+      final request = TypingRequest(
+        customerId: customerId,
+        instanceId: state.currentInstanceId,
+        phoneNumber: formattedNumber,
+      );
+      await _repository.typingStart(request);
+    } catch (e) {
+      developer.log('Error in startTyping', error: e, name: 'WhatsAppCubit');
+    }
+  }
+
+  /// Stop typing indicator
+  Future<void> stopTyping(String phoneNumber) async {
+    try {
+      // Format number for API
+      String formattedNumber = phoneNumber.replaceAll(RegExp(r'\D'), '');
+      if (formattedNumber.length == 11 && formattedNumber.startsWith('01')) {
+        formattedNumber = '2$formattedNumber';
+      }
+
+      final request = TypingRequest(
+        customerId: customerId,
+        instanceId: state.currentInstanceId,
+        phoneNumber: formattedNumber,
+      );
+      await _repository.typingStop(request);
+    } catch (e) {
+      developer.log('Error in stopTyping', error: e, name: 'WhatsAppCubit');
+    }
+  }
+
+  /// Clear current bulk job details
+  void clearBulkJobDetails() {
+    emit(state.copyWith(currentBulkJobDetails: null));
   }
 
   /// Clear error

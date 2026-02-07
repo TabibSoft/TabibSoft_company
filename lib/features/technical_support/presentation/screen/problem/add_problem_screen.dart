@@ -882,7 +882,7 @@ class _AddProblemScreenState extends State<AddProblemScreen>
               final filtered = engineerSearchQuery.isEmpty
                   ? state.engineers
                   : state.engineers
-                      .where((e) => e.name
+                      .where((e) => (e.name ?? '')
                           .toLowerCase()
                           .contains(engineerSearchQuery.toLowerCase()))
                       .toList();
@@ -903,12 +903,15 @@ class _AddProblemScreenState extends State<AddProblemScreen>
                   final eng = filtered[index];
                   return ListTile(
                     dense: true,
-                    title: Text(eng.name, style: TextStyle(fontSize: 14.sp)),
+                    title:
+                        Text(eng.name ?? '', style: TextStyle(fontSize: 14.sp)),
                     leading: CircleAvatar(
                       radius: 16.r,
                       backgroundColor: TechColors.accentCyan,
                       child: Text(
-                          eng.name.isNotEmpty ? eng.name[0].toUpperCase() : '',
+                          eng.name != null && eng.name!.isNotEmpty
+                              ? eng.name![0].toUpperCase()
+                              : '',
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 12.sp,
@@ -917,7 +920,7 @@ class _AddProblemScreenState extends State<AddProblemScreen>
                     onTap: () {
                       setState(() {
                         selectedEngineer = eng;
-                        engineerController.text = eng.name;
+                        engineerController.text = eng.name ?? '';
                         engineerSearchQuery = '';
                         isEngineerDropdownVisible = false;
                       });
@@ -1555,7 +1558,7 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
                             child: BlocBuilder<EngineerCubit, EngineerState>(
                               builder: (context, state) {
                                 final filteredEngineers = state.engineers
-                                    .where((eng) => eng.name
+                                    .where((eng) => (eng.name ?? '')
                                         .toLowerCase()
                                         .contains(
                                             _engineerSearch.toLowerCase()))
@@ -1590,14 +1593,15 @@ class _AddCustomerBottomSheetState extends State<AddCustomerBottomSheet>
                                     final isSelected =
                                         _selectedEngineerId == eng.id;
                                     return _buildDropdownItem(
-                                      title: eng.name,
+                                      title: eng.name ?? '',
                                       subtitle: eng.telephone,
                                       icon: Icons.engineering_rounded,
                                       isSelected: isSelected,
                                       onTap: () {
                                         setState(() {
                                           _selectedEngineerId = eng.id;
-                                          _engineerController.text = eng.name;
+                                          _engineerController.text =
+                                              eng.name ?? '';
                                           _showEngineerDropdown = false;
                                           _engineerSearch = '';
                                         });

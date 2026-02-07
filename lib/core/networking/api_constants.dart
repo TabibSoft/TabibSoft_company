@@ -102,6 +102,11 @@ class ApiConstants {
   static const String whatsAppChatMessages = '/chat-messages';
   static const String whatsAppContacts = '/contacts';
   static const String whatsAppHealth = '/health';
+  static const String whatsAppTypingStart = '/typing-start';
+  static const String whatsAppTypingStop = '/typing-stop';
+
+  //اندبوينت رفع الصور على واتساب 
+  static const String whatsAppUploadMedia = '/uploadWhatsPics';
 }
 //171b7d44-57d9-4eac-4e90-08de535c797c
 //

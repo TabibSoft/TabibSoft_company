@@ -288,10 +288,10 @@ class _AddCustomerFormState extends State<AddCustomerForm> {
                         itemBuilder: (context, index) {
                           final engineer = state.engineers[index];
                           return ListTile(
-                            title: Text(engineer.name),
+                            title: Text(engineer.name ?? ''),
                             onTap: () {
                               setState(() {
-                                _engineer.text = engineer.name;
+                                _engineer.text = engineer.name ?? '';
                                 _selectedEngineerId = engineer.id;
                                 _showEngineerDropdown = false;
                               });

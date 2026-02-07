@@ -582,7 +582,7 @@ class _AddIssueFormState extends State<AddIssueForm> {
                     final filteredEngineers = engineerSearchQuery.isEmpty
                         ? state.engineers
                         : state.engineers
-                            .where((eng) => eng.name
+                            .where((eng) => (eng.name ?? '')
                                 .toLowerCase()
                                 .contains(engineerSearchQuery.toLowerCase()))
                             .toList();
@@ -609,18 +609,18 @@ class _AddIssueFormState extends State<AddIssueForm> {
                               backgroundColor: primaryBtnColor,
                               radius: 18,
                               child: Text(
-                                  eng.name.isNotEmpty
-                                      ? eng.name[0].toUpperCase()
+                                  eng.name != null && eng.name!.isNotEmpty
+                                      ? eng.name![0].toUpperCase()
                                       : '',
                                   style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold))),
-                          title: Text(eng.name,
+                          title: Text(eng.name ?? '',
                               style: const TextStyle(fontSize: 14)),
                           onTap: () {
                             setState(() {
                               selectedEngineer = eng;
-                              _engineerController.text = eng.name;
+                              _engineerController.text = eng.name ?? '';
                               engineerSearchQuery = '';
                               isEngineerDropdownVisible = false;
                             });

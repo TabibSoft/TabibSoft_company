@@ -4,16 +4,16 @@ part 'engineer_model.g.dart';
 
 @JsonSerializable()
 class EngineerModel {
-  final String id;
-  final String name;
-  final String address;
-  final String telephone;
+  final String? id;
+  final String? name;
+  final String? address;
+  final String? telephone;
 
   EngineerModel({
-    required this.id,
-    required this.name,
-    required this.address,
-    required this.telephone,
+    this.id,
+    this.name,
+    this.address,
+    this.telephone,
   });
 
   factory EngineerModel.fromJson(Map<String, dynamic> json) =>

@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:tabib_soft_company/core/networking/api_service.dart';
 import 'package:tabib_soft_company/core/networking/dio_factory.dart';
@@ -17,6 +18,26 @@ class WhatsAppRepository {
 
   void _log(String message, {Object? error}) {
     developer.log(message, name: 'WhatsAppRepository', error: error);
+  }
+
+  /// Upload media for WhatsApp
+  Future<WhatsAppUploadResponse> uploadMedia(File file) async {
+    try {
+      _log('Uploading media: ${file.path}');
+      return await _apiService.uploadWhatsAppMedia(file);
+    } on DioException catch (e) {
+      _log('DioException in uploadMedia: ${e.message}', error: e);
+      return WhatsAppUploadResponse(
+        success: false,
+        message: _handleError(e),
+      );
+    } catch (e) {
+      _log('Error in uploadMedia', error: e);
+      return WhatsAppUploadResponse(
+        success: false,
+        message: 'خطأ غير متوقع في الرفع: $e',
+      );
+    }
   }
 
   /// Get WhatsApp instances for a customer
@@ -183,6 +204,46 @@ class WhatsAppRepository {
     } catch (e) {
       _log('Health check failed', error: e);
       return false;
+    }
+  }
+
+  /// Start typing indicator
+  Future<TypingResponse> typingStart(TypingRequest request) async {
+    try {
+      _log('Starting typing indicator for: ${request.phoneNumber}');
+      return await _apiService.typingStart(request);
+    } on DioException catch (e) {
+      _log('DioException in typingStart: ${e.message}', error: e);
+      return TypingResponse(
+        success: false,
+        errorMessage: _handleError(e),
+      );
+    } catch (e) {
+      _log('Error in typingStart', error: e);
+      return TypingResponse(
+        success: false,
+        errorMessage: 'خطأ غير متوقع: $e',
+      );
+    }
+  }
+
+  /// Stop typing indicator
+  Future<TypingResponse> typingStop(TypingRequest request) async {
+    try {
+      _log('Stopping typing indicator for: ${request.phoneNumber}');
+      return await _apiService.typingStop(request);
+    } on DioException catch (e) {
+      _log('DioException in typingStop: ${e.message}', error: e);
+      return TypingResponse(
+        success: false,
+        errorMessage: _handleError(e),
+      );
+    } catch (e) {
+      _log('Error in typingStop', error: e);
+      return TypingResponse(
+        success: false,
+        errorMessage: 'خطأ غير متوقع: $e',
+      );
     }
   }
 

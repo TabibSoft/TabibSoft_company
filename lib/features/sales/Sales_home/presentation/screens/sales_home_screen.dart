@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/sales_cubit.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/sales_state.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/sales_content_card_home_widget.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/filter_widget.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/widgets/home_widgets/home_skeltonizer_widget.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/presentation/screens/taday_calls_screen.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/whatsapp/whatsapp_cubit.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/cubit/whatsapp/whatsapp_state.dart';
+import 'package:tabib_soft_company/features/technical_support/presentation/screen/support_home/whatsapp.dart';
 
 class SalesHomeScreen extends StatefulWidget {
   const SalesHomeScreen({super.key});
@@ -167,6 +171,7 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
             ),
           ],
         ),
+        floatingActionButton: _buildWhatsAppFAB(),
         body: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -310,6 +315,62 @@ class _SalesHomeScreenState extends State<SalesHomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildWhatsAppFAB() {
+    return BlocBuilder<WhatsAppCubit, WhatsAppState>(
+      builder: (context, state) {
+        final messageCount = state.messageCount;
+        return Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const WhatsappPage()),
+                );
+              },
+              backgroundColor: const Color(0xFF25D366), // WhatsApp Green
+              child: Image.asset(
+                'assets/images/pngs/icons8-whatsapp-48 3.png',
+                width: 55.r,
+                height: 55.r,
+                // color: Colors.white,
+              ),
+            ),
+            if (messageCount > 0)
+              Positioned(
+                top: -2,
+                right: -2,
+                child: Container(
+                  padding: EdgeInsets.all(4.r),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  constraints: BoxConstraints(
+                    minWidth: 22.r,
+                    minHeight: 22.r,
+                  ),
+                  child: Center(
+                    child: Text(
+                      messageCount > 99 ? '99+' : '$messageCount',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

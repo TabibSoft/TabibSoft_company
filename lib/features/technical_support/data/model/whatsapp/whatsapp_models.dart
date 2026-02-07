@@ -241,7 +241,7 @@ class SendMessageRequest {
   final String customerId;
   final String? instanceId;
   final String toNumber;
-  final String message;
+  final String? message;
   final String? mediaUrl;
   final String? caption;
   final bool isGroup;
@@ -250,25 +250,22 @@ class SendMessageRequest {
     required this.customerId,
     this.instanceId,
     required this.toNumber,
-    required this.message,
+    this.message,
     this.mediaUrl,
     this.caption,
     this.isGroup = false,
   });
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {
+    return {
       'customerId': customerId,
       'instanceId': instanceId,
       'toNumber': toNumber,
       'message': message,
+      'mediaUrl': mediaUrl,
+      'caption': caption,
       'isGroup': isGroup,
     };
-
-    if (mediaUrl != null) data['mediaUrl'] = mediaUrl;
-    if (caption != null) data['caption'] = caption;
-
-    return data;
   }
 }
 
@@ -291,7 +288,7 @@ class BulkMessageRequest {
   final String customerId;
   final String? instanceId;
   final String? jobName;
-  final String message;
+  final String? message;
   final String? mediaUrl;
   final String? caption;
   final bool isGroup;
@@ -303,7 +300,7 @@ class BulkMessageRequest {
     required this.customerId,
     this.instanceId,
     this.jobName,
-    required this.message,
+    this.message,
     this.mediaUrl,
     this.caption,
     this.isGroup = false,
@@ -668,5 +665,77 @@ List<WhatsAppBulkRecipient> _parseBulkRecipientsList(dynamic value) {
         .toList();
   } catch (e) {
     return [];
+  }
+}
+
+class TypingRequest {
+  final String customerId;
+  final String? instanceId;
+  final String phoneNumber;
+
+  TypingRequest({
+    required this.customerId,
+    this.instanceId,
+    required this.phoneNumber,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'customerId': customerId,
+        'instanceId': instanceId,
+        'phoneNumber': phoneNumber,
+      };
+}
+
+class TypingResponse {
+  final bool success;
+  final String? message;
+  final String? status;
+  final String? errorMessage;
+
+  TypingResponse({
+    this.success = false,
+    this.message,
+    this.status,
+    this.errorMessage,
+  });
+
+  factory TypingResponse.fromJson(Map<String, dynamic> json) {
+    try {
+      final data = json['data'];
+      return TypingResponse(
+        success: _parseBool(json['success']),
+        message: _parseString(json['message']),
+        status: _parseString(data?['status']),
+        errorMessage: _parseString(data?['errorMessage']),
+      );
+    } catch (e) {
+      return TypingResponse(success: false);
+    }
+  }
+}
+
+class WhatsAppUploadResponse {
+  final bool success;
+  final String? message;
+  final String? url;
+
+  WhatsAppUploadResponse({
+    this.success = false,
+    this.message,
+    this.url,
+  });
+
+  factory WhatsAppUploadResponse.fromJson(Map<String, dynamic> json) {
+    try {
+      final data = json['data'];
+      return WhatsAppUploadResponse(
+        success: _parseBool(json['success']),
+        message: _parseString(json['message']),
+        url: _parseString(data is Map ? data['url'] : data),
+      );
+    } catch (e) {
+      return WhatsAppUploadResponse(
+          success: false, message: 'خطأ في تحليل استجابة الرفع: $e');
+    }
   }
 }

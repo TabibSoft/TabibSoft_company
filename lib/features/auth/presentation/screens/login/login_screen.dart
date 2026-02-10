@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // White rounded bottom card
                 Positioned(
-                  top: 400.h,
+                  top: 370.h,
                   left: 0,
                   right: 0,
                   bottom: 0,
@@ -157,13 +157,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       physics: const BouncingScrollPhysics(),
                       child: Padding(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 22.w, vertical: 26.h),
+                            horizontal: 22.w, vertical: 16.h),
                         child: Form(
                           key: loginFormKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              SizedBox(height: 6.h),
+                              // SizedBox(height: 6.h),
                               const Text(
                                 'تسجيل الدخول',
                                 style: TextStyle(

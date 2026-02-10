@@ -21,6 +21,8 @@ import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits
 import 'package:tabib_soft_company/features/sales/Sales_home/presentation/cubits/sales_cubit.dart';
 import 'package:tabib_soft_company/features/home/notifications/data/repo/notification_repo.dart';
 import 'package:tabib_soft_company/features/home/notifications/presentation/cubits/notification_cubit.dart';
+import 'package:tabib_soft_company/features/sales/sales_admin/data/repos/requirements_repo.dart';
+import 'package:tabib_soft_company/features/sales/sales_admin/presentation/cubit/requirements_cubit.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/data/repo/today_call_repo.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/presentation/cubit/today_call_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/data/repo/add_customer/add_customer_repo.dart';
@@ -30,6 +32,7 @@ import 'package:tabib_soft_company/features/technical_support/presentation/cubit
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/add_customer/product_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/data/repo/visit_repository.dart';
+import 'package:tabib_soft_company/features/technical_support/data/repo/whatsapp_repository.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
 
 class ServicesLocator {
@@ -44,51 +47,75 @@ class ServicesLocator {
     locator.registerLazySingleton<IntroAppCubit>(() => IntroAppCubit());
 
     // Login
-    locator.registerLazySingleton<LoginReposetory>(() => LoginReposetory(locator()));
-    locator.registerFactory<LoginCubit>(() => LoginCubit(locator<LoginReposetory>()));
+    locator.registerLazySingleton<LoginReposetory>(
+        () => LoginReposetory(locator()));
+    locator.registerFactory<LoginCubit>(
+        () => LoginCubit(locator<LoginReposetory>()));
 
     // Customer
-    locator.registerLazySingleton<CustomerRepository>(() => CustomerRepository(locator<ApiService>()));
-    locator.registerFactory<CustomerCubit>(() => CustomerCubit(locator<CustomerRepository>()));
+    locator.registerLazySingleton<CustomerRepository>(
+        () => CustomerRepository(locator<ApiService>()));
+    locator.registerFactory<CustomerCubit>(
+        () => CustomerCubit(locator<CustomerRepository>()));
 
     // Engineer
-    locator.registerLazySingleton<EngineerRepository>(() => EngineerRepository(locator<ApiService>()));
-    locator.registerFactory<EngineerCubit>(() => EngineerCubit(locator<EngineerRepository>()));
+    locator.registerLazySingleton<EngineerRepository>(
+        () => EngineerRepository(locator<ApiService>()));
+    locator.registerFactory<EngineerCubit>(
+        () => EngineerCubit(locator<EngineerRepository>()));
 
     // Task & Report
-    locator.registerLazySingleton<TaskRepository>(() => TaskRepository(locator<ApiService>()));
-    locator.registerFactory<TaskCubit>(() => TaskCubit(locator<TaskRepository>()));
+    locator.registerLazySingleton<TaskRepository>(
+        () => TaskRepository(locator<ApiService>()));
+    locator
+        .registerFactory<TaskCubit>(() => TaskCubit(locator<TaskRepository>()));
 
-    locator.registerLazySingleton<ReportRepository>(() => ReportRepository(locator<ApiService>()));
-    locator.registerFactory<ReportCubit>(() => ReportCubit(locator<ReportRepository>()));
+    locator.registerLazySingleton<ReportRepository>(
+        () => ReportRepository(locator<ApiService>()));
+    locator.registerFactory<ReportCubit>(
+        () => ReportCubit(locator<ReportRepository>()));
 
     // Sales
-    locator.registerLazySingleton<SalesRepository>(() => SalesRepository(locator<ApiService>()));
-    locator.registerFactory<SalesCubit>(() => SalesCubit(locator<SalesRepository>()));
+    locator.registerLazySingleton<SalesRepository>(
+        () => SalesRepository(locator<ApiService>()));
+    locator.registerFactory<SalesCubit>(
+        () => SalesCubit(locator<SalesRepository>()));
 
     // Add Customer
-    locator.registerLazySingleton<AddCustomerRepository>(() => AddCustomerRepository(locator<ApiService>()));
-    locator.registerFactory<AddCustomerCubit>(() => AddCustomerCubit(locator<AddCustomerRepository>()));
+    locator.registerLazySingleton<AddCustomerRepository>(
+        () => AddCustomerRepository(locator<ApiService>()));
+    locator.registerFactory<AddCustomerCubit>(
+        () => AddCustomerCubit(locator<AddCustomerRepository>()));
 
     // Product
-    locator.registerLazySingleton<ProductRepository>(() => ProductRepository(locator<ApiService>()));
-    locator.registerFactory<ProductCubit>(() => ProductCubit(locator<ProductRepository>()));
+    locator.registerLazySingleton<ProductRepository>(
+        () => ProductRepository(locator<ApiService>()));
+    locator.registerFactory<ProductCubit>(
+        () => ProductCubit(locator<ProductRepository>()));
 
     // Sales Details
-    locator.registerLazySingleton<SalesDetailsRepository>(() => SalesDetailsRepository(locator<ApiService>()));
-    locator.registerFactory<SalesDetailsCubit>(() => SalesDetailsCubit(locator<SalesDetailsRepository>()));
+    locator.registerLazySingleton<SalesDetailsRepository>(
+        () => SalesDetailsRepository(locator<ApiService>()));
+    locator.registerFactory<SalesDetailsCubit>(
+        () => SalesDetailsCubit(locator<SalesDetailsRepository>()));
 
     // Add Note
-    locator.registerLazySingleton<AddNoteRepository>(() => AddNoteRepository(locator<ApiService>()));
-    locator.registerFactory<AddNoteCubit>(() => AddNoteCubit(locator<AddNoteRepository>()));
+    locator.registerLazySingleton<AddNoteRepository>(
+        () => AddNoteRepository(locator<ApiService>()));
+    locator.registerFactory<AddNoteCubit>(
+        () => AddNoteCubit(locator<AddNoteRepository>()));
 
     // Notifications
-    locator.registerLazySingleton<NotificationRepository>(() => NotificationRepository(locator<ApiService>()));
-    locator.registerFactory<NotificationCubit>(() => NotificationCubit(locator<NotificationRepository>()));
+    locator.registerLazySingleton<NotificationRepository>(
+        () => NotificationRepository(locator<ApiService>()));
+    locator.registerFactory<NotificationCubit>(
+        () => NotificationCubit(locator<NotificationRepository>()));
 
     // Today Calls
-    locator.registerLazySingleton<TodayCallsRepository>(() => TodayCallsRepository(locator<ApiService>()));
-    locator.registerFactory<TodayCallsCubit>(() => TodayCallsCubit(locator<TodayCallsRepository>()));
+    locator.registerLazySingleton<TodayCallsRepository>(
+        () => TodayCallsRepository(locator<ApiService>()));
+    locator.registerFactory<TodayCallsCubit>(
+        () => TodayCallsCubit(locator<TodayCallsRepository>()));
 
     // Subscription
     locator.registerLazySingleton<SubscriptionRepository>(
@@ -113,6 +140,19 @@ class ServicesLocator {
     locator.registerFactory<VisitCubit>(
       () => VisitCubit(locator<VisitRepository>()),
     );
+
+    // WhatsApp
+    locator.registerLazySingleton<WhatsAppRepository>(
+      () => WhatsAppRepository(),
+    );
+
+    // Sales Admin Requirements
+    locator.registerLazySingleton<RequirementsRepository>(
+      () => RequirementsRepository(locator<ApiService>()),
+    );
+    locator.registerFactory<RequirementsCubit>(
+      () => RequirementsCubit(locator<RequirementsRepository>()),
+    );
   }
 
   // Getters
@@ -126,9 +166,14 @@ class ServicesLocator {
   static AddCustomerCubit get addCustomerCubit => locator<AddCustomerCubit>();
   static ProductCubit get productCubit => locator<ProductCubit>();
   static AddNoteCubit get addNoteCubit => locator<AddNoteCubit>();
-  static NotificationCubit get notificationCubit => locator<NotificationCubit>();
+  static NotificationCubit get notificationCubit =>
+      locator<NotificationCubit>();
   static TodayCallsCubit get todayCallsCubit => locator<TodayCallsCubit>();
-  static AddSubscriptionCubit get addSubscriptionCubit => locator<AddSubscriptionCubit>();
-  static PaymentMethodCubit get paymentMethodCubit => locator<PaymentMethodCubit>();
+  static AddSubscriptionCubit get addSubscriptionCubit =>
+      locator<AddSubscriptionCubit>();
+  static PaymentMethodCubit get paymentMethodCubit =>
+      locator<PaymentMethodCubit>();
   static VisitCubit get visitCubit => locator<VisitCubit>();
+  static RequirementsCubit get requirementsCubit =>
+      locator<RequirementsCubit>();
 }

@@ -15,6 +15,7 @@ NotificationModel _$NotificationModelFromJson(Map<String, dynamic> json) =>
       date: NotificationModel._dateTimeFromJson(json['notfDate'] as String),
       isRead: json['isRecevie'] as bool,
       referenceId: json['referenceId'] as String?,
+      measurementId: json['measurementId'] as String?,
       engineerId: json['engineerId'] as String,
       engineer: json['engineer'],
     );
@@ -28,6 +29,7 @@ Map<String, dynamic> _$NotificationModelToJson(NotificationModel instance) =>
       'notfDate': NotificationModel._dateTimeToJson(instance.date),
       'isRecevie': instance.isRead,
       'referenceId': instance.referenceId,
+      'measurementId': instance.measurementId,
       'engineerId': instance.engineerId,
       'engineer': instance.engineer,
     };

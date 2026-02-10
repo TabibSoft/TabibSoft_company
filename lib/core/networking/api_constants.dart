@@ -39,22 +39,19 @@ class ApiConstants {
 
   static const String getAllMeasurements = 'Sales/GetAllMeasurement';
 
-  static const String getDealDetailById =
-      'Sales/GetDealDetailById'; // إضافة جديدة
+  static const String getDealDetailById = 'Sales/GetDealDetailById';
 
-  static const String addRequirement = 'Sales/AddRequirement'; // إضافة جديدة
+  static const String addRequirement = 'Sales/AddRequirement';
 
-  static const String getAllOffers = 'Sales/GetAllOffers'; // إضافة جديدة
+  static const String getAllOffers = 'Sales/GetAllOffers';
 
   static const String getAllProducts = 'Sales/GetAllProudcts';
 
-  static const String getAllPaymentMethods =
-      'Sales/GetAllPaymentMethod'; // إضافة جديدة
+  static const String getAllPaymentMethods = 'Sales/GetAllPaymentMethod';
 
-  static const String addPayment = 'Sales/AddPayment'; // إضافة جديدة
+  static const String addPayment = 'Sales/AddPayment';
 
-  static const String makeMeasurementDone =
-      'Sales/MakeMeasurementDone'; // إضافة جديدة
+  static const String makeMeasurementDone = 'Sales/MakeMeasurementDone';
 
   static const String getAllProgrammerTasks = 'Programer/GetAll';
   static const String getProgrammerTaskById = 'Programer/GetById';
@@ -91,6 +88,9 @@ class ApiConstants {
   static const String getCities = 'Customer/GetCities';
   static const String getGovernments = 'Customer/GetGovernments';
 
+  static const String requirementsData =
+      'Reports/requirements-data'; //جلب الداتا للسيلز ادمن
+  static const String updateAdminNote = 'Reports/update-admin-note'; //تعديل ملاحظة ادمن
   // WhatsApp API - Port 7261
   static const String whatsAppBaseUrl =
       'https://tabibsoft.ddns.net:7261/api/WhatsApp';
@@ -105,7 +105,7 @@ class ApiConstants {
   static const String whatsAppTypingStart = '/typing-start';
   static const String whatsAppTypingStop = '/typing-stop';
 
-  //اندبوينت رفع الصور على واتساب 
+  //اندبوينت رفع الصور على واتساب
   static const String whatsAppUploadMedia = '/uploadWhatsPics';
 }
 //171b7d44-57d9-4eac-4e90-08de535c797c

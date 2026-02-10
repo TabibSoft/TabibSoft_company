@@ -14,6 +14,11 @@ class SalesDetailModel {
   final String? note;
   final String engineerId;
   final String engineerName;
+  final String? productName;
+  final String? statusName;
+  final double? paid;
+  final double? rest;
+  final String? location;
   final List<MeasurementRequirement> measurementRequirement;
 
   SalesDetailModel({
@@ -27,7 +32,12 @@ class SalesDetailModel {
     this.note,
     required this.engineerId,
     required this.engineerName,
-    required this.measurementRequirement, // Add this
+    this.productName,
+    this.statusName,
+    this.paid,
+    this.rest,
+    this.location,
+    required this.measurementRequirement,
   });
 
   factory SalesDetailModel.fromJson(Map<String, dynamic> json) =>
@@ -56,6 +66,10 @@ class MeasurementRequirement {
   final String? imageUrl;
   final int count;
   final String? communicationId;
+  final String? communicationName;
+  final String? adminNote;
+  final String? adminNoteUser;
+  final DateTime? adminNoteDate;
 
   MeasurementRequirement({
     required this.id,
@@ -76,10 +90,14 @@ class MeasurementRequirement {
     this.imageUrl,
     required this.count,
     this.communicationId,
+    this.communicationName,
+    this.adminNote,
+    this.adminNoteUser,
+    this.adminNoteDate,
   });
 
   factory MeasurementRequirement.fromJson(Map<String, dynamic> json) =>
       _$MeasurementRequirementFromJson(json);
 
-  Map<String, dynamic> toJson() => _$MeasurementRequirementToJson(this);    
+  Map<String, dynamic> toJson() => _$MeasurementRequirementToJson(this);
 }

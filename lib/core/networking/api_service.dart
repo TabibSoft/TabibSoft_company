@@ -12,6 +12,7 @@ import 'package:tabib_soft_company/features/sales/Sales_home/data/models/filter/
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/notes/sales_detail_model.dart';
 import 'package:tabib_soft_company/features/sales/Sales_home/data/models/paginated_sales_model.dart';
 import 'package:tabib_soft_company/features/home/notifications/data/model/notification_model.dart';
+import 'package:tabib_soft_company/features/sales/sales_admin/data/models/requirement_model.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/data/models/today_call_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/add_customer_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/product_model.dart';
@@ -144,8 +145,16 @@ abstract class ApiService {
     @Part(name: "exepectedCallTimeTo") String? exepectedCallTimeTo,
     @Part(name: "imageFiles") List<MultipartFile>? imageFiles,
   );
+
+  @POST(ApiConstants.requirementsData)
+  Future<PaginatedRequirements> getRequirementsData(
+      @Body() Map<String, dynamic> body);
+
   @POST(ApiConstants.makeMeasurementDone)
   Future<void> makeMeasurementDone(@Body() Map<String, dynamic> body);
+
+  @POST(ApiConstants.updateAdminNote)
+  Future<void> updateAdminNote(@Body() Map<String, dynamic> body);
 
   @GET(ApiConstants.getAllProgrammerTasks)
   Future<List<CustomizationTaskModel>> getAllProgrammerTasks();

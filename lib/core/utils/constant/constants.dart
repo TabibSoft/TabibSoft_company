@@ -4,3 +4,4 @@ const homeScreen = '/homeScareen';
 const articaleScreen = '/articalesScreen';
 const profileScreen = '/profileScreen';
 const todayCallsScreen = '/todayCallsScreen';
+const salesAdminRequirementsScreen = '/sales_admin_requirements';

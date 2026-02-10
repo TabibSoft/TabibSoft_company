@@ -13,7 +13,7 @@ class NotificationDetailScreenAnyRole extends StatelessWidget {
   });
 
   String _formatDate(DateTime date) {
-    return DateFormat('dd MMMM yyyy - hh:mm a', 'ar').format(date);
+    return DateFormat('dd MMMM yyyy - hh:mm a', 'ar').format(date.toLocal());
   }
 
   @override

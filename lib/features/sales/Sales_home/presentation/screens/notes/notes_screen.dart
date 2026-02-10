@@ -21,13 +21,15 @@ class NotesScreen extends StatefulWidget {
   final String? customerName;
   final String? customerPhone;
   final bool isFromNotification;
+  final bool isAdminNote;
 
   const NotesScreen(
       {super.key,
       required this.measurementId,
       this.customerName,
       this.customerPhone,
-      this.isFromNotification = false});
+      this.isFromNotification = false,
+      this.isAdminNote = false});
 
   @override
   State<NotesScreen> createState() => _NotesScreenState();
@@ -301,84 +303,97 @@ class _NotesScreenState extends State<NotesScreen> {
                               topRight: Radius.circular(30.r),
                             ),
                           ),
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            child: Column(
-                              children: [
-                                SizedBox(height: 20.h),
-                                if (widget.isFromNotification) ...[
-                                  _buildCustomerInfoCard(detail),
+                          child: RefreshIndicator(
+                            onRefresh: () async {
+                              await context
+                                  .read<SalesDetailsCubit>()
+                                  .fetchDealDetails(id: widget.measurementId);
+                            },
+                            color: SalesColors.primaryBlue,
+                            backgroundColor: Colors.white,
+                            child: SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: Column(
+                                children: [
                                   SizedBox(height: 20.h),
-                                ],
-                                // 1. Statistics & Chart Card
-                                _buildStatsCard(allNotes, detail),
+                                  if (widget.isFromNotification) ...[
+                                    _buildCustomerInfoCard(detail),
+                                    SizedBox(height: 20.h),
+                                  ],
 
-                                SizedBox(height: 20.h),
-                                Padding(
-                                  padding:
-                                      EdgeInsets.symmetric(horizontal: 20.w),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        'سجل الملاحظات ',
-                                        style: TextStyle(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: SalesColors.textPrimary,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Container(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 12.w, vertical: 6.h),
-                                        decoration: BoxDecoration(
-                                          color: SalesColors.primaryBlue
-                                              .withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(20.r),
-                                        ),
-                                        child: Text(
-                                          '${allNotes.length} ملاحظة',
-                                          style: TextStyle(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.bold,
-                                            color: SalesColors.primaryBlue,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(height: 16.h),
+                                  _buildRequirementsTable(detail),
+                                  SizedBox(height: 20.h),
 
-                                // 2. Timeline Notes
-                                if (allNotes.isEmpty)
-                                  _buildEmptyState()
-                                else
-                                  ListView.builder(
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
+                                  // 1. Statistics & Chart Card
+                                  _buildStatsCard(allNotes, detail),
+
+                                  SizedBox(height: 20.h),
+                                  Padding(
                                     padding:
                                         EdgeInsets.symmetric(horizontal: 20.w),
-                                    itemCount: allNotes.length,
-                                    itemBuilder: (context, index) {
-                                      final noteData = allNotes[index];
-                                      final isLast =
-                                          index == allNotes.length - 1;
-                                      return _TimelineNoteItem(
-                                        note: noteData['note'],
-                                        date: noteData['date'],
-                                        images: noteData['images'],
-                                        expectedComment:
-                                            noteData['expectedComment'],
-                                        isLast: isLast,
-                                      );
-                                    },
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          'سجل الملاحظات ',
+                                          style: TextStyle(
+                                            fontSize: 16.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: SalesColors.textPrimary,
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 12.w, vertical: 6.h),
+                                          decoration: BoxDecoration(
+                                            color: SalesColors.primaryBlue
+                                                .withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(20.r),
+                                          ),
+                                          child: Text(
+                                            '${allNotes.length} ملاحظة',
+                                            style: TextStyle(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: SalesColors.primaryBlue,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
+                                  SizedBox(height: 16.h),
 
-                                SizedBox(height: 100.h),
-                              ],
+                                  // 2. Timeline Notes
+                                  if (allNotes.isEmpty)
+                                    _buildEmptyState()
+                                  else
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 20.w),
+                                      itemCount: allNotes.length,
+                                      itemBuilder: (context, index) {
+                                        final noteData = allNotes[index];
+                                        final isLast =
+                                            index == allNotes.length - 1;
+                                        return _TimelineNoteItem(
+                                          note: noteData['note'],
+                                          date: noteData['date'],
+                                          images: noteData['images'],
+                                          expectedComment:
+                                              noteData['expectedComment'],
+                                          isLast: isLast,
+                                        );
+                                      },
+                                    ),
+
+                                  SizedBox(height: 100.h),
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -713,7 +728,7 @@ class _NotesScreenState extends State<NotesScreen> {
               ),
               SizedBox(width: 10.w),
               Text(
-                'معلومات العميل',
+                'بيانات الصفقة',
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
@@ -726,32 +741,22 @@ class _NotesScreenState extends State<NotesScreen> {
           const Divider(height: 1, color: SalesColors.borderLight),
           SizedBox(height: 16.h),
 
-          // Details grid
+          if (!widget.isAdminNote) _buildInfoRow('رقم المعرف:', detail.id),
+          _buildInfoRow('العميل:', displayName),
           _buildInfoRow(
-              'الاشعار:', 'تم اضافة عميل جديد'), // Static for now as requested
-          // _buildInfoRow('العميل:', displayName),
-          _buildInfoRow(
-            ' العميل :',
+            widget.isAdminNote ? 'محتوي الاشعار:' : 'هاتف العميل:',
             displayPhone,
+            isPhone: !widget.isAdminNote,
           ),
           _buildInfoRow('المهندس:', detail.engineerName),
+          _buildInfoRow('المنتج:', detail.productName ?? 'غير متوفر'),
+          _buildInfoRow('الحالة:', detail.statusName ?? 'غير متوفر'),
           _buildInfoRow(
             'تاريخ الصفقة:',
             intl.DateFormat('yyyy-MM-dd').format(detail.date),
           ),
-          _buildInfoRow(
-            'المكالمة الآتية:',
-            nextCall != null
-                ? intl.DateFormat('yyyy-MM-dd').format(nextCall)
-                : 'غير محدد',
-          ),
-          _buildInfoRow('الملاحظة:', detail.note ?? 'لا يوجد'),
-          Divider(height: 24.h, color: SalesColors.borderLight),
-          _buildInfoRow(
-            'إجمالي الصفقة:',
-            '${detail.total} ج.م',
-            isBold: true,
-          ),
+          _buildInfoRow('العرض:', detail.offerName ?? 'بدون عرض'),
+          _buildInfoRow('سعر المنتج:', '${detail.total} ج.م'),
           _buildInfoRow('الخصم:', '${detail.discount} ج.م'),
           _buildInfoRow(
             'الإجمالي النهائي:',
@@ -759,6 +764,12 @@ class _NotesScreenState extends State<NotesScreen> {
             isBold: true,
             valueColor: SalesColors.primaryBlue,
           ),
+          _buildInfoRow('المدفوع:', '${detail.paid ?? 0} ج.م',
+              valueColor: Colors.green),
+          _buildInfoRow('المتبقي:', '${detail.rest ?? 0} ج.م',
+              valueColor: Colors.red),
+          _buildInfoRow('الملاحظة:', detail.note ?? 'لا يوجد'),
+          _buildInfoRow('الموقع:', detail.location ?? 'غير متوفر'),
         ],
       ),
     );
@@ -798,6 +809,105 @@ class _NotesScreenState extends State<NotesScreen> {
               ),
               textAlign: TextAlign
                   .left, // Align values to the left for better readability
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRequirementsTable(SalesDetailModel detail) {
+    if (detail.measurementRequirement.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16.r),
+            child: Row(
+              children: [
+                Icon(Icons.assignment_outlined,
+                    color: SalesColors.primaryBlue, size: 24.sp),
+                SizedBox(width: 10.w),
+                Text(
+                  'سجل المتابعات (القياسات)',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: SalesColors.primaryBlue,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              horizontalMargin: 12,
+              columnSpacing: 20,
+              headingRowColor: WidgetStateProperty.all(
+                  SalesColors.primaryBlue.withOpacity(0.05)),
+              columns: const [
+                DataColumn(label: Text('الملاحظة')),
+                DataColumn(label: Text('تاريخ الاتصال')),
+                DataColumn(label: Text('من')),
+                DataColumn(label: Text('إلى')),
+                DataColumn(label: Text('التعليق')),
+                DataColumn(label: Text('تاريخ الإنشاء')),
+                DataColumn(label: Text('ملاحظة الأدمن')),
+              ],
+              rows: detail.measurementRequirement.map((req) {
+                return DataRow(cells: [
+                  DataCell(Text(req.notes ?? '-')),
+                  DataCell(Text(req.exepectedCallDate != null
+                      ? intl.DateFormat('yyyy-MM-dd')
+                          .format(req.exepectedCallDate!)
+                      : '-')),
+                  DataCell(Text(req.exepectedCallTimeFrom ?? '-')),
+                  DataCell(Text(req.exepectedCallTimeTo ?? '-')),
+                  DataCell(Text(req.exepectedComment ?? '-')),
+                  DataCell(Text(req.creatDate != null
+                      ? intl.DateFormat('yyyy-MM-dd').format(req.creatDate!)
+                      : '-')),
+                  DataCell(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: req.adminNote != null
+                            ? Colors.amber.withOpacity(0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        req.adminNote ?? '-',
+                        style: TextStyle(
+                          color: req.adminNote != null
+                              ? Colors.amber[900]
+                              : Colors.black,
+                          fontWeight: req.adminNote != null
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ),
+                ]);
+              }).toList(),
             ),
           ),
         ],

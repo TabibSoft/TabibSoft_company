@@ -2,7 +2,6 @@ import 'package:tabib_soft_company/core/export.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:tabib_soft_company/features/home/presentation/widgets/adhkar_global_overlay.dart';
 
@@ -65,7 +64,10 @@ class MyApp extends StatelessWidget {
             locale: const Locale('ar', 'EG'),
             theme: ThemeData(
               scaffoldBackgroundColor: AppColor.backGroundColor,
-              textTheme: GoogleFonts.cairoTextTheme(),
+              fontFamily: 'Amiri',
+              textTheme: ThemeData.light().textTheme.apply(
+                    fontFamily: 'Amiri',
+                  ),
             ),
             onGenerateRoute: appRouter.onGenerateRoute,
           ),

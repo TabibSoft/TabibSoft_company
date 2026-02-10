@@ -18,6 +18,11 @@ SalesDetailModel _$SalesDetailModelFromJson(Map<String, dynamic> json) =>
       note: json['note'] as String?,
       engineerId: json['engineerId'] as String,
       engineerName: json['engineerName'] as String,
+      productName: json['productName'] as String?,
+      statusName: json['statusName'] as String?,
+      paid: (json['paid'] as num?)?.toDouble(),
+      rest: (json['rest'] as num?)?.toDouble(),
+      location: json['location'] as String?,
       measurementRequirement: (json['measurementRequirement'] as List<dynamic>)
           .map(
               (e) => MeasurementRequirement.fromJson(e as Map<String, dynamic>))
@@ -36,6 +41,11 @@ Map<String, dynamic> _$SalesDetailModelToJson(SalesDetailModel instance) =>
       'note': instance.note,
       'engineerId': instance.engineerId,
       'engineerName': instance.engineerName,
+      'productName': instance.productName,
+      'statusName': instance.statusName,
+      'paid': instance.paid,
+      'rest': instance.rest,
+      'location': instance.location,
       'measurementRequirement': instance.measurementRequirement,
     };
 
@@ -67,6 +77,12 @@ MeasurementRequirement _$MeasurementRequirementFromJson(
       imageUrl: json['imageUrl'] as String?,
       count: (json['count'] as num).toInt(),
       communicationId: json['communicationId'] as String?,
+      communicationName: json['communicationName'] as String?,
+      adminNote: json['adminNote'] as String?,
+      adminNoteUser: json['adminNoteUser'] as String?,
+      adminNoteDate: json['adminNoteDate'] == null
+          ? null
+          : DateTime.parse(json['adminNoteDate'] as String),
     );
 
 Map<String, dynamic> _$MeasurementRequirementToJson(
@@ -90,4 +106,8 @@ Map<String, dynamic> _$MeasurementRequirementToJson(
       'imageUrl': instance.imageUrl,
       'count': instance.count,
       'communicationId': instance.communicationId,
+      'communicationName': instance.communicationName,
+      'adminNote': instance.adminNote,
+      'adminNoteUser': instance.adminNoteUser,
+      'adminNoteDate': instance.adminNoteDate?.toIso8601String(),
     };

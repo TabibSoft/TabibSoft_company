@@ -5,6 +5,7 @@ import 'package:tabib_soft_company/features/auth/presentation/screens/login/logi
 import 'package:tabib_soft_company/features/auth/presentation/screens/splash_screen.dart';
 import 'package:tabib_soft_company/features/home/presentation/screens/home_screen.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/presentation/screens/taday_calls_screen.dart';
+import 'package:tabib_soft_company/features/sales/sales_admin/presentation/screens/sales_admin_requirements_screen.dart';
 
 class AppRouter {
   Route? onGenerateRoute(RouteSettings routeSettings) {
@@ -38,6 +39,16 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) {
             return const TodayCallsScreen();
+          },
+        );
+
+      case salesAdminRequirementsScreen:
+        return MaterialPageRoute(
+          builder: (_) {
+            return BlocProvider(
+              create: (_) => ServicesLocator.requirementsCubit,
+              child: const SalesAdminRequirementsScreen(),
+            );
           },
         );
     }

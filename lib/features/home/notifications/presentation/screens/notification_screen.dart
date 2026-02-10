@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:tabib_soft_company/core/utils/cache/cache_helper.dart';
 import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:tabib_soft_company/features/home/notifications/presentation/screens/notification_detail_screen_anyRole.dart';
@@ -20,11 +20,14 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String? _userRoles;
   late AnimationController _animationController;
+  late AnimationController _shimmerController;
+  // 1 = admin notes only, 2 = other notifications
+  int _selectedFilter = 2;
 
   @override
   void initState() {
@@ -33,6 +36,10 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
     _loadUserRoles();
 
     context.read<NotificationCubit>().clearUnreadNotificationBadge();
@@ -50,6 +57,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   void dispose() {
     _searchController.dispose();
     _animationController.dispose();
+    _shimmerController.dispose();
     super.dispose();
   }
 
@@ -69,14 +77,19 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   }
 
   String formatDate(DateTime date) {
+    final localDate = date.toLocal();
     final now = DateTime.now();
-    final diff = now.difference(date);
-    if (diff.inDays == 0) {
-      return 'اليوم ${DateFormat('hh:mm a', 'ar').format(date)}';
-    } else if (diff.inDays == 1) {
-      return 'أمس ${DateFormat('hh:mm a', 'ar').format(date)}';
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final notificationDate =
+        DateTime(localDate.year, localDate.month, localDate.day);
+
+    if (notificationDate == today) {
+      return 'اليوم ${DateFormat('hh:mm a', 'ar').format(localDate)}';
+    } else if (notificationDate == yesterday) {
+      return 'أمس ${DateFormat('hh:mm a', 'ar').format(localDate)}';
     }
-    return DateFormat('dd MMM yyyy - hh:mm a', 'ar').format(date);
+    return DateFormat('dd MMM yyyy - hh:mm a', 'ar').format(localDate);
   }
 
   @override
@@ -267,72 +280,225 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                         ),
                       ],
                     ),
-                    child: BlocBuilder<NotificationCubit, NotificationState>(
-                      builder: (context, state) {
-                        if (state.status == NotificationStatus.loading) {
-                          return Skeletonizer(
-                            enabled: true,
-                            child: ListView.builder(
-                              itemCount: 8,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 20.w, vertical: 20.h),
-                              itemBuilder: (_, __) => _buildSkeletonCard(),
-                            ),
-                          );
-                        } else if (state.status == NotificationStatus.loaded) {
-                          final notifications = state.notifications;
-                          final filtered = _searchQuery.isNotEmpty
-                              ? notifications
-                                  .where((n) =>
-                                      (n.title ?? '')
-                                          .toString()
-                                          .toLowerCase()
-                                          .contains(
-                                              _searchQuery.toLowerCase()) ||
-                                      (n.body ?? '')
-                                          .toString()
-                                          .toLowerCase()
-                                          .contains(_searchQuery.toLowerCase()))
-                                  .toList()
-                              : notifications.toList();
+                    child: Column(
+                      children: [
+                        // Filter buttons
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedFilter = 2;
+                                    });
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 250),
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: 10.h),
+                                    decoration: BoxDecoration(
+                                      color: _selectedFilter == 2
+                                          ? TechColors.primaryMid
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: _selectedFilter == 2
+                                            ? TechColors.primaryMid
+                                            : Colors.grey.shade300,
+                                      ),
+                                      boxShadow: _selectedFilter == 2
+                                          ? [
+                                              BoxShadow(
+                                                color: TechColors.primaryMid
+                                                    .withOpacity(0.3),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 3),
+                                              ),
+                                            ]
+                                          : [],
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.notifications_rounded,
+                                          size: 18.r,
+                                          color: _selectedFilter == 2
+                                              ? Colors.white
+                                              : Colors.grey[600],
+                                        ),
+                                        SizedBox(width: 6.w),
+                                        Text(
+                                          'الإشعارات',
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            fontWeight: FontWeight.w700,
+                                            color: _selectedFilter == 2
+                                                ? Colors.white
+                                                : Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedFilter = 1;
+                                    });
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 250),
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: 10.h),
+                                    decoration: BoxDecoration(
+                                      color: _selectedFilter == 1
+                                          ? TechColors.accentCyan
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: _selectedFilter == 1
+                                            ? TechColors.accentCyan
+                                            : Colors.grey.shade300,
+                                      ),
+                                      boxShadow: _selectedFilter == 1
+                                          ? [
+                                              BoxShadow(
+                                                color: TechColors.accentCyan
+                                                    .withOpacity(0.3),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 3),
+                                              ),
+                                            ]
+                                          : [],
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.admin_panel_settings_rounded,
+                                          size: 18.r,
+                                          color: _selectedFilter == 1
+                                              ? Colors.white
+                                              : Colors.grey[600],
+                                        ),
+                                        SizedBox(width: 6.w),
+                                        Text(
+                                          'ملاحظات إدارية',
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            fontWeight: FontWeight.w700,
+                                            color: _selectedFilter == 1
+                                                ? Colors.white
+                                                : Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        // Notification list
+                        Expanded(
+                          child:
+                              BlocBuilder<NotificationCubit, NotificationState>(
+                            builder: (context, state) {
+                              if (state.status == NotificationStatus.loading) {
+                                return _buildShimmerLoading();
+                              } else if (state.status ==
+                                  NotificationStatus.loaded) {
+                                var notifications =
+                                    state.notifications.toList();
 
-                          if (filtered.isEmpty) {
-                            return _buildEmptyState();
-                          }
+                                // Apply admin note filter
+                                bool isAdminNote(String title) {
+                                  final t = title.toLowerCase();
+                                  return t.contains('ملاحظة إدارية') ||
+                                      t.contains('ملاحظة ادارية');
+                                }
 
-                          filtered.sort((a, b) => b.date.compareTo(a.date));
+                                if (_selectedFilter == 1) {
+                                  notifications = notifications
+                                      .where((n) => isAdminNote(n.title ?? ''))
+                                      .toList();
+                                } else if (_selectedFilter == 2) {
+                                  notifications = notifications
+                                      .where((n) => !isAdminNote(n.title ?? ''))
+                                      .toList();
+                                }
 
-                          return RefreshIndicator(
-                            color: TechColors.accentCyan,
-                            onRefresh: () async {
-                              await context
-                                  .read<NotificationCubit>()
-                                  .fetchNotifications();
-                            },
-                            child: ListView.builder(
-                              padding:
-                                  EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 40.h),
-                              itemCount: filtered.length,
-                              itemBuilder: (context, index) {
-                                final notification = filtered[index];
-                                final bool isRead = state.readNotificationIds
-                                    .contains(notification.id);
+                                // Apply search filter
+                                final filtered = _searchQuery.isNotEmpty
+                                    ? notifications
+                                        .where((n) =>
+                                            (n.title ?? '')
+                                                .toString()
+                                                .toLowerCase()
+                                                .contains(_searchQuery
+                                                    .toLowerCase()) ||
+                                            (n.body ?? '')
+                                                .toString()
+                                                .toLowerCase()
+                                                .contains(
+                                                    _searchQuery.toLowerCase()))
+                                        .toList()
+                                    : notifications;
 
-                                return Padding(
-                                  padding: EdgeInsets.only(bottom: 16.h),
-                                  child: _buildNotificationCard(
-                                      notification, isRead),
+                                if (filtered.isEmpty) {
+                                  return _buildEmptyState();
+                                }
+
+                                filtered
+                                    .sort((a, b) => b.date.compareTo(a.date));
+
+                                return RefreshIndicator(
+                                  color: TechColors.accentCyan,
+                                  onRefresh: () async {
+                                    await context
+                                        .read<NotificationCubit>()
+                                        .fetchNotifications();
+                                  },
+                                  child: ListView.builder(
+                                    padding: EdgeInsets.fromLTRB(
+                                        20.w, 12.h, 20.w, 40.h),
+                                    itemCount: filtered.length,
+                                    itemBuilder: (context, index) {
+                                      final notification = filtered[index];
+                                      final bool isRead = state
+                                          .readNotificationIds
+                                          .contains(notification.id);
+
+                                      return Padding(
+                                        padding: EdgeInsets.only(bottom: 16.h),
+                                        child: _buildNotificationCard(
+                                            notification, isRead),
+                                      );
+                                    },
+                                  ),
                                 );
-                              },
-                            ),
-                          );
-                        } else if (state.status == NotificationStatus.error) {
-                          return _buildErrorState(
-                              state.failure?.errMessages ?? 'حدث خطأ');
-                        }
+                              } else if (state.status ==
+                                  NotificationStatus.error) {
+                                return _buildErrorState(
+                                    state.failure?.errMessages ?? 'حدث خطأ');
+                              }
 
-                        return const SizedBox.shrink();
-                      },
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -379,14 +545,19 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             }
 
             if (_hasSalesRole()) {
+              final bool isAdminNote =
+                  (notification.title ?? '').contains('ملاحظة إدارية') ||
+                      (notification.title ?? '').contains('ملاحظة ادارية');
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (ctx) => NotesScreen(
-                    measurementId: notification.referenceId!,
+                    measurementId:
+                        notification.measurementId ?? notification.referenceId!,
                     customerName: notification.title,
                     customerPhone: notification.body,
                     isFromNotification: true,
+                    isAdminNote: isAdminNote,
                   ),
                 ),
               );
@@ -507,14 +678,121 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     );
   }
 
-  Widget _buildSkeletonCard() {
-    return Container(
-      height: 100.h,
-      margin: EdgeInsets.only(bottom: 16.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-      ),
+  Widget _buildShimmerLoading() {
+    return AnimatedBuilder(
+      animation: _shimmerController,
+      builder: (context, child) {
+        return ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+          itemCount: 6,
+          itemBuilder: (context, index) {
+            final delay = index * 0.15;
+            final animValue =
+                ((_shimmerController.value - delay) % 1.0).clamp(0.0, 1.0);
+            return Opacity(
+              opacity: 0.6 + 0.4 * math.sin(animValue * math.pi),
+              child: Container(
+                margin: EdgeInsets.only(bottom: 16.h),
+                padding: EdgeInsets.all(16.r),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      offset: const Offset(0, 4),
+                      blurRadius: 12,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Avatar shimmer
+                    Container(
+                      width: 50.r,
+                      height: 50.r,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment(-1.0 + 2.0 * animValue, 0),
+                          end: Alignment(-1.0 + 2.0 * animValue + 1.0, 0),
+                          colors: [
+                            Colors.grey[200]!,
+                            Colors.grey[100]!,
+                            Colors.grey[200]!,
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Title shimmer
+                          Container(
+                            height: 16.h,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              gradient: LinearGradient(
+                                begin: Alignment(-1.0 + 2.0 * animValue, 0),
+                                end: Alignment(-1.0 + 2.0 * animValue + 1.0, 0),
+                                colors: [
+                                  Colors.grey[200]!,
+                                  Colors.grey[100]!,
+                                  Colors.grey[200]!,
+                                ],
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 10.h),
+                          // Body shimmer
+                          Container(
+                            height: 12.h,
+                            width: 200.w,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6),
+                              gradient: LinearGradient(
+                                begin: Alignment(-1.0 + 2.0 * animValue, 0),
+                                end: Alignment(-1.0 + 2.0 * animValue + 1.0, 0),
+                                colors: [
+                                  Colors.grey[200]!,
+                                  Colors.grey[100]!,
+                                  Colors.grey[200]!,
+                                ],
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 10.h),
+                          // Date shimmer
+                          Container(
+                            height: 10.h,
+                            width: 120.w,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(5),
+                              gradient: LinearGradient(
+                                begin: Alignment(-1.0 + 2.0 * animValue, 0),
+                                end: Alignment(-1.0 + 2.0 * animValue + 1.0, 0),
+                                colors: [
+                                  Colors.grey[300]!,
+                                  Colors.grey[100]!,
+                                  Colors.grey[300]!,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

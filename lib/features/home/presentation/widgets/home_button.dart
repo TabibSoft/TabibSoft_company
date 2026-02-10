@@ -209,11 +209,12 @@ class _HomeButtonState extends State<HomeButton>
   void _showToast(BuildContext context) {
     final responses = [
       'إنت بتعمل إيه هنا؟ 🤔',
-      'لو ضغطت تاني هنبلغ الإدارة 👮‍♂️',
+      'حلو انت كدااا؟ 🤔',
+      'لو ضغطت تاني هنبلغ الإدارة 👮♂️',
       'ده مش ليك يا نجم ✨',
       'حاول في مكان تاني يا بطل 🦾',
       'بس يا بــابــا 🤗',
-      'وحش الكودينج بيسلم عليك 👋',
+      'وحش الكود بيسلم عليك وبيقولك شيل ايدك 👋',
       'خليك في حالك يا جميل 🌹'
     ];
     final random = Random().nextInt(responses.length);

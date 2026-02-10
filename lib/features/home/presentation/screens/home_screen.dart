@@ -49,22 +49,113 @@ class _HomeScreenState extends State<HomeScreen>
     final bool isTracker = userRoles.contains('TRACKER');
 
     // تحديد العنوان بناءً على الصلاحيات مع المسميات المطلوبة
+    final name = userName.isNotEmpty ? userName : 'المستخدم';
+    final seed =
+        DateTime.now().day + DateTime.now().month * 31 + DateTime.now().year;
     String title;
+
     if (isAdmin || userRoles.contains('MANAGEMENT')) {
-      title =
-          'أهلاً بالإدارة ${userName.isNotEmpty ? userName : 'المستخدم'} 👑';
+      final msgs = [
+        'صباح الفلوس يا $name 👑💰',
+        'الكبير كبير يا $name 👑',
+        'الإدارة نورت يا $name 🌟',
+        'يا مدير الدنيا $name 🚀👑',
+        'الباشا $name وصل 🎩👑',
+        'أهلاً بصاحب القرار $name 💎',
+      ];
+      title = msgs[seed % msgs.length];
+    } else if (userRoles.contains('SALESADMIN')) {
+      final msgs = [
+        'مدير المبيعات $name نور 🚀👑',
+        'كابتن السيلز $name جاهز 🏆',
+        'أبو الخطط $name.. يلا نكسر التارجت 📈👑',
+        'مايسترو المبيعات $name وصل 🎵🤑',
+        'يا $name النهارده فريقك هيكسرها 🔥🚀',
+        'يا $name.. خلي الأرقام تتكلم 🎯💼',
+      ];
+      title = msgs[seed % msgs.length];
     } else if (userRoles.contains('SALSE')) {
-      title = 'أهلاً السيلز اللعيب ${userName.isNotEmpty ? userName : ''} 🎯';
+      final msgs = [
+        'السيلز اللعيب $name جاهز يكسر الدنيا 🎯',
+        'يلا يا $name ورينا الشطارة 💪🔥',
+        'ملك الديلز $name وصل 🤑',
+        'البياع الشاطر $name يلا بينا 🚀',
+        'يا $name النهارده هنكسر التارجت 📈',
+        '$name.. كل عميل بيحلم بيك 😂🎯',
+        'سيلز الأحلام $name جاهز 💰',
+        'يا $name خليك كده حلو وبيع كتير 😎🤝',
+        'النهارده يومك يا $name.. يلا نبيع 🏅',
+        'عم الديلات $name.. يلا الشغل مستنيك 🎯💼',
+      ];
+      title = msgs[seed % msgs.length];
     } else if (userRoles.contains('PROGRAMMER')) {
-      title = 'وحش الكودينج ${userName.isNotEmpty ? userName : ''} 💻';
+      final msgs = [
+        'وحش الكودينج $name جاهز 💻🔥',
+        'يلا يا $name نكتب كود يهز الدنيا 🚀',
+        'الديفلوبر الخطير $name وصل 👨‍💻',
+        '$name.. البج اللي هربت مستنياك 🐛😂',
+        'يا $name النهارده من غير bugs إن شاء الله 🙏💻',
+        'الهاكر الطيب $name نور 😎⌨️',
+        'يلا يا $name.. compile and conquer 🏆💻',
+        'أسطورة الـ Stack Overflow  يا $name 🤓',
+        'سوبرمان الكود $name.. يلا بينا 🦸‍♂️💻',
+      ];
+      title = msgs[seed % msgs.length];
     } else if (userRoles.contains('SUPPORT')) {
-      title = 'بطل الدعم ${userName.isNotEmpty ? userName : ''} 🛠️';
+      final msgs = [
+        'بطل الدعم $name جاهز ينقذ الموقف 🛠️',
+        'يا $name عكننت ع المبرمجين النهارده!!🦸‍♂️',
+        'سوبر سابورت $name وصل 💪',
+        '$name.. حامي حمى العملاء 🛡️',
+        
+        'يلا يا $name نخلّي كل عميل مبسوط 😊🛠️',
+        'دكتور المشاكل $name حاضر 🩺',
+        'يا $name.. أنت الخط الأول للدفاع 🏰',
+        '$name سابورت هيرو اليوم 🎖️🛠️',
+        'يلا يا $name نعكنن ع المبرمجين!🤝',
+       
+      ];
+      title = msgs[seed % msgs.length];
     } else if (isModerator) {
-      title = 'الوســـيط ${userName.isNotEmpty ? userName : ''} 🤝';
+      final msgs = [
+        'الوسيط الدبلوماسي $name وصل 🤝',
+        'يا $name يلا نظبّط الأمور 💼',
+        '$name .. الميزان بتاع الشغل ⚖️',
+        'أبو الحلول $name حاضر 🧠🤝',
+        'يلا يا $name نوصّل كل حاجة لبر الأمان 🚢',
+        'المحترم $name نور المكان 🌟🤝',
+        '$name ماسك الخيوط كلها 🎭',
+        'يا $name.. بدونك الدنيا تتلخبط 😂🤝',
+        'صانع السلام $name وصل ☮️',
+        'أهلاً بالوسيط الذهبي $name 🏅',
+      ];
+      title = msgs[seed % msgs.length];
     } else if (isTracker) {
-      title = 'ملك المتابعة ${userName.isNotEmpty ? userName : ''} 🚀';
+      final msgs = [
+        'ملك المتابعة $name جاهز 🚀',
+        'يا $name مفيش حاجة بتفوتك 🔍',
+        'العين الساهرة $name وصلت 👁️',
+        '$name.. GPS بشري ما شاء الله 📡😂',
+        'يلا يا $name تابع وهات النتيجة 📊',
+        'المتابع الأسطورة $name حاضر 🏆',
+        '$name شغّال رادار النهارده 📡🔥',
+        'يا $name خليك ورا كل حاجة 🎯',
+        'أبو المتابعة $name.. يلا بينا 🚀📋',
+        'الكل تحت عينك يا $name 👀🔥',
+      ];
+      title = msgs[seed % msgs.length];
     } else {
-      title = 'أهلاً ${userName.isNotEmpty ? userName : 'المستخدم'} 👋';
+      final msgs = [
+        'أهلاً $name.. يوم جميل يا رب 👋',
+        'نورت يا $name 🌟',
+        'يلا يا $name نبدأ يومنا 💪',
+        'صباح الخير يا $name ☀️',
+        '$name.. مبسوطين إنك معانا 🤗',
+        'أهلاً وسهلاً يا $name 🎉',
+        'يومك حلو يا $name إن شاء الله 🌸',
+        'حمد لله على السلامة يا $name 👋😊',
+      ];
+      title = msgs[seed % msgs.length];
     }
 
     return Directionality(

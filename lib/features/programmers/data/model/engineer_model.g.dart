@@ -18,6 +18,6 @@ Map<String, dynamic> _$EngineerModelToJson(EngineerModel instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
-      'address': instance.name,
+      'address': instance.address,
       'telephone': instance.telephone,
     };

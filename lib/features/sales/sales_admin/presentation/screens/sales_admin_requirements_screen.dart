@@ -26,8 +26,9 @@ class _SalesAdminRequirementsScreenState
   DateTime? fromDate;
   DateTime? toDate;
   String? selectedSalesPersonId;
-  String? selectedStatusId;
+  String? selectedStatusName;
   String? selectedName;
+  final Set<String> _selectedStatusFilters = {};
   final ScrollController _scrollController = ScrollController();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -86,7 +87,7 @@ class _SalesAdminRequirementsScreenState
           fromDate: fromDate != null ? _formatDateForApi(fromDate!) : null,
           toDate: toDate != null ? _formatDateForApi(toDate!) : null,
           salesPersonId: selectedSalesPersonId,
-          statusId: selectedStatusId,
+          statusName: selectedStatusName,
           name: selectedName,
         );
       }
@@ -115,7 +116,7 @@ class _SalesAdminRequirementsScreenState
           currentFromDate: fromDate,
           currentToDate: toDate,
           currentSalesPersonId: selectedSalesPersonId,
-          currentStatusId: selectedStatusId,
+          currentStatusName: selectedStatusName,
           currentName: selectedName,
         );
       },
@@ -135,8 +136,12 @@ class _SalesAdminRequirementsScreenState
         fromDate = result['fromDate'];
         toDate = result['toDate'];
         selectedSalesPersonId = result['salesPersonId'];
-        selectedStatusId = result['statusId'];
+        selectedStatusName = result['statusName'];
         selectedName = result['name'];
+        _selectedStatusFilters.clear();
+        if (result['statusName'] != null) {
+          _selectedStatusFilters.add(result['statusName']);
+        }
       });
 
       context.read<RequirementsCubit>().fetchRequirements(
@@ -145,11 +150,36 @@ class _SalesAdminRequirementsScreenState
             fromDate: fromDate != null ? _formatDateForApi(fromDate!) : null,
             toDate: toDate != null ? _formatDateForApi(toDate!) : null,
             salesPersonId: selectedSalesPersonId,
-            statusId: selectedStatusId,
+            statusName: selectedStatusName,
             name: selectedName,
             isRefresh: true,
           );
     }
+  }
+
+  void _onStatusBoxTapped(String statusName) {
+    setState(() {
+      if (_selectedStatusFilters.contains(statusName)) {
+        _selectedStatusFilters.remove(statusName);
+      } else {
+        _selectedStatusFilters.clear();
+        _selectedStatusFilters.add(statusName);
+      }
+      selectedStatusName = _selectedStatusFilters.isNotEmpty
+          ? _selectedStatusFilters.first
+          : null;
+    });
+
+    context.read<RequirementsCubit>().fetchRequirements(
+          page: 1,
+          pageSize: 25,
+          fromDate: fromDate != null ? _formatDateForApi(fromDate!) : null,
+          toDate: toDate != null ? _formatDateForApi(toDate!) : null,
+          salesPersonId: selectedSalesPersonId,
+          statusName: selectedStatusName,
+          name: selectedName,
+          isRefresh: true,
+        );
   }
 
   void _showEditNoteDialog(
@@ -322,7 +352,7 @@ class _SalesAdminRequirementsScreenState
                               ? _formatDateForApi(toDate!)
                               : null,
                           salesPersonId: selectedSalesPersonId,
-                          statusId: selectedStatusId,
+                          statusName: selectedStatusName,
                           name: selectedName,
                           isRefresh: true,
                         );
@@ -403,51 +433,85 @@ class _SalesAdminRequirementsScreenState
         itemCount: state.statusCounts.length,
         itemBuilder: (context, index) {
           final status = state.statusCounts[index];
-          return Container(
-            margin: const EdgeInsets.only(left: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-              border: Border(
-                bottom: BorderSide(
-                  color: Color(
-                      int.parse(status.statusColor.replaceFirst('#', '0xFF'))),
-                  width: 4,
+          final isSelected = _selectedStatusFilters.contains(status.statusName);
+          final statusColor =
+              Color(int.parse(status.statusColor.replaceFirst('#', '0xFF')));
+          return GestureDetector(
+            onTap: () => _onStatusBoxTapped(status.statusName),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.only(left: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color:
+                    isSelected ? statusColor.withOpacity(0.12) : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+                border: Border.all(
+                  color: isSelected ? statusColor : Colors.transparent,
+                  width: isSelected ? 2 : 0,
                 ),
               ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  status.statusName,
-                  style: TextStyle(
-                    fontFamily: 'Amiri',
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blueGrey[800],
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        status.statusName,
+                        style: TextStyle(
+                          fontFamily: 'Amiri',
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueGrey[800],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${status.count}',
+                        style: TextStyle(
+                          fontFamily: 'Amiri',
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${status.count}',
-                  style: TextStyle(
-                    fontFamily: 'Amiri',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(int.parse(
-                        status.statusColor.replaceFirst('#', '0xFF'))),
-                  ),
-                ),
-              ],
+                  if (isSelected)
+                    Positioned(
+                      top: -8,
+                      right: -8,
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
         },

@@ -7,7 +7,7 @@ class FilterDialog extends StatefulWidget {
   final DateTime? currentFromDate;
   final DateTime? currentToDate;
   final String? currentSalesPersonId;
-  final String? currentStatusId;
+  final String? currentStatusName;
   final String? currentName;
 
   const FilterDialog({
@@ -17,7 +17,7 @@ class FilterDialog extends StatefulWidget {
     this.currentFromDate,
     this.currentToDate,
     this.currentSalesPersonId,
-    this.currentStatusId,
+    this.currentStatusName,
     this.currentName,
   });
 
@@ -29,7 +29,7 @@ class _FilterDialogState extends State<FilterDialog> {
   DateTime? fromDate;
   DateTime? toDate;
   String? selectedSalesPersonId;
-  String? selectedStatusId;
+  String? selectedStatusName;
   late TextEditingController nameController;
 
   @override
@@ -38,7 +38,7 @@ class _FilterDialogState extends State<FilterDialog> {
     fromDate = widget.currentFromDate;
     toDate = widget.currentToDate;
     selectedSalesPersonId = widget.currentSalesPersonId;
-    selectedStatusId = widget.currentStatusId;
+    selectedStatusName = widget.currentStatusName;
     nameController = TextEditingController(text: widget.currentName);
   }
 
@@ -90,7 +90,7 @@ class _FilterDialogState extends State<FilterDialog> {
       fromDate = null;
       toDate = null;
       selectedSalesPersonId = null;
-      selectedStatusId = null;
+      selectedStatusName = null;
       nameController.clear();
     });
   }
@@ -210,7 +210,7 @@ class _FilterDialogState extends State<FilterDialog> {
                 // Status Dropdown
                 _buildDropdown(
                   label: 'الحالة',
-                  value: selectedStatusId,
+                  value: selectedStatusName,
                   hint: 'اختر الحالة',
                   items: widget.statusCounts.map((status) {
                     return DropdownMenuItem(
@@ -234,7 +234,7 @@ class _FilterDialogState extends State<FilterDialog> {
                     );
                   }).toList(),
                   onChanged: (value) =>
-                      setState(() => selectedStatusId = value),
+                      setState(() => selectedStatusName = value),
                 ),
               ],
             ),
@@ -271,7 +271,7 @@ class _FilterDialogState extends State<FilterDialog> {
                       'fromDate': fromDate,
                       'toDate': toDate,
                       'salesPersonId': selectedSalesPersonId,
-                      'statusId': selectedStatusId,
+                      'statusName': selectedStatusName,
                       'name': nameController.text.trim(),
                     });
                   },

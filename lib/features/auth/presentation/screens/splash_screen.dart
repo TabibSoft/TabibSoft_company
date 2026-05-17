@@ -95,12 +95,8 @@ class _SplashScreenState extends State<SplashScreen>
 
   void checkLoginStatus() {
     if (!mounted) return;
-    String token = CacheHelper.getString(key: 'loginToken');
-    if (token.isNotEmpty) {
-      context.pushReplacementNamed(homeScreen);
-    } else {
-      context.pushReplacementNamed(loginScreen);
-    }
+    // Navigate to AppGateScreen for access verification
+    context.pushReplacementNamed(appGateScreen);
   }
 
   @override

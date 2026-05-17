@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:tabib_soft_company/core/export.dart';
+import 'package:tabib_soft_company/features/app_gate/export.dart';
 import 'package:tabib_soft_company/features/auth/data/repos/login_repo.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_cubit.dart';
 import 'package:tabib_soft_company/features/modirator/data/repo/add_subscription_repo.dart';
@@ -45,6 +46,9 @@ class ServicesLocator {
 
     // intro app
     locator.registerLazySingleton<IntroAppCubit>(() => IntroAppCubit());
+
+    // App Gate
+    locator.registerFactory<AppGateCubit>(() => AppGateCubit());
 
     // Login
     locator.registerLazySingleton<LoginReposetory>(
@@ -157,6 +161,7 @@ class ServicesLocator {
 
   // Getters
   static IntroAppCubit get introAppCubit => locator<IntroAppCubit>();
+  static AppGateCubit get appGateCubit => locator<AppGateCubit>();
   static LoginCubit get loginCubit => locator<LoginCubit>();
   static CustomerCubit get customerCubit => locator<CustomerCubit>();
   static EngineerCubit get engineerCubit => locator<EngineerCubit>();

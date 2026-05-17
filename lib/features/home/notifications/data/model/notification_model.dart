@@ -9,8 +9,8 @@ class NotificationModel {
   final String body;
   final String? type; // Made nullable to handle null or empty string
   @JsonKey(
-      name: 'notfDate', fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
-  final DateTime date;
+      name: 'createdDate', fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
+  final DateTime? date;
   @JsonKey(name: 'isRecevie')
   late final bool isRead;
   final String? referenceId; // Added to match API response
@@ -24,7 +24,7 @@ class NotificationModel {
     required this.title,
     required this.body,
     this.type,
-    required this.date,
+    this.date,
     required this.isRead,
     this.referenceId,
     this.measurementId,
@@ -38,7 +38,7 @@ class NotificationModel {
   Map<String, dynamic> toJson() => _$NotificationModelToJson(this);
 
   // Helper methods for DateTime serialization
-  static DateTime _dateTimeFromJson(String date) =>
-      DateTime.parse(date).toLocal();
-  static String _dateTimeToJson(DateTime date) => date.toIso8601String();
+  static DateTime? _dateTimeFromJson(String? date) =>
+      date != null ? DateTime.parse(date).toLocal() : null;
+  static String? _dateTimeToJson(DateTime? date) => date?.toIso8601String();
 }

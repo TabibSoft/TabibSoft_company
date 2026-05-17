@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tabib_soft_company/core/export.dart';
+import 'package:tabib_soft_company/features/app_gate/export.dart';
 import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 import 'package:tabib_soft_company/features/auth/presentation/screens/splash_screen.dart';
 import 'package:tabib_soft_company/features/home/presentation/screens/home_screen.dart';
@@ -16,6 +17,21 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) {
             return const SplashScreen();
+          },
+        );
+      case appGateScreen:
+        return MaterialPageRoute(
+          builder: (_) {
+            return BlocProvider(
+              create: (_) => ServicesLocator.appGateCubit,
+              child: const AppGateScreen(),
+            );
+          },
+        );
+      case appBlockedScreen:
+        return MaterialPageRoute(
+          builder: (_) {
+            return const AppBlockedScreen();
           },
         );
       case loginScreen:

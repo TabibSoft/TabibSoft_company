@@ -12,7 +12,8 @@ class NotificationDetailScreenAnyRole extends StatelessWidget {
     required this.notification,
   });
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
     return DateFormat('dd MMMM yyyy - hh:mm a', 'ar').format(date.toLocal());
   }
 

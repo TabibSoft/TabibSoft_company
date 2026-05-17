@@ -15,7 +15,7 @@ class RequirementsCubit extends Cubit<RequirementsState> {
     String? fromDate,
     String? toDate,
     String? salesPersonId,
-    String? statusId,
+    String? statusName,
     String? name,
     bool isRefresh = false,
   }) async {
@@ -37,7 +37,7 @@ class RequirementsCubit extends Cubit<RequirementsState> {
             DateTime.now().subtract(const Duration(days: 7)).toIso8601String(),
         "to": toDate ?? DateTime.now().toIso8601String(),
         "salesId": salesPersonId,
-        "statusId": statusId,
+        "statusName": statusName,
         "name": name,
         "search": name, // Adding search as it's common in other APIs
       };

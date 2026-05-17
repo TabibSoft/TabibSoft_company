@@ -3,14 +3,55 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+/// Abstract interface for app configuration service.
+/// Allows replacing Remote Config with API, Firestore, or License server.
+abstract class AppConfigService {
+  Future<void> init();
+  Future<bool> fetchAndActivate();
+  bool getBool(String key);
+  String getString(String key);
+  int getInt(String key);
+}
+
 /// [FRConfig] is stands for Firebase Remote Config
-class FRConfig {
+class FRConfig implements AppConfigService {
   static final FRConfig instance = FRConfig._();
   final FirebaseRemoteConfig _remoteConfig = FirebaseRemoteConfig.instance;
 
   FRConfig._() {
     setupRemoteConfig();
     _isUpdateExist();
+  }
+
+  @override
+  Future<void> init() async {
+    await setupRemoteConfig();
+  }
+
+  @override
+  Future<bool> fetchAndActivate() async {
+    return await _remoteConfig.fetchAndActivate();
+  }
+
+  @override
+  bool getBool(String key) {
+    return _remoteConfig.getBool(key);
+  }
+
+  @override
+  String getString(String key) {
+    return _remoteConfig.getString(key);
+  }
+
+  @override
+  int getInt(String key) {
+    return _remoteConfig.getInt(key);
+  }
+
+  /// Check if the app is enabled via Remote Config
+  bool get isAppEnabled {
+    if (kDebugMode) return true; // Always enabled in debug mode
+    return _remoteConfig.getBool('app_enabled');
   }
 
   /// Check Remote Config if the ['force_update'] is true, the app will navigate
@@ -83,8 +124,7 @@ class FRConfig {
     return _remoteConfig;
   }
 
-
-  String appLink(){
+  String appLink() {
     debugPrint('appLinkkkkkkkkkkkkkkkkkkkkk : $storeAppLink');
     return storeAppLink;
   }

@@ -460,8 +460,11 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                                   return _buildEmptyState();
                                 }
 
-                                filtered
-                                    .sort((a, b) => b.date.compareTo(a.date));
+                                filtered.sort((a, b) {
+                                  final aDate = a.date ?? DateTime(2000);
+                                  final bDate = b.date ?? DateTime(2000);
+                                  return bDate.compareTo(aDate);
+                                });
 
                                 return RefreshIndicator(
                                   color: TechColors.accentCyan,
@@ -511,7 +514,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   }
 
   Widget _buildNotificationCard(NotificationModel notification, bool isRead) {
-    final dateStr = formatDate(notification.date);
+    final dateStr =
+        notification.date != null ? formatDate(notification.date!) : '';
 
     return Container(
       decoration: BoxDecoration(

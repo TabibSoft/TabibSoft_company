@@ -3,7 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:tabib_soft_company/core/utils/constant/app_style.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/my_request_screen.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/screens/salary_advance_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/vacation_request_screen.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/screens/early_permission_screen.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/screens/work_fromhome_screen.dart';
 
 class HumanResourcesScreen extends StatelessWidget {
   const HumanResourcesScreen({super.key});
@@ -87,7 +90,14 @@ class HumanResourcesScreen extends StatelessWidget {
                             icon: Icons.access_time_rounded,
                             bgColor: const Color(0xffE7FAF4),
                             iconColor: const Color(0xff34B299),
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const EarlyPermissionScreen()),
+                              );
+                            },
                           ),
                           SizedBox(width: 12.w),
                           _ServiceSection(
@@ -95,23 +105,30 @@ class HumanResourcesScreen extends StatelessWidget {
                             icon: Icons.home_rounded,
                             bgColor: const Color(0xffFFF7D9),
                             iconColor: const Color(0xffD6A100),
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const WorkFromHomeScreen()),
+                              );
+                            },
                           ),
                           SizedBox(width: 12.w),
-                          _ServiceSection(
-                            title: "طلب عمل\nمن البيت",
-                            icon: Icons.home_work_rounded,
-                            bgColor: const Color(0xffE4F7F5),
-                            iconColor: const Color(0xff4AA39A),
-                            onTap: () {},
-                          ),
-                          SizedBox(width: 12.w),
+                        
                           _ServiceSection(
                             title: "سلفة راتب",
                             icon: Icons.payments_rounded,
                             bgColor: const Color(0xffEAF7E8),
                             iconColor: Colors.green,
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SalaryAdvanceScreen(),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),

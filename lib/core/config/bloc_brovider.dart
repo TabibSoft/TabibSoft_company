@@ -19,6 +19,8 @@ import 'package:tabib_soft_company/features/technical_support/presentation/cubit
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
 import 'package:tabib_soft_company/features/technical_support/data/repo/whatsapp_repository.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/whatsapp/whatsapp_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_profile_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_cubit.dart';
 
 Widget buildAppWithProviders({required Widget child}) {
   return MultiBlocProvider(
@@ -54,6 +56,12 @@ Widget buildAppWithProviders({required Widget child}) {
           repository: WhatsAppRepository(),
           customerId: '6857e4ca-b3a2-4562-6f0a-08dd8633b87e',
         )..initialize(),
+      ),
+      BlocProvider<HrProfileCubit>(
+        create: (_) => ServicesLocator.hrProfileCubit..fetchHrProfile(),
+      ),
+      BlocProvider<HrLeaveCubit>(
+        create: (_) => ServicesLocator.hrLeaveCubit,
       ),
     ],
     child: child,

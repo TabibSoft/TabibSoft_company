@@ -1,15 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:tabib_soft_company/core/utils/constant/app_style.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_state.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_profile_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_profile_state.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/my_request_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/salary_advance_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/vacation_request_screen.dart';
-import 'package:tabib_soft_company/features/human_resources/presentation/screens/early_permission_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/work_fromhome_screen.dart';
 
-class HumanResourcesScreen extends StatelessWidget {
+class HumanResourcesScreen extends StatefulWidget {
   const HumanResourcesScreen({super.key});
+
+  @override
+  State<HumanResourcesScreen> createState() => _HumanResourcesScreenState();
+}
+
+class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HrProfileCubit>().fetchHrProfile();
+      context.read<HrLeaveCubit>().fetchMyLeaves();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +44,7 @@ class HumanResourcesScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _welcomeCard(),
+                    _welcomeCard(context),
                     SizedBox(height: 24.h),
                     Text(
                       "إحصائيات الإجازات",
@@ -35,26 +53,120 @@ class HumanResourcesScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 16.h),
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: _StatCard(
-                            title: "إجازة اعتيادية",
-                            value: "10/14",
-                            percent: .72,
-                            color: AppColor.accentColor,
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        const Expanded(
-                          child: _StatCard(
-                            title: "إجازة مرضية",
-                            value: "2/6",
-                            percent: .33,
-                            color: AppColor.secondaryColor,
-                          ),
-                        ),
-                      ],
+                    BlocBuilder<HrProfileCubit, HrProfileState>(
+                      builder: (context, state) {
+                        if (state.status == HrProfileStatus.loading ||
+                            state.status == HrProfileStatus.initial) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        if (state.status == HrProfileStatus.error) {
+                          return Center(
+                            child: Text(
+                              state.failure?.errMessages ?? 'حدث خطأ',
+                              style: AppStyle.font14_400Weight,
+                            ),
+                          );
+                        }
+                        final profile = state.profile!;
+                        final vacationBalance = profile.vacationBalance ?? 0;
+                        final sickBalance = profile.sickLeaveBalance ?? 0;
+                        final casualBalance = profile.casualLeaveBalance ?? 0;
+
+                        // حدود الإجازات حسب سياسات الموارد البشرية الحالية.
+                        const vacationMax = 9;
+                        const sickMax = 10;
+                        const casualMax = 7;
+
+                        final vacationMonthlyMax =
+                            profile.vacationMonthlyMax ?? 0;
+                        final earlyPermissionMonthlyHours =
+                            profile.maxLeaveHoursPerMonth ?? 0;
+                        final earlyPermissionDailyHours =
+                            profile.maxLeaveHoursPerDay ?? 0;
+
+                        final vacationPercent = vacationMax > 0
+                            ? (vacationBalance / vacationMax).clamp(0.0, 1.0)
+                            : 0.0;
+                        final sickPercent = sickMax > 0
+                            ? (sickBalance / sickMax).clamp(0.0, 1.0)
+                            : 0.0;
+                        final casualPercent = casualMax > 0
+                            ? (casualBalance / casualMax).clamp(0.0, 1.0)
+                            : 0.0;
+
+                        return Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _StatCard(
+                                    title: "إجازة اعتيادية",
+                                    value: "$vacationBalance/$vacationMax",
+                                    percent: vacationPercent,
+                                    color: AppColor.accentColor,
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: _StatCard(
+                                    title: "إجازة مرضية",
+                                    value: "$sickBalance/$sickMax",
+                                    percent: sickPercent,
+                                    color: AppColor.secondaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 12.h),
+                            _StatCard(
+                              title: "إجازة عارضة",
+                              value: "$casualBalance/$casualMax",
+                              percent: casualPercent,
+                              color: const Color(0xffD6A100),
+                            ),
+                            SizedBox(height: 12.h),
+                            SizedBox(height: 10.h),
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(14.w),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16.r),
+                                border: Border.all(
+                                  color:
+                                      AppColor.secondaryColor.withOpacity(.2),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "الحدود الشهرية",
+                                    style: AppStyle.font14_700Weight.copyWith(
+                                      color: AppColor.titleColor,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    "طلب الإجازة الاعتيادية: $vacationMonthlyMax يوم / شهر",
+                                    style: AppStyle.font13_400Weight.copyWith(
+                                      color: AppColor.subTitleColor,
+                                    ),
+                                  ),
+                                  SizedBox(height: 6.h),
+                                  Text(
+                                    "الاستئذان المبكر: $earlyPermissionMonthlyHours ساعة / شهر (بحد أقصى $earlyPermissionDailyHours ساعة يومياً)",
+                                    style: AppStyle.font13_400Weight.copyWith(
+                                      color: AppColor.subTitleColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     SizedBox(height: 30.h),
                     Text(
@@ -84,22 +196,22 @@ class HumanResourcesScreen extends StatelessWidget {
                               );
                             },
                           ),
-                          SizedBox(width: 12.w),
-                          _ServiceSection(
-                            title: "طلب استئذان مبكر",
-                            icon: Icons.access_time_rounded,
-                            bgColor: const Color(0xffE7FAF4),
-                            iconColor: const Color(0xff34B299),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const EarlyPermissionScreen()),
-                              );
-                            },
-                          ),
-                          SizedBox(width: 12.w),
+                          // SizedBox(width: 12.w),
+                          // _ServiceSection(
+                          //   title: "طلب استئذان مبكر",
+                          //   icon: Icons.access_time_rounded,
+                          //   bgColor: const Color(0xffE7FAF4),
+                          //   iconColor: const Color(0xff34B299),
+                          //   onTap: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //           builder: (context) =>
+                          //               const EarlyPermissionScreen()),
+                          //     );
+                          //   },
+                          // ),
+                          SizedBox(width: 20.w),
                           _ServiceSection(
                             title: "طلب عمل\nمن البيت",
                             icon: Icons.home_rounded,
@@ -114,8 +226,7 @@ class HumanResourcesScreen extends StatelessWidget {
                               );
                             },
                           ),
-                          SizedBox(width: 12.w),
-                        
+                          SizedBox(width: 20.w),
                           _ServiceSection(
                             title: "سلفة راتب",
                             icon: Icons.payments_rounded,
@@ -125,7 +236,8 @@ class HumanResourcesScreen extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const SalaryAdvanceScreen(),
+                                  builder: (context) =>
+                                      const SalaryAdvanceScreen(),
                                 ),
                               );
                             },
@@ -155,7 +267,51 @@ class HumanResourcesScreen extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: 10.h),
-                    const _ActivityTimeline(),
+                    BlocBuilder<HrLeaveCubit, HrLeaveState>(
+                      builder: (context, state) {
+                        final requests = state.leaveRequests;
+
+                        if (state.status == HrLeaveStatus.loadingRequests &&
+                            requests.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+
+                        if (requests.isEmpty) {
+                          return Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            child: Text(
+                              'لا توجد أنشطة حالياً',
+                              style: AppStyle.font13_400Weight.copyWith(
+                                color: AppColor.subTitleColor,
+                              ),
+                            ),
+                          );
+                        }
+
+                        final recent = requests.take(3).toList();
+                        return Column(
+                          children: List.generate(recent.length, (i) {
+                            final r = recent[i];
+                            return Column(
+                              children: [
+                                _ActivityCard(
+                                  title: _leaveTypeLabel(r.leaveType),
+                                  time: _timeAgo(r.createdDate),
+                                  status: _statusLabel(r.status),
+                                  icon: _leaveIcon(r.leaveType),
+                                  color: _statusColor(r.status),
+                                ),
+                                if (i < recent.length - 1)
+                                  SizedBox(height: 14.h),
+                              ],
+                            );
+                          }),
+                        );
+                      },
+                    ),
                     SizedBox(height: 25.h),
                     Row(
                       children: [
@@ -197,62 +353,132 @@ class HumanResourcesScreen extends StatelessWidget {
     );
   }
 
-  Widget _welcomeCard() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            AppColor.accentColor,
-            AppColor.primaryColor,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColor.primaryColor.withOpacity(.15),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.pending_actions_rounded,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "لديك 3 طلبات قيد المراجعة",
-                  style: AppStyle.font16_700Weight.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  "يمكنك متابعة حالة جميع الطلبات",
-                  style: AppStyle.font13_400Weight.copyWith(
-                    color: Colors.white70,
-                  ),
-                ),
+  String _leaveTypeLabel(String? value) {
+    switch (value) {
+      case 'RegularVacation':
+        return 'إجازة اعتيادية';
+      case 'Casual':
+        return 'إجازة عارضة';
+      case 'Sick':
+        return 'إجازة مرضية';
+      case 'LeaveHours':
+        return 'استئذان (ساعات)';
+      default:
+        return value ?? 'طلب إجازة';
+    }
+  }
+
+  String _statusLabel(String? value) {
+    switch (value) {
+      case 'Approved':
+        return 'تمت الموافقة';
+      case 'Rejected':
+        return 'مرفوض';
+      case 'PendingLevel1':
+      case 'PendingLevel2':
+        return 'قيد المراجعة';
+      default:
+        return value ?? 'قيد المراجعة';
+    }
+  }
+
+  Color _statusColor(String? value) {
+    switch (value) {
+      case 'Approved':
+        return Colors.green;
+      case 'Rejected':
+        return Colors.red;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  IconData _leaveIcon(String? value) {
+    switch (value) {
+      case 'RegularVacation':
+        return Icons.beach_access_rounded;
+      case 'Sick':
+        return Icons.local_hospital_rounded;
+      case 'LeaveHours':
+        return Icons.access_time_rounded;
+      case 'Casual':
+      default:
+        return Icons.pending_actions_rounded;
+    }
+  }
+
+  String _timeAgo(DateTime? date) {
+    if (date == null) return '';
+    final diff = DateTime.now().difference(date);
+    if (diff.inMinutes < 60) return 'منذ ${diff.inMinutes} دقيقة';
+    if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعة';
+    if (diff.inDays == 1) return 'أمس';
+    return 'منذ ${diff.inDays} أيام';
+  }
+
+  Widget _welcomeCard(BuildContext context) {
+    return BlocBuilder<HrProfileCubit, HrProfileState>(
+      builder: (context, state) {
+        final name = state.profile?.employeeName ?? '';
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(18.w),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                AppColor.accentColor,
+                AppColor.primaryColor,
               ],
             ),
+            borderRadius: BorderRadius.circular(24.r),
+            boxShadow: [
+              BoxShadow(
+                color: AppColor.primaryColor.withOpacity(.15),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              )
+            ],
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.pending_actions_rounded,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name.isNotEmpty
+                          ? "أهلاً بك، $name 👋"
+                          : "لديك طلبات قيد المراجعة",
+                      style: AppStyle.font16_700Weight.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      "يمكنك متابعة حالة جميع الطلبات",
+                      style: AppStyle.font13_400Weight.copyWith(
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -388,41 +614,6 @@ class _StatCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ActivityTimeline extends StatelessWidget {
-  const _ActivityTimeline();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        _ActivityCard(
-          title: "تمت الموافقة على طلب إجازة الأسبوع القادم",
-          time: "منذ ساعتين",
-          color: Colors.green,
-          icon: Icons.check_circle_rounded,
-          status: "تمت الموافقة",
-        ),
-        SizedBox(height: 14),
-        _ActivityCard(
-          title: "تم إرسال طلب إذن خروج مبكر",
-          time: "أمس - 04:30 م",
-          color: Colors.orange,
-          icon: Icons.pending_actions_rounded,
-          status: "قيد المراجعة",
-        ),
-        SizedBox(height: 14),
-        _ActivityCard(
-          title: "تم اعتماد سلفة الراتب",
-          time: "منذ 3 أيام",
-          color: Colors.blue,
-          icon: Icons.payments_rounded,
-          status: "مكتمل",
-        ),
-      ],
     );
   }
 }

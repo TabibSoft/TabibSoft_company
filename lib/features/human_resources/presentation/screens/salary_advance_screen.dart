@@ -35,8 +35,8 @@ class _SalaryAdvanceScreenState extends State<SalaryAdvanceScreen> {
                 Container(
                   height: 220.h,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [const Color(0xFF00579B), const Color(0xFF00A8D8)],
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF00579B), Color(0xFF00A8D8)],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -47,7 +47,8 @@ class _SalaryAdvanceScreenState extends State<SalaryAdvanceScreen> {
                   ),
                   child: SafeArea(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 18.h),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 18.w, vertical: 18.h),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -73,10 +74,8 @@ class _SalaryAdvanceScreenState extends State<SalaryAdvanceScreen> {
                     ),
                   ),
                 ),
-                               Positioned(
-                  top: 240.h,
-                  left: 0,
-                  right: 0,
+                Padding(
+                  padding: EdgeInsets.only(top: 240.h),
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -104,15 +103,18 @@ class _SalaryAdvanceScreenState extends State<SalaryAdvanceScreen> {
                               ],
                             ),
                             child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 22.h),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 18.w, vertical: 22.h),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _buildSectionLabel('المبلغ المطلوب', icon: Icons.monetization_on_outlined),
+                                  _buildSectionLabel('المبلغ المطلوب',
+                                      icon: Icons.monetization_on_outlined),
                                   SizedBox(height: 10.h),
                                   Container(
                                     width: double.infinity,
-                                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 16.w, vertical: 16.h),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFF4F7FB),
                                       borderRadius: BorderRadius.circular(20.r),
@@ -124,7 +126,8 @@ class _SalaryAdvanceScreenState extends State<SalaryAdvanceScreen> {
                                         isDense: true,
                                         contentPadding: EdgeInsets.zero,
                                         hintText: '0.00',
-                                        hintStyle: AppStyle.font14_400Weight.copyWith(
+                                        hintStyle:
+                                            AppStyle.font14_400Weight.copyWith(
                                           color: const Color(0xFF9EA4AE),
                                         ),
                                         border: InputBorder.none,
@@ -135,22 +138,31 @@ class _SalaryAdvanceScreenState extends State<SalaryAdvanceScreen> {
                                     ),
                                   ),
                                   SizedBox(height: 20.h),
-                                  _buildSectionLabel('فترة السداد', icon: Icons.date_range_outlined),
+                                  _buildSectionLabel('فترة السداد',
+                                      icon: Icons.date_range_outlined),
                                   SizedBox(height: 10.h),
                                   Container(
                                     width: double.infinity,
-                                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 16.w),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFF4F7FB),
                                       borderRadius: BorderRadius.circular(20.r),
                                     ),
                                     child: DropdownButtonFormField<String>(
-                                      value: duration,
-                                      decoration: const InputDecoration(border: InputBorder.none),
+                                      initialValue: duration,
+                                      decoration: const InputDecoration(
+                                          border: InputBorder.none),
                                       items: const [
-                                        DropdownMenuItem(value: '3 أشهر', child: Text('3 أشهر')),
-                                        DropdownMenuItem(value: '6 أشهر', child: Text('6 أشهر')),
-                                        DropdownMenuItem(value: '12 أشهر', child: Text('12 أشهر')),
+                                        DropdownMenuItem(
+                                            value: '3 أشهر',
+                                            child: Text('3 أشهر')),
+                                        DropdownMenuItem(
+                                            value: '6 أشهر',
+                                            child: Text('6 أشهر')),
+                                        DropdownMenuItem(
+                                            value: '12 أشهر',
+                                            child: Text('12 أشهر')),
                                       ],
                                       onChanged: (value) {
                                         if (value != null) {
@@ -160,24 +172,29 @@ class _SalaryAdvanceScreenState extends State<SalaryAdvanceScreen> {
                                       style: AppStyle.font14_700Weight.copyWith(
                                         color: ProgrammerColors.textPrimary,
                                       ),
-                                      icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF7D848D)),
+                                      icon: const Icon(
+                                          Icons.keyboard_arrow_down,
+                                          color: Color(0xFF7D848D)),
                                     ),
                                   ),
                                   SizedBox(height: 20.h),
-                                  _buildSectionLabel('سبب الطلب', icon: Icons.note_outlined),
+                                  _buildSectionLabel('سبب الطلب',
+                                      icon: Icons.note_outlined),
                                   SizedBox(height: 10.h),
                                   TextField(
                                     controller: reasonController,
                                     maxLines: 5,
                                     decoration: InputDecoration(
                                       hintText: 'يرجى توضيح سبب السلفة...',
-                                      hintStyle: AppStyle.font14_400Weight.copyWith(
+                                      hintStyle:
+                                          AppStyle.font14_400Weight.copyWith(
                                         color: const Color(0xFF9EA4AE),
                                       ),
                                       filled: true,
                                       fillColor: const Color(0xFFF4F7FB),
                                       border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(20.r),
+                                        borderRadius:
+                                            BorderRadius.circular(20.r),
                                         borderSide: BorderSide.none,
                                       ),
                                       contentPadding: EdgeInsets.symmetric(
@@ -251,7 +268,8 @@ class _SalaryAdvanceScreenState extends State<SalaryAdvanceScreen> {
                                     ),
                                   ),
                                   SizedBox(width: 8.w),
-                                  const Icon(Icons.arrow_forward, color: Colors.white),
+                                  const Icon(Icons.arrow_forward,
+                                      color: Colors.white),
                                 ],
                               ),
                             ),
@@ -262,10 +280,12 @@ class _SalaryAdvanceScreenState extends State<SalaryAdvanceScreen> {
                     ),
                   ),
                 ),
-        Positioned(
-                  top: 170.h,
-                  left: 16.w,
-                  right: 16.w,
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: 170.h,
+                    left: 16.w,
+                    right: 16.w,
+                  ),
                   child: Row(
                     children: [
                       Expanded(
@@ -286,7 +306,6 @@ class _SalaryAdvanceScreenState extends State<SalaryAdvanceScreen> {
                     ],
                   ),
                 ),
-
               ],
             ),
           ],

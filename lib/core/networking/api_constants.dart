@@ -53,6 +53,10 @@ class ApiConstants {
 
   static const String makeMeasurementDone = 'Sales/MakeMeasurementDone';
 
+  static const String hrProfileMe = 'HRProfile/Me';
+  static const String hrLeave = 'HRLeave';
+  static const String hrLeaveTypes = 'HRLeave/Types';
+
   static const String getAllProgrammerTasks = 'Programer/GetAll';
   static const String getProgrammerTaskById = 'Programer/GetById';
   static const String addCustomization = 'Programer/AddCustomization';
@@ -90,7 +94,8 @@ class ApiConstants {
 
   static const String requirementsData =
       'Reports/requirements-data'; //جلب الداتا للسيلز ادمن
-  static const String updateAdminNote = 'Reports/update-admin-note'; //تعديل ملاحظة ادمن
+  static const String updateAdminNote =
+      'Reports/update-admin-note'; //تعديل ملاحظة ادمن
   // WhatsApp API - Port 7261
   static const String whatsAppBaseUrl =
       'https://tabibsoft.ddns.net:7261/api/WhatsApp';

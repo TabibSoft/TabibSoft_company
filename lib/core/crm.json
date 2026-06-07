@@ -182,6 +182,1291 @@
         }
       }
     },
+    "/api/HRAttendance/Me": {
+      "get": {
+        "tags": [
+          "HRAttendance"
+        ],
+        "summary": "جلب سجلات الحضور والانصراف للموظف الحالي (المسجل دخوله).",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "description": "عامل تصفية اختياري لشهر معين.",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "عامل تصفية اختياري لسنة معينة.",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceRecordDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceRecordDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceRecordDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRAttendance": {
+      "post": {
+        "tags": [
+          "HRAttendance"
+        ],
+        "summary": "تسجيل حضور يومي جديد للموظف.",
+        "requestBody": {
+          "description": "تفاصيل سجل الحضور متضمنة وقت تسجيل الدخول (ClockIn) والتاريخ.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttendanceDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttendanceDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttendanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "HRAttendance"
+        ],
+        "summary": "جلب سجلات الحضور والانصراف لموظف معين.",
+        "parameters": [
+          {
+            "name": "employeeProfileId",
+            "in": "query",
+            "description": "المعرف الفريد لملف الموظف.",
+            "style": "form",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "description": "عامل تصفية اختياري لشهر معين.",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "عامل تصفية اختياري لسنة معينة.",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceRecordDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceRecordDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceRecordDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRAttendance/{id}/clockout": {
+      "put": {
+        "tags": [
+          "HRAttendance"
+        ],
+        "summary": "تسجيل الانصراف للموظف وحساب ساعات العمل الإضافي أو التأخير اليومي.",
+        "description": "تقوم هذه الدالة بحساب دقائق العمل الفعلية بناءً على وقت الحضور (ClockIn) ووقت الانصراف (ClockOut).\r\nكما تقوم بتعديل إجمالي دقائق المكافأة (BonusMinutes) أو العجز (DeficitMinutes) للموظف بناءً على ساعات عمله اليومية المحددة في النظام.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "المعرف الفريد لسجل الحضور.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "بيانات وقت الانصراف.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClockOutDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClockOutDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClockOutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRBonusAdjustment/Me": {
+      "get": {
+        "tags": [
+          "HRBonusAdjustment"
+        ],
+        "summary": "جلب سجل حركات المكافآت والعجز للموظف الحالي (المسجل دخوله).",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusSubtractionLogDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusSubtractionLogDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusSubtractionLogDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRBonusAdjustment": {
+      "post": {
+        "tags": [
+          "HRBonusAdjustment"
+        ],
+        "summary": "تعديل دقائق المكافأة أو العجز لموظف بشكل يدوي.",
+        "requestBody": {
+          "description": "بيانات التعديل متضمنة عدد الدقائق، السبب، ونوع المعاملة (مكافأة يدوية أو عجز يدوي).",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBonusAdjustmentDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBonusAdjustmentDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBonusAdjustmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "HRBonusAdjustment"
+        ],
+        "summary": "جلب سجل حركات المكافآت والعجز لموظف معين.",
+        "parameters": [
+          {
+            "name": "employeeProfileId",
+            "in": "query",
+            "description": "المعرف الفريد لملف الموظف.",
+            "style": "form",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusSubtractionLogDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusSubtractionLogDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusSubtractionLogDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRDashboard/dashboard": {
+      "get": {
+        "tags": [
+          "HRDashboard"
+        ],
+        "summary": "استرجاع مقاييس وإحصائيات لوحة التحكم للموارد البشرية (للمدراء والمسؤولين).",
+        "description": "تقوم هذه الدالة بإرجاع الإحصائيات العامة وتشمل: إجمالي عدد الموظفين الفعالين، طلبات الإجازة المعلقة، الغياب اليومي، وقائمة أفضل الموظفين من حيث دقائق المكافأة.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummaryDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummaryDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummaryDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRLeave/Types": {
+      "get": {
+        "tags": [
+          "HRLeave"
+        ],
+        "summary": "جلب أنواع الإجازات المتاحة في النظام.",
+        "description": "مفيدة جداً لتطبيقات الموبايل (Flutter) لملء قائمة منسدلة (Dropdown) بأنواع الإجازات دون الحاجة لبرمجتها يدوياً.",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/HRLeave": {
+      "post": {
+        "tags": [
+          "HRLeave"
+        ],
+        "summary": "تقديم طلب إجازة جديد أو استئذان.",
+        "description": "تقوم هذه الدالة بالتحقق من الطلب ومطابقته مع حدود وأرصدة الموظف في ملف الموارد البشرية.\r\nالإجازات (الاعتيادية، العارضة، المرضية) يتم مطابقتها مع الأرصدة المتاحة في السنة المالية الديناميكية.\r\nالاستئذان (LeaveHours) يتم التحقق من عدم تجاوزه للحد الأقصى للساعات المسموح بها يومياً وشهرياً.",
+        "requestBody": {
+          "description": "بيانات طلب الإجازة (النوع، تاريخ البداية، تاريخ النهاية، عدد الساعات المطلوبة).",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLeaveRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLeaveRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLeaveRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "HRLeave"
+        ],
+        "summary": "استرجاع جميع طلبات الإجازات الخاصة بالموظف الحالي.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveRequestDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveRequestDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveRequestDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRLeave/{id}": {
+      "get": {
+        "tags": [
+          "HRLeave"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveRequestDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveRequestDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveRequestDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRLeave/pending/level1": {
+      "get": {
+        "tags": [
+          "HRLeave"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveRequestDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveRequestDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveRequestDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRLeave/pending/level2": {
+      "get": {
+        "tags": [
+          "HRLeave"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveRequestDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveRequestDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveRequestDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRLeave/{id}/approve": {
+      "post": {
+        "tags": [
+          "HRLeave"
+        ],
+        "summary": "اعتماد أو رفض طلب إجازة (للمدراء والمسؤولين فقط).",
+        "description": "تقوم هذه الدالة بترقية حالة الطلب عبر دورة الاعتماد (مثال: معلق مستوى 1 -> معلق مستوى 2 -> معتمد).\r\nالرفض يقوم بتغيير حالة الطلب فوراً إلى مرفوض.\r\nملاحظة: خصم الأرصدة يتم حسابه ديناميكياً في أماكن أخرى ولا يتطلب تحديثاً صريحاً في قاعدة البيانات هنا عند الاعتماد.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "المعرف الفريد لطلب الإجازة.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "بيانات قرار الاعتماد (موافقة/رفض، وسبب الرفض إن وجد).",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRejectDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRejectDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRejectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRLeave/{id}/reject": {
+      "post": {
+        "tags": [
+          "HRLeave"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRejectDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRejectDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveRejectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/HRLeave/notifications": {
+      "get": {
+        "tags": [
+          "HRLeave"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRLeave/notifications/{id}/read": {
+      "put": {
+        "tags": [
+          "HRLeave"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/HRProfile/Me": {
+      "get": {
+        "tags": [
+          "HRProfile"
+        ],
+        "summary": "جلب الملف الشخصي للموارد البشرية الخاص بالموظف الحالي (المسجل دخوله).",
+        "description": "هذه الدالة مصممة خصيصاً لتطبيقات الموبايل لتجلب بيانات الموظف المباشرة بدون الحاجة لمعرفة الـ EmployeeProfileId الخاص به.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeHRProfileDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeHRProfileDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeHRProfileDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRProfile/{employeeProfileId}": {
+      "get": {
+        "tags": [
+          "HRProfile"
+        ],
+        "summary": "جلب الملف الشخصي للموارد البشرية الخاص بالموظف.",
+        "description": "تقوم هذه الدالة بحساب الأرصدة المتبقية للإجازات (الاعتيادية، العارضة، المرضية) بشكل ديناميكي بناءً على استهلاك الموظف خلال سنته المالية الفعالة.",
+        "parameters": [
+          {
+            "name": "employeeProfileId",
+            "in": "path",
+            "description": "المعرف الفريد للموظف.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeHRProfileDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeHRProfileDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeHRProfileDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRProfile": {
+      "post": {
+        "tags": [
+          "HRProfile"
+        ],
+        "summary": "إنشاء ملف موارد بشرية جديد للموظف.",
+        "requestBody": {
+          "description": "الإعدادات المبدئية للملف (مثل: حصة الإجازات السنوية، الحد الأقصى لساعات الاستئذان، الخ).",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHRProfileDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHRProfileDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHRProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRProfile/{id}": {
+      "put": {
+        "tags": [
+          "HRProfile"
+        ],
+        "summary": "تحديث بيانات ملف الموارد البشرية الخاص بالموظف.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "المعرف الفريد لملف الموارد البشرية المراد تحديثه.",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "الإعدادات الجديدة المراد تحديثها.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHRProfileDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHRProfileDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHRProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRSettings": {
+      "get": {
+        "tags": [
+          "HRSettings"
+        ],
+        "summary": "استرجاع الإعدادات العامة لدورة الاعتماد والموافقات.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalSettingsDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalSettingsDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalSettingsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "HRSettings"
+        ],
+        "summary": "تحديث الإعدادات العامة لدورة الاعتماد (للمسؤولين فقط).",
+        "requestBody": {
+          "description": "الإعدادات الجديدة للاعتماد والموافقات.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalSettingsDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalSettingsDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/Notification/GetNotifications": {
       "get": {
         "tags": [
@@ -344,6 +1629,15 @@
             }
           },
           {
+            "name": "engineerId",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
             "name": "address",
             "in": "query",
             "style": "form",
@@ -358,6 +1652,86 @@
             "schema": {
               "type": "integer",
               "format": "int32"
+            }
+          },
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Problem/GetTechSupportByEngineer": {
+      "get": {
+        "tags": [
+          "Problem"
+        ],
+        "summary": "Admin-only endpoint. Returns tech-support tickets that belong to the specified engineer\r\n(identified by their EmployeeProfile Id). The logged-in user's identity is never used\r\nfor filtering; only the supplied engineerId matters.",
+        "parameters": [
+          {
+            "name": "engineerId",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "problem",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "customerId",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "address",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -1128,6 +2502,7 @@
         "tags": [
           "Reports"
         ],
+        "summary": "Get requirements report data with filters",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1159,6 +2534,7 @@
         "tags": [
           "Reports"
         ],
+        "summary": "Update admin note on a requirement",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1755,6 +3131,129 @@
         },
         "additionalProperties": false
       },
+      "ApprovalSettingsDto": {
+        "type": "object",
+        "properties": {
+          "level1ApproverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "level2ApproverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ApproveRejectDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AttendanceRecordDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "clockIn": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "clockOut": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "workedMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bonusMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deficitMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AttendanceStatus"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AttendanceStatus": {
+        "enum": [
+          "Incomplete",
+          "Complete"
+        ],
+        "type": "string"
+      },
+      "BonusSubtractionLogDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "performedByUserName": {
+            "type": "string",
+            "nullable": true
+          },
+          "transactionType": {
+            "$ref": "#/components/schemas/BonusTransactionType"
+          },
+          "minutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BonusTransactionType": {
+        "enum": [
+          "AutoAttendance",
+          "ManualBonus",
+          "ManualDeficit"
+        ],
+        "type": "string"
+      },
       "City": {
         "type": "object",
         "properties": {
@@ -1788,6 +3287,139 @@
           "lastEditDate": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClockOutDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clockOut": {
+            "$ref": "#/components/schemas/TimeSpan"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateAttendanceDto": {
+        "type": "object",
+        "properties": {
+          "employeeProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "clockIn": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "clockOut": {
+            "$ref": "#/components/schemas/TimeSpan"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateBonusAdjustmentDto": {
+        "type": "object",
+        "properties": {
+          "employeeProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "transactionType": {
+            "$ref": "#/components/schemas/BonusTransactionType"
+          },
+          "minutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateHRProfileDto": {
+        "required": [
+          "employeeProfileId"
+        ],
+        "type": "object",
+        "properties": {
+          "employeeProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vacationBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vacationMonthlyMax": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "casualLeaveBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sickLeaveBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fingerprintCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "workHoursPerDay": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "defaultCheckIn": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "defaultCheckOut": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "financialYearStartDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "maxLeaveHoursPerMonth": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxLeaveHoursPerDay": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActiveInHR": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateLeaveRequestDto": {
+        "type": "object",
+        "properties": {
+          "leaveType": {
+            "$ref": "#/components/schemas/LeaveType"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hoursRequested": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -1897,6 +3529,62 @@
               "$ref": "#/components/schemas/CustomersEngineer"
             },
             "nullable": true
+          },
+          "availabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerAvailability"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerAvailability": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdUser": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastEditUser": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastEditDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "customerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "dayOfWeek": {
+            "$ref": "#/components/schemas/DayOfWeekEnum"
+          },
+          "availableFrom": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "availableTo": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -2098,6 +3786,163 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardSummaryDto": {
+        "type": "object",
+        "properties": {
+          "totalEmployees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingLeaveRequests": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "absentEmployeesToday": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "topBonusEmployees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmployeeBonusSummaryDto"
+            },
+            "nullable": true
+          },
+          "isAdmin": {
+            "type": "boolean"
+          },
+          "vacationBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vacationMonthlyMax": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "casualLeaveBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sickLeaveBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "myBonusMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "myDeficitMinutes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DayOfWeekEnum": {
+        "enum": [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        "type": "string"
+      },
+      "EmployeeBonusSummaryDto": {
+        "type": "object",
+        "properties": {
+          "employeeProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "bonusMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deficitMinutes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmployeeHRProfileDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "vacationBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vacationMonthlyMax": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "casualLeaveBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sickLeaveBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fingerprintCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "workHoursPerDay": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "defaultCheckIn": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "defaultCheckOut": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "bonusMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deficitMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "financialYearStartDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "maxLeaveHoursPerMonth": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxLeaveHoursPerDay": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActiveInHR": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -2512,6 +4357,72 @@
           }
         },
         "additionalProperties": false
+      },
+      "LeaveRequestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "leaveType": {
+            "$ref": "#/components/schemas/LeaveType"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "totalDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hoursRequested": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LeaveStatus"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LeaveStatus": {
+        "enum": [
+          "PendingLevel1",
+          "PendingLevel2",
+          "Approved",
+          "Rejected"
+        ],
+        "type": "string"
+      },
+      "LeaveType": {
+        "enum": [
+          "RegularVacation",
+          "Casual",
+          "Sick",
+          "LeaveHours"
+        ],
+        "type": "string"
       },
       "LoginApiDto": {
         "required": [
@@ -2961,6 +4872,33 @@
         },
         "additionalProperties": false
       },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
       "Product": {
         "type": "object",
         "properties": {
@@ -3126,6 +5064,10 @@
           "salesId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "statusName": {
+            "type": "string",
             "nullable": true
           },
           "statusId": {
@@ -3368,6 +5310,64 @@
           "adminNote": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateHRProfileDto": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vacationBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vacationMonthlyMax": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "casualLeaveBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sickLeaveBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fingerprintCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "workHoursPerDay": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "defaultCheckIn": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "defaultCheckOut": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "financialYearStartDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "maxLeaveHoursPerMonth": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxLeaveHoursPerDay": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActiveInHR": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -3912,7 +5912,7 @@
   },
   "security": [
     {
-      "Bearer": []
+      "Bearer": [ ]
     }
   ]
 }

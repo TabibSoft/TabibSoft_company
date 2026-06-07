@@ -28,6 +28,10 @@ import 'package:tabib_soft_company/features/technical_support/data/model/customi
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/government_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/city_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/whatsapp/whatsapp_models.dart';
+import 'package:tabib_soft_company/features/human_resources/data/models/hr_profile_model.dart';
+import 'package:tabib_soft_company/features/human_resources/data/models/hr_leave_type_model.dart';
+import 'package:tabib_soft_company/features/human_resources/data/models/create_hr_leave_request_model.dart';
+import 'package:tabib_soft_company/features/human_resources/data/models/hr_leave_request_model.dart';
 import 'api_constants.dart';
 
 part 'api_service.g.dart';
@@ -282,4 +286,16 @@ abstract class ApiService {
   Future<WhatsAppUploadResponse> uploadWhatsAppMedia(
     @Part(name: "file") File file,
   );
+
+  @GET(ApiConstants.hrProfileMe)
+  Future<HrProfileModel> getHrProfileMe();
+
+  @GET(ApiConstants.hrLeaveTypes)
+  Future<List<HrLeaveTypeModel>> getHrLeaveTypes();
+
+  @GET(ApiConstants.hrLeave)
+  Future<List<HrLeaveRequestModel>> getMyHrLeaves();
+
+  @POST(ApiConstants.hrLeave)
+  Future<void> createHrLeave(@Body() CreateHrLeaveRequestModel request);
 }

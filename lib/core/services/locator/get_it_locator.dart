@@ -35,6 +35,10 @@ import 'package:tabib_soft_company/features/technical_support/presentation/cubit
 import 'package:tabib_soft_company/features/technical_support/visits/data/repo/visit_repository.dart';
 import 'package:tabib_soft_company/features/technical_support/data/repo/whatsapp_repository.dart';
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/data/repo/hr_profile_repo.dart';
+import 'package:tabib_soft_company/features/human_resources/data/repo/hr_leave_repo.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_profile_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_cubit.dart';
 
 class ServicesLocator {
   static final GetIt locator = GetIt.instance;
@@ -137,6 +141,22 @@ class ServicesLocator {
       () => PaymentMethodCubit(locator<PaymentMethodRepository>()),
     );
 
+    // HR Profile
+    locator.registerLazySingleton<HrProfileRepository>(
+      () => HrProfileRepository(locator<ApiService>()),
+    );
+    locator.registerFactory<HrProfileCubit>(
+      () => HrProfileCubit(locator<HrProfileRepository>()),
+    );
+
+    // HR Leave
+    locator.registerLazySingleton<HrLeaveRepository>(
+      () => HrLeaveRepository(locator<ApiService>()),
+    );
+    locator.registerFactory<HrLeaveCubit>(
+      () => HrLeaveCubit(locator<HrLeaveRepository>()),
+    );
+
     // Visit Repository & Cubit
     locator.registerLazySingleton<VisitRepository>(
       () => VisitRepository(locator<ApiService>()),
@@ -181,4 +201,6 @@ class ServicesLocator {
   static VisitCubit get visitCubit => locator<VisitCubit>();
   static RequirementsCubit get requirementsCubit =>
       locator<RequirementsCubit>();
+  static HrProfileCubit get hrProfileCubit => locator<HrProfileCubit>();
+  static HrLeaveCubit get hrLeaveCubit => locator<HrLeaveCubit>();
 }

@@ -36,10 +36,10 @@ class _EarlyPermissionScreenState extends State<EarlyPermissionScreen> {
                 Container(
                   height: 280.h,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       colors: [
-                        const Color(0xFF00579B),
-                        const Color(0xFF00A8D8),
+                        Color(0xFF00579B),
+                        Color(0xFF00A8D8),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -118,10 +118,12 @@ class _EarlyPermissionScreenState extends State<EarlyPermissionScreen> {
                 ),
 
                 // White card overlapping
-                Positioned(
-                  top: 220.h,
-                  left: 16.w,
-                  right: 16.w,
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: 220.h,
+                    left: 16.w,
+                    right: 16.w,
+                  ),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -200,8 +202,7 @@ class _EarlyPermissionScreenState extends State<EarlyPermissionScreen> {
                                           'وقت الخروج',
                                           style: AppStyle.font14_700Weight
                                               .copyWith(
-                                            color:
-                                                ProgrammerColors.textPrimary,
+                                            color: ProgrammerColors.textPrimary,
                                           ),
                                         ),
                                       ],
@@ -253,8 +254,8 @@ class _EarlyPermissionScreenState extends State<EarlyPermissionScreen> {
                                             'العودة المتوقعة',
                                             style: AppStyle.font14_700Weight
                                                 .copyWith(
-                                              color: ProgrammerColors
-                                                  .textPrimary,
+                                              color:
+                                                  ProgrammerColors.textPrimary,
                                             ),
                                           ),
                                         ),
@@ -403,7 +404,6 @@ class _EarlyPermissionScreenState extends State<EarlyPermissionScreen> {
               ],
             ),
             SizedBox(height: 24.h),
-
           ],
         ),
       ),

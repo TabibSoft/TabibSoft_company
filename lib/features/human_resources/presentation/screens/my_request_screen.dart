@@ -1,10 +1,105 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tabib_soft_company/core/utils/constant/app_style.dart';
 import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_state.dart';
+import 'package:tabib_soft_company/features/human_resources/data/models/hr_leave_request_model.dart';
 
-class MyRequestsPage extends StatelessWidget {
+class MyRequestsPage extends StatefulWidget {
   const MyRequestsPage({super.key});
+
+  @override
+  State<MyRequestsPage> createState() => _MyRequestsPageState();
+}
+
+class _MyRequestsPageState extends State<MyRequestsPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedFilter = 'الكل';
+  String _searchQuery = '';
+
+  static const _filters = ['الكل', 'الإجازات', 'الاستئذان'];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HrLeaveCubit>().fetchMyLeaves();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  DateTime _requestDateTime(HrLeaveRequestModel request) {
+    return request.createdDate ??
+        request.startDate ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  bool _matchesFilter(HrLeaveRequestModel request) {
+    if (_selectedFilter == 'الكل') return true;
+    if (_selectedFilter == 'الإجازات') return request.leaveType != 'LeaveHours';
+    if (_selectedFilter == 'الاستئذان')
+      return request.leaveType == 'LeaveHours';
+    return true;
+  }
+
+  bool _matchesSearch(HrLeaveRequestModel request) {
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) return true;
+
+    final title = _leaveTypeLabel(request.leaveType).toLowerCase();
+    final status = _statusLabel(request.status).toLowerCase();
+    final number = request.id?.toString() ?? '';
+
+    return title.contains(query) ||
+        status.contains(query) ||
+        number.contains(query);
+  }
+
+  List<HrLeaveRequestModel> _filteredRequests(
+      List<HrLeaveRequestModel> requests) {
+    final sorted = List<HrLeaveRequestModel>.from(requests)
+      ..sort((a, b) => _requestDateTime(b).compareTo(_requestDateTime(a)));
+
+    return sorted.where(_matchesFilter).where(_matchesSearch).toList();
+  }
+
+  Widget _buildFilterTab(String text, bool isSelected) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedFilter = text;
+          });
+        },
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 4.w),
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF00337C) : Colors.white,
+            borderRadius: BorderRadius.circular(30.r),
+            border: Border.all(
+              color: isSelected ? Colors.transparent : const Color(0xFFE0E0E0),
+            ),
+          ),
+          child: Center(
+            child: Text(
+              text,
+              style: AppStyle.font14_700Weight.copyWith(
+                color: isSelected ? Colors.white : const Color(0xFF001233),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,11 +189,30 @@ class MyRequestsPage extends StatelessWidget {
                   ],
                 ),
                 child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                   decoration: InputDecoration(
                     hintText: 'ابحث عن طلب معين...',
-                    hintStyle: AppStyle.font14_400Weight.copyWith(
-                        color: const Color(0xFF7D848D)),
-                    prefixIcon: const Icon(Icons.search, color: Color(0xFF7D848D)),
+                    hintStyle: AppStyle.font14_400Weight
+                        .copyWith(color: const Color(0xFF7D848D)),
+                    prefixIcon:
+                        const Icon(Icons.search, color: Color(0xFF7D848D)),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? GestureDetector(
+                            onTap: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                              });
+                            },
+                            child: const Icon(Icons.close,
+                                color: Color(0xFF7D848D)),
+                          )
+                        : null,
                     border: InputBorder.none,
                   ),
                 ),
@@ -108,16 +222,14 @@ class MyRequestsPage extends StatelessWidget {
 
           SizedBox(height: 12.h),
 
-          // Tabs
+          // Filter tabs
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 12.w),
             child: Row(
-              children: [
-                _buildTab('مباشرة عم', false),
-                _buildTab('سلف', false),
-                _buildTab('إجازات', false),
-                _buildTab('الكل', true),
-              ],
+              children: _filters
+                  .map((filter) =>
+                      _buildFilterTab(filter, filter == _selectedFilter))
+                  .toList(),
             ),
           ),
 
@@ -127,97 +239,132 @@ class MyRequestsPage extends StatelessWidget {
           Expanded(
             child: Stack(
               children: [
-                ListView(
-                  padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
-                  children: [
-                    _buildRequestCard(
-                      status: 'تم الموافقة',
-                      statusColor: const Color(0xFF4CAF50),
-                      title: 'طلب إجازة سنوية',
-                      requestNumber: 'REQ-8291# :رقم الطلب',
-                      date: '2023 أكتوبر 12',
-                      icon: Icons.calendar_today,
-                    ),
-                    _buildRequestCard(
-                      status: 'قيد المراجعة',
-                      statusColor: const Color(0xFFF4A800),
-                      title: 'طلب سلفة مالية',
-                      requestNumber: 'REQ-8295# :رقم الطلب',
-                      date: '2023 أكتوبر 18',
-                      icon: Icons.account_balance_wallet,
-                    ),
-                    _buildRequestCard(
-                      status: 'مرفوض',
-                      statusColor: const Color(0xFFE53935),
-                      title: 'طلب تعديل دوام',
-                      requestNumber: 'REQ-8280# :رقم الطلب',
-                      date: '2023 أكتوبر 05',
-                      icon: Icons.access_time,
-                    ),
-                    _buildRequestCard(
-                      status: 'قيد المراجعة',
-                      statusColor: const Color(0xFFF4A800),
-                      title: 'تجديد بطاقة الموظف',
-                      requestNumber: 'REQ-8302# :رقم الطلب',
-                      date: '2023 أكتوبر 20',
-                      icon: Icons.badge,
-                    ),
-                    SizedBox(height: 24.h),
+                BlocBuilder<HrLeaveCubit, HrLeaveState>(
+                  builder: (context, state) {
+                    final requests = state.leaveRequests;
+                    if (state.status == HrLeaveStatus.loadingRequests &&
+                        requests.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                    // Bottom CTA
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 8.w),
-                      padding: EdgeInsets.symmetric(vertical: 28.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEAE6FF),
-                        borderRadius: BorderRadius.circular(18.r),
-                      ),
-                      child: Center(
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF15A0C8),
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 28.w, vertical: 12.h),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r)),
+                    final filteredRequests = _filteredRequests(requests);
+                    final recentActivities = filteredRequests.take(2).toList();
+                    final hasAnyRequests = requests.isNotEmpty;
+                    final hasFilteredResults = filteredRequests.isNotEmpty;
+
+                    return RefreshIndicator(
+                      onRefresh: () =>
+                          context.read<HrLeaveCubit>().fetchMyLeaves(),
+                      child: ListView(
+                        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
+                        children: [
+                          if (hasAnyRequests) ...[
+                            Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8.h),
+                              child: Text(
+                                'آخر الأنشطة',
+                                style: AppStyle.font18_600Weight.copyWith(
+                                  color: AppColor.titleColor,
+                                ),
+                              ),
+                            ),
+                            if (hasFilteredResults)
+                              ...recentActivities.map((r) {
+                                return Padding(
+                                  padding: EdgeInsets.only(bottom: 14.h),
+                                  child: _buildRequestCard(
+                                    status: _statusLabel(r.status),
+                                    statusColor: _statusColor(r.status),
+                                    title: _leaveTypeLabel(r.leaveType),
+                                    date: _formatRequestDate(r),
+                                    icon: _leaveIcon(r.leaveType),
+                                    rejectionReason: r.rejectionReason,
+                                  ),
+                                );
+                              })
+                            else
+                              Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16.h),
+                                child: Text(
+                                  'لا توجد طلبات مطابقة للفلاتر أو البحث',
+                                  style: AppStyle.font13_400Weight.copyWith(
+                                    color: const Color(0xFF7D848D),
+                                  ),
+                                ),
+                              ),
+                            SizedBox(height: 16.h),
+                            Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8.h),
+                              child: Text(
+                                'جميع الطلبات',
+                                style: AppStyle.font18_600Weight.copyWith(
+                                  color: AppColor.titleColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (!hasAnyRequests)
+                            Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16.h),
+                              child: Text(
+                                'لا توجد طلبات حالياً',
+                                style: AppStyle.font13_400Weight.copyWith(
+                                  color: const Color(0xFF7D848D),
+                                ),
+                              ),
+                            ),
+                          if (hasFilteredResults)
+                            ...filteredRequests.map((r) {
+                              return Padding(
+                                padding: EdgeInsets.only(bottom: 14.h),
+                                child: _buildRequestCard(
+                                  status: _statusLabel(r.status),
+                                  statusColor: _statusColor(r.status),
+                                  title: _leaveTypeLabel(r.leaveType),
+                                  date: _formatRequestDate(r),
+                                  icon: _leaveIcon(r.leaveType),
+                                  rejectionReason: r.rejectionReason,
+                                ),
+                              );
+                            })
+                          else if (hasAnyRequests)
+                            const SizedBox.shrink(),
+                          SizedBox(height: 24.h),
+
+                          // Bottom CTA
+                          Container(
+                            margin: EdgeInsets.symmetric(horizontal: 8.w),
+                            padding: EdgeInsets.symmetric(vertical: 28.h),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEAE6FF),
+                              borderRadius: BorderRadius.circular(18.r),
+                            ),
+                            child: Center(
+                              child: ElevatedButton(
+                                onPressed: () {},
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF15A0C8),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 28.w, vertical: 12.h),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(12.r)),
+                                ),
+                                child: Text(
+                                  'تقديم طلب جديد',
+                                  style: AppStyle.font16_700Weight
+                                      .copyWith(color: Colors.white),
+                                ),
+                              ),
+                            ),
                           ),
-                          child: Text(
-                            'تقديم طلب جديد',
-                            style: AppStyle.font16_700Weight
-                                .copyWith(color: Colors.white),
-                          ),
-                        ),
+                          SizedBox(height: 40.h),
+                        ],
                       ),
-                    ),
-                    SizedBox(height: 40.h),
-                  ],
+                    );
+                  },
                 ),
 
-                // Floating add button
-                Positioned(
-                  left: 20.w,
-                  bottom: 140.h,
-                  child: Container(
-                    width: 56.w,
-                    height: 56.w,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF17C3B2),
-                      borderRadius: BorderRadius.circular(16.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.14),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.add, color: Colors.white),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -226,36 +373,13 @@ class MyRequestsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTab(String text, bool isSelected) {
-    return Expanded(
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 4.w),
-        padding: EdgeInsets.symmetric(vertical: 12.h),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF00337C) : Colors.white,
-          borderRadius: BorderRadius.circular(30.r),
-          border:
-              isSelected ? null : Border.all(color: const Color(0xFFE0E0E0)),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: AppStyle.font14_700Weight.copyWith(
-              color: isSelected ? Colors.white : const Color(0xFF001233),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildRequestCard({
     required String status,
     required Color statusColor,
     required String title,
-    required String requestNumber,
     required String date,
     required IconData icon,
+    String? rejectionReason,
   }) {
     return Container(
       margin: EdgeInsets.only(bottom: 14.h),
@@ -327,13 +451,6 @@ class MyRequestsPage extends StatelessWidget {
                           color: const Color(0xFF001233),
                         ),
                       ),
-                      SizedBox(height: 6.h),
-                      Text(
-                        requestNumber,
-                        style: AppStyle.font14_400Weight.copyWith(
-                          color: const Color(0xFF7D848D),
-                        ),
-                      ),
                       SizedBox(height: 12.h),
                       Row(
                         children: [
@@ -350,6 +467,16 @@ class MyRequestsPage extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: 8.h),
+                      if (rejectionReason != null &&
+                          rejectionReason.isNotEmpty) ...[
+                        Text(
+                          'سبب الرفض: $rejectionReason',
+                          style: AppStyle.font13_400Weight.copyWith(
+                            color: const Color(0xFFE53935),
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                      ],
                       TextButton(
                         onPressed: () {},
                         style: TextButton.styleFrom(padding: EdgeInsets.zero),
@@ -382,5 +509,65 @@ class MyRequestsPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _leaveTypeLabel(String? value) {
+    switch (value) {
+      case 'RegularVacation':
+        return 'طلب إجازة سنوية';
+      case 'Casual':
+        return 'طلب إجازة عارضة';
+      case 'Sick':
+        return 'طلب إجازة مرضية';
+      case 'LeaveHours':
+        return 'طلب استئذان (ساعات)';
+      default:
+        return 'طلب إجازة';
+    }
+  }
+
+  String _statusLabel(String? value) {
+    switch (value) {
+      case 'Approved':
+        return 'تمت الموافقة';
+      case 'Rejected':
+        return 'مرفوض';
+      case 'PendingLevel1':
+      case 'PendingLevel2':
+        return 'قيد المراجعة';
+      default:
+        return value ?? 'قيد المراجعة';
+    }
+  }
+
+  Color _statusColor(String? value) {
+    switch (value) {
+      case 'Approved':
+        return const Color(0xFF4CAF50);
+      case 'Rejected':
+        return const Color(0xFFE53935);
+      default:
+        return const Color(0xFFF4A800);
+    }
+  }
+
+  IconData _leaveIcon(String? value) {
+    switch (value) {
+      case 'RegularVacation':
+        return Icons.calendar_today;
+      case 'Sick':
+        return Icons.local_hospital;
+      case 'LeaveHours':
+        return Icons.access_time;
+      case 'Casual':
+      default:
+        return Icons.pending_actions;
+    }
+  }
+
+  String _formatRequestDate(HrLeaveRequestModel request) {
+    final date = request.createdDate ?? request.startDate;
+    if (date == null) return '-';
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 }

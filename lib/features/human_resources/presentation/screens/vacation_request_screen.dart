@@ -7,6 +7,7 @@ import 'package:tabib_soft_company/features/human_resources/data/models/create_h
 import 'package:tabib_soft_company/features/human_resources/data/models/hr_leave_request_model.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_cubit.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_state.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_profile_cubit.dart';
 
 class VacationRequestScreen extends StatefulWidget {
   const VacationRequestScreen({super.key});
@@ -44,7 +45,7 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
     final int totalHours = _calculateRequestedHours();
 
     return BlocListener<HrLeaveCubit, HrLeaveState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state.status == HrLeaveStatus.error && state.failure != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -60,14 +61,20 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
               backgroundColor: Colors.green,
             ),
           );
+
           setState(() {
             vacationType = null;
             startDate = null;
             endDate = null;
             reasonController.clear();
           });
-          context.read<HrLeaveCubit>().fetchLeaveTypes();
-          context.read<HrLeaveCubit>().fetchMyLeaves();
+
+          await context.read<HrProfileCubit>().fetchHrProfile();
+          await context.read<HrLeaveCubit>().fetchLeaveTypes();
+          await context.read<HrLeaveCubit>().fetchMyLeaves();
+
+          if (!mounted) return;
+          Navigator.of(context).pop();
         }
       },
       child: Scaffold(
@@ -243,7 +250,9 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
                                       ),
                                     ),
                                     items: types
-                                        .where((e) => e.name != null)
+                                        .where((e) =>
+                                            e.name != null &&
+                                            e.name != 'LeaveHours')
                                         .map(
                                           (e) => DropdownMenuItem<String>(
                                             value: e.name,
@@ -499,7 +508,8 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
                               builder: (context, state) {
                                 final requests = state.leaveRequests;
 
-                                if (state.status == HrLeaveStatus.loadingRequests &&
+                                if (state.status ==
+                                        HrLeaveStatus.loadingRequests &&
                                     requests.isEmpty) {
                                   return const Center(
                                     child: CircularProgressIndicator(),
@@ -533,7 +543,8 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
                                           status: _statusLabel(request.status),
                                           statusColor:
                                               _statusColor(request.status),
-                                          title: _leaveTypeLabel(request.leaveType),
+                                          title: _leaveTypeLabel(
+                                              request.leaveType),
                                           date: _requestDateSummary(request),
                                         ),
                                       );

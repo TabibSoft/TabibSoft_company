@@ -7,8 +7,11 @@ import 'package:tabib_soft_company/features/human_resources/presentation/cubits/
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_state.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_profile_cubit.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_profile_state.dart';
+import 'package:tabib_soft_company/features/human_resources/data/models/hr_leave_request_model.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/my_request_screen.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/screens/my_reports_sceen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/salary_advance_screen.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/screens/early_permission_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/vacation_request_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/work_fromhome_screen.dart';
 
@@ -39,94 +42,116 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
           child: Column(
             children: [
               const _HeaderSection(),
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _welcomeCard(context),
-                    SizedBox(height: 24.h),
-                    Text(
-                      "إحصائيات الإجازات",
-                      style: AppStyle.font18_600Weight.copyWith(
-                        color: AppColor.titleColor,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    BlocBuilder<HrProfileCubit, HrProfileState>(
-                      builder: (context, state) {
-                        if (state.status == HrProfileStatus.loading ||
-                            state.status == HrProfileStatus.initial) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        }
-                        if (state.status == HrProfileStatus.error) {
-                          return Center(
-                            child: Text(
-                              state.failure?.errMessages ?? 'حدث خطأ',
-                              style: AppStyle.font14_400Weight,
-                            ),
-                          );
-                        }
-                        final profile = state.profile!;
-                        final vacationBalance = profile.vacationBalance ?? 0;
-                        final sickBalance = profile.sickLeaveBalance ?? 0;
-                        final casualBalance = profile.casualLeaveBalance ?? 0;
+              BlocBuilder<HrProfileCubit, HrProfileState>(
+                builder: (context, profileState) {
+                  return BlocBuilder<HrLeaveCubit, HrLeaveState>(
+                    builder: (context, leaveState) {
+                      final isProfileLoading =
+                          profileState.status == HrProfileStatus.loading ||
+                              profileState.status == HrProfileStatus.initial;
+                      final isLeaveLoading =
+                          leaveState.status == HrLeaveStatus.loadingRequests &&
+                              leaveState.leaveRequests.isEmpty;
 
-                        // حدود الإجازات حسب سياسات الموارد البشرية الحالية.
-                        const vacationMax = 9;
-                        const sickMax = 10;
-                        const casualMax = 7;
+                      if (isProfileLoading || isLeaveLoading) {
+                        return const _HumanResourcesSkeleton();
+                      }
 
-                        final vacationMonthlyMax =
-                            profile.vacationMonthlyMax ?? 0;
-                        final earlyPermissionMonthlyHours =
-                            profile.maxLeaveHoursPerMonth ?? 0;
-                        final earlyPermissionDailyHours =
-                            profile.maxLeaveHoursPerDay ?? 0;
+                      final profile = profileState.profile!;
+                      final vacationBalance = profile.vacationBalance ?? 0;
+                      final sickBalance = profile.sickLeaveBalance ?? 0;
+                      final casualBalance = profile.casualLeaveBalance ?? 0;
 
-                        final vacationPercent = vacationMax > 0
-                            ? (vacationBalance / vacationMax).clamp(0.0, 1.0)
-                            : 0.0;
-                        final sickPercent = sickMax > 0
-                            ? (sickBalance / sickMax).clamp(0.0, 1.0)
-                            : 0.0;
-                        final casualPercent = casualMax > 0
-                            ? (casualBalance / casualMax).clamp(0.0, 1.0)
-                            : 0.0;
+                      final vacationMax = profile.totalVacationBalance ??
+                          profile.vacationBalance ??
+                          0;
+                      final sickMax = profile.totalSickLeaveBalance ??
+                          profile.sickLeaveBalance ??
+                          0;
+                      final casualMax = profile.totalCasualLeaveBalance ??
+                          profile.casualLeaveBalance ??
+                          0;
 
-                        return Column(
+                      final vacationMonthlyMax =
+                          profile.vacationMonthlyMax ?? 0;
+                      final earlyPermissionMonthlyHours =
+                          profile.maxLeaveHoursPerMonth ?? 0;
+                      final earlyPermissionDailyHours =
+                          profile.maxLeaveHoursPerDay ?? 0;
+
+                      final vacationPercent = vacationMax > 0
+                          ? (vacationBalance / vacationMax).clamp(0.0, 1.0)
+                          : 0.0;
+                      final sickPercent = sickMax > 0
+                          ? (sickBalance / sickMax).clamp(0.0, 1.0)
+                          : 0.0;
+                      final casualPercent = casualMax > 0
+                          ? (casualBalance / casualMax).clamp(0.0, 1.0)
+                          : 0.0;
+
+                      final requests = leaveState.leaveRequests;
+                      final recentActivities = List<HrLeaveRequestModel>.from(
+                          requests)
+                        ..sort((a, b) =>
+                            _requestDateTime(b).compareTo(_requestDateTime(a)));
+                      final latestActivities =
+                          recentActivities.take(2).toList();
+
+                      return Padding(
+                        padding: EdgeInsets.all(16.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _StatCard(
-                                    title: "إجازة اعتيادية",
-                                    value: "$vacationBalance/$vacationMax",
-                                    percent: vacationPercent,
-                                    color: AppColor.accentColor,
+                            _welcomeCard(context),
+                            SizedBox(height: 24.h),
+                            Text(
+                              "إحصائيات الإجازات",
+                              style: AppStyle.font18_600Weight.copyWith(
+                                color: AppColor.titleColor,
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
+                            SizedBox(
+                              height: 230.h,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                children: [
+                                  SizedBox(width: 16.w),
+                                  SizedBox(
+                                    width: 180.w,
+                                    child: _StatCard(
+                                      title: "إجازة اعتيادية",
+                                      value: "$vacationBalance/$vacationMax",
+                                      percent: vacationPercent,
+                                      color: AppColor.accentColor,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(width: 12.w),
-                                Expanded(
-                                  child: _StatCard(
-                                    title: "إجازة مرضية",
-                                    value: "$sickBalance/$sickMax",
-                                    percent: sickPercent,
-                                    color: AppColor.secondaryColor,
+                                  SizedBox(width: 12.w),
+                                  SizedBox(
+                                    width: 180.w,
+                                    child: _StatCard(
+                                      title: "إجازة مرضية",
+                                      value: "$sickBalance/$sickMax",
+                                      percent: sickPercent,
+                                      color: AppColor.secondaryColor,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  SizedBox(width: 12.w),
+                                  SizedBox(
+                                    width: 180.w,
+                                    child: _StatCard(
+                                      title: "إجازة عارضة",
+                                      value: "$casualBalance/$casualMax",
+                                      percent: casualPercent,
+                                      color: const Color(0xffD6A100),
+                                    ),
+                                  ),
+                                  SizedBox(width: 16.w),
+                                ],
+                              ),
                             ),
                             SizedBox(height: 12.h),
-                            _StatCard(
-                              title: "إجازة عارضة",
-                              value: "$casualBalance/$casualMax",
-                              percent: casualPercent,
-                              color: const Color(0xffD6A100),
-                            ),
-                            SizedBox(height: 12.h),
-                            SizedBox(height: 10.h),
                             Container(
                               width: double.infinity,
                               padding: EdgeInsets.all(14.w),
@@ -161,190 +186,198 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
                                       color: AppColor.subTitleColor,
                                     ),
                                   ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "آخر الأنشطة",
+                                        style:
+                                            AppStyle.font18_600Weight.copyWith(
+                                          color: AppColor.titleColor,
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const MyRequestsPage(),
+                                            ),
+                                          );
+                                        },
+                                        child: Text(
+                                          "عرض الكل",
+                                          style: AppStyle.font14_700Weight
+                                              .copyWith(
+                                            color: AppColor.accentColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  if (latestActivities.isEmpty)
+                                    Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 16.h),
+                                      child: Text(
+                                        'لا توجد أنشطة حالياً',
+                                        style:
+                                            AppStyle.font13_400Weight.copyWith(
+                                          color: AppColor.subTitleColor,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    Column(
+                                      children: List.generate(
+                                          latestActivities.length, (i) {
+                                        final r = latestActivities[i];
+                                        return Column(
+                                          children: [
+                                            _ActivityCard(
+                                              title:
+                                                  _leaveTypeLabel(r.leaveType),
+                                              time: _timeAgo(r.createdDate),
+                                              status: _statusLabel(r.status),
+                                              icon: _leaveIcon(r.leaveType),
+                                              color: _statusColor(r.status),
+                                            ),
+                                            if (i < latestActivities.length - 1)
+                                              SizedBox(height: 14.h),
+                                          ],
+                                        );
+                                      }),
+                                    ),
+                                  SizedBox(height: 30.h),
                                 ],
                               ),
                             ),
-                          ],
-                        );
-                      },
-                    ),
-                    SizedBox(height: 30.h),
-                    Text(
-                      "الخدمات",
-                      style: AppStyle.font18_600Weight.copyWith(
-                        color: AppColor.titleColor,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    SizedBox(
-                      height: 200.h,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        children: [
-                          _ServiceSection(
-                            title: "طلب إجازة",
-                            icon: Icons.add_rounded,
-                            bgColor: const Color(0xffEEF1FF),
-                            iconColor: const Color(0xff4C5FD5),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const VacationRequestScreen()),
-                              );
-                            },
-                          ),
-                          // SizedBox(width: 12.w),
-                          // _ServiceSection(
-                          //   title: "طلب استئذان مبكر",
-                          //   icon: Icons.access_time_rounded,
-                          //   bgColor: const Color(0xffE7FAF4),
-                          //   iconColor: const Color(0xff34B299),
-                          //   onTap: () {
-                          //     Navigator.push(
-                          //       context,
-                          //       MaterialPageRoute(
-                          //           builder: (context) =>
-                          //               const EarlyPermissionScreen()),
-                          //     );
-                          //   },
-                          // ),
-                          SizedBox(width: 20.w),
-                          _ServiceSection(
-                            title: "طلب عمل\nمن البيت",
-                            icon: Icons.home_rounded,
-                            bgColor: const Color(0xffFFF7D9),
-                            iconColor: const Color(0xffD6A100),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const WorkFromHomeScreen()),
-                              );
-                            },
-                          ),
-                          SizedBox(width: 20.w),
-                          _ServiceSection(
-                            title: "سلفة راتب",
-                            icon: Icons.payments_rounded,
-                            bgColor: const Color(0xffEAF7E8),
-                            iconColor: Colors.green,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SalaryAdvanceScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 30.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "آخر الأنشطة",
-                          style: AppStyle.font18_600Weight.copyWith(
-                            color: AppColor.titleColor,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: Text(
-                            "عرض الكل",
-                            style: AppStyle.font14_700Weight.copyWith(
-                              color: AppColor.accentColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                    BlocBuilder<HrLeaveCubit, HrLeaveState>(
-                      builder: (context, state) {
-                        final requests = state.leaveRequests;
-
-                        if (state.status == HrLeaveStatus.loadingRequests &&
-                            requests.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-
-                        if (requests.isEmpty) {
-                          return Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16.h),
-                            child: Text(
-                              'لا توجد أنشطة حالياً',
-                              style: AppStyle.font13_400Weight.copyWith(
-                                color: AppColor.subTitleColor,
+                            SizedBox(height: 30.h),
+                            Text(
+                              "الخدمات",
+                              style: AppStyle.font18_600Weight.copyWith(
+                                color: AppColor.titleColor,
                               ),
                             ),
-                          );
-                        }
-
-                        final recent = requests.take(3).toList();
-                        return Column(
-                          children: List.generate(recent.length, (i) {
-                            final r = recent[i];
-                            return Column(
+                            SizedBox(height: 16.h),
+                            SizedBox(
+                              height: 200.h,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                children: [
+                                  _ServiceSection(
+                                    title: "طلب إجازة",
+                                    icon: Icons.add_rounded,
+                                    bgColor: const Color(0xffEEF1FF),
+                                    iconColor: const Color(0xff4C5FD5),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const VacationRequestScreen()),
+                                      );
+                                    },
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  _ServiceSection(
+                                    title: "طلب استئذان مبكر",
+                                    icon: Icons.access_time_rounded,
+                                    bgColor: const Color(0xffE7FAF4),
+                                    iconColor: const Color(0xff34B299),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const EarlyPermissionScreen()),
+                                      );
+                                    },
+                                  ),
+                                  SizedBox(width: 20.w),
+                                  _ServiceSection(
+                                    title: "طلب عمل\nمن البيت",
+                                    icon: Icons.home_rounded,
+                                    bgColor: const Color(0xffFFF7D9),
+                                    iconColor: const Color(0xffD6A100),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const WorkFromHomeScreen()),
+                                      );
+                                    },
+                                  ),
+                                  SizedBox(width: 20.w),
+                                  _ServiceSection(
+                                    title: "سلفة راتب",
+                                    icon: Icons.payments_rounded,
+                                    bgColor: const Color(0xffEAF7E8),
+                                    iconColor: Colors.green,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const SalaryAdvanceScreen(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 30.h),
+                            Row(
                               children: [
-                                _ActivityCard(
-                                  title: _leaveTypeLabel(r.leaveType),
-                                  time: _timeAgo(r.createdDate),
-                                  status: _statusLabel(r.status),
-                                  icon: _leaveIcon(r.leaveType),
-                                  color: _statusColor(r.status),
+                                Expanded(
+                                  child: _QuickActionButton(
+                                    title: "تقاريري",
+                                    icon: Icons.analytics_rounded,
+                                    color: AppColor.primaryColor,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const MyReportsPage(),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
-                                if (i < recent.length - 1)
-                                  SizedBox(height: 14.h),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: _QuickActionButton(
+                                    title: "طلباتي",
+                                    icon: Icons.description_rounded,
+                                    color: AppColor.accentColor,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const MyRequestsPage(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
                               ],
-                            );
-                          }),
-                        );
-                      },
-                    ),
-                    SizedBox(height: 25.h),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _QuickActionButton(
-                            title: "تقاريري",
-                            icon: Icons.analytics_rounded,
-                            color: AppColor.primaryColor,
-                            onTap: () {},
-                          ),
+                            ),
+                            SizedBox(height: 30.h),
+                            SizedBox(height: 10.h),
+                          ],
                         ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: _QuickActionButton(
-                            title: "طلباتي",
-                            icon: Icons.description_rounded,
-                            color: AppColor.accentColor,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const MyRequestsPage(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 30.h),
-                    SizedBox(height: 10.h),
-                  ],
-                ),
+                      );
+                    },
+                  );
+                },
               ),
             ],
           ),
@@ -414,6 +447,12 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
     if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعة';
     if (diff.inDays == 1) return 'أمس';
     return 'منذ ${diff.inDays} أيام';
+  }
+
+  DateTime _requestDateTime(HrLeaveRequestModel request) {
+    return request.createdDate ??
+        request.startDate ??
+        DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   Widget _welcomeCard(BuildContext context) {
@@ -792,6 +831,143 @@ class _QuickActionButton extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _HumanResourcesSkeleton extends StatelessWidget {
+  const _HumanResourcesSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            height: 140.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(.05),
+                  blurRadius: 16,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 24.h),
+          Container(
+            width: 180.w,
+            height: 24.h,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          SizedBox(
+            height: 220.h,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: 3,
+              separatorBuilder: (_, __) => SizedBox(width: 12.w),
+              itemBuilder: (context, index) => Container(
+                width: 180.w,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(.05),
+                      blurRadius: 12,
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.all(18.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 80.w,
+                      height: 80.w,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Container(
+                      width: 100.w,
+                      height: 16.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Container(
+                      width: 140.w,
+                      height: 16.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 24.h),
+          Container(
+            width: double.infinity,
+            height: 120.h,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(18.r),
+            ),
+          ),
+          SizedBox(height: 24.h),
+          Container(
+            width: double.infinity,
+            height: 220.h,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(24.r),
+            ),
+          ),
+          SizedBox(height: 24.h),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 56.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Container(
+                  height: 56.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 30.h),
+        ],
       ),
     );
   }

@@ -8,9 +8,12 @@ class HrProfileModel {
   final String? employeeProfileId;
   final String? employeeName;
   final int? vacationBalance;
+  final int? totalVacationBalance;
   final int? vacationMonthlyMax;
   final int? casualLeaveBalance;
+  final int? totalCasualLeaveBalance;
   final int? sickLeaveBalance;
+  final int? totalSickLeaveBalance;
   final String? fingerprintCode;
   final int? workHoursPerDay;
   final String? defaultCheckIn;
@@ -27,9 +30,12 @@ class HrProfileModel {
     this.employeeProfileId,
     this.employeeName,
     this.vacationBalance,
+    this.totalVacationBalance,
     this.vacationMonthlyMax,
     this.casualLeaveBalance,
+    this.totalCasualLeaveBalance,
     this.sickLeaveBalance,
+    this.totalSickLeaveBalance,
     this.fingerprintCode,
     this.workHoursPerDay,
     this.defaultCheckIn,

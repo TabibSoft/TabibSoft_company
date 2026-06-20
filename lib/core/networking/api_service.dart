@@ -28,10 +28,15 @@ import 'package:tabib_soft_company/features/technical_support/data/model/customi
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/government_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/customer/addCustomer/city_model.dart';
 import 'package:tabib_soft_company/features/technical_support/data/model/whatsapp/whatsapp_models.dart';
+import 'package:tabib_soft_company/features/human_resources/data/models/hr_labor_law_model.dart';
 import 'package:tabib_soft_company/features/human_resources/data/models/hr_profile_model.dart';
 import 'package:tabib_soft_company/features/human_resources/data/models/hr_leave_type_model.dart';
 import 'package:tabib_soft_company/features/human_resources/data/models/create_hr_leave_request_model.dart';
 import 'package:tabib_soft_company/features/human_resources/data/models/hr_leave_request_model.dart';
+import 'package:tabib_soft_company/features/human_resources/data/models/create_hr_remote_work_request_model.dart';
+import 'package:tabib_soft_company/features/human_resources/data/models/hr_remote_work_request_model.dart';
+import 'package:tabib_soft_company/features/human_resources/data/models/hr_bonus_type_model.dart';
+import 'package:tabib_soft_company/features/human_resources/data/models/hr_deficit_type_model.dart';
 import 'api_constants.dart';
 
 part 'api_service.g.dart';
@@ -293,9 +298,29 @@ abstract class ApiService {
   @GET(ApiConstants.hrLeaveTypes)
   Future<List<HrLeaveTypeModel>> getHrLeaveTypes();
 
+  @GET(ApiConstants.hrBonusTypes)
+  Future<HrBonusAdjustmentResponse> getHrBonuses();
+
+  @GET(ApiConstants.hrDeficitTypes)
+  Future<HrDeficitAdjustmentResponse> getHrDeficits();
+
   @GET(ApiConstants.hrLeave)
   Future<List<HrLeaveRequestModel>> getMyHrLeaves();
 
+  @GET(ApiConstants.hrLaborLaws)
+  Future<HrLaborLawResponseModel> getEgyptianLaborLaws();
+
   @POST(ApiConstants.hrLeave)
   Future<void> createHrLeave(@Body() CreateHrLeaveRequestModel request);
+
+  @POST(ApiConstants.hrRemoteWorkSubmit)
+  Future<void> submitRemoteWork(@Body() CreateHrRemoteWorkRequestModel request);
+
+  @GET(ApiConstants.hrRemoteWorkMyRequests)
+  Future<List<HrRemoteWorkRequestModel>> getMyRemoteWorkRequests();
+
+  @GET(ApiConstants.hrRemoteWorkById)
+  Future<HrRemoteWorkRequestModel> getRemoteWorkRequestById(
+    @Path("id") String id,
+  );
 }

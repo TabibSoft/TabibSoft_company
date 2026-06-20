@@ -472,38 +472,185 @@
         }
       }
     },
-    "/api/HRBonusAdjustment/Me": {
+    "/api/HRBonusAdjustment/Me/Bonuses": {
       "get": {
         "tags": [
           "HRBonusAdjustment"
         ],
-        "summary": "جلب سجل حركات المكافآت والعجز للموظف الحالي (المسجل دخوله).",
+        "summary": "جلب سجل حركات المكافآت للموظف الحالي (المسجل دخوله) مع الفلترة والتقسيم لصفحات.",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "description": "عامل تصفية اختياري لشهر معين.",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "عامل تصفية اختياري لسنة معينة.",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "description": "رقم الصفحة (الافتراضي 1).",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "عدد العناصر في الصفحة (الافتراضي 10).",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "employeeProfileId",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BonusSubtractionLogDto"
-                  }
+                  "$ref": "#/components/schemas/PaginatedLogResponseDto"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BonusSubtractionLogDto"
-                  }
+                  "$ref": "#/components/schemas/PaginatedLogResponseDto"
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BonusSubtractionLogDto"
-                  }
+                  "$ref": "#/components/schemas/PaginatedLogResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRBonusAdjustment/Me/Deficits": {
+      "get": {
+        "tags": [
+          "HRBonusAdjustment"
+        ],
+        "summary": "جلب سجل حركات العجز (الخصومات) للموظف الحالي (المسجل دخوله) مع الفلترة والتقسيم لصفحات.",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "description": "عامل تصفية اختياري لشهر معين.",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "عامل تصفية اختياري لسنة معينة.",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "description": "رقم الصفحة (الافتراضي 1).",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "عدد العناصر في الصفحة (الافتراضي 10).",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "employeeProfileId",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedLogResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedLogResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedLogResponseDto"
                 }
               }
             }
@@ -660,6 +807,17 @@
         ],
         "summary": "استرجاع مقاييس وإحصائيات لوحة التحكم للموارد البشرية (للمدراء والمسؤولين).",
         "description": "تقوم هذه الدالة بإرجاع الإحصائيات العامة وتشمل: إجمالي عدد الموظفين الفعالين، طلبات الإجازة المعلقة، الغياب اليومي، وقائمة أفضل الموظفين من حيث دقائق المكافأة.",
+        "parameters": [
+          {
+            "name": "empId",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -680,6 +838,18 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/HRLaborLaw/GetEgyptianLaborLaws": {
+      "get": {
+        "tags": [
+          "HRLaborLaw"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
           }
         }
       }
@@ -1386,6 +1556,73 @@
         }
       }
     },
+    "/api/HRRemoteWork/submit": {
+      "post": {
+        "tags": [
+          "HRRemoteWork"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRemoteWorkRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRemoteWorkRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRemoteWorkRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/HRRemoteWork/my-requests": {
+      "get": {
+        "tags": [
+          "HRRemoteWork"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/HRRemoteWork/{id}": {
+      "get": {
+        "tags": [
+          "HRRemoteWork"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/HRSettings": {
       "get": {
         "tags": [
@@ -1463,6 +1700,84 @@
         "responses": {
           "200": {
             "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/HRTypes/Bonuses": {
+      "get": {
+        "tags": [
+          "HRTypes"
+        ],
+        "summary": "جلب جميع قوالب (أنواع) المكافآت المتاحة",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusDeficitTypeDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusDeficitTypeDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusDeficitTypeDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HRTypes/Deficits": {
+      "get": {
+        "tags": [
+          "HRTypes"
+        ],
+        "summary": "جلب جميع قوالب (أنواع) الخصومات المتاحة",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusDeficitTypeDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusDeficitTypeDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BonusDeficitTypeDto"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3209,6 +3524,24 @@
         ],
         "type": "string"
       },
+      "BonusDeficitTypeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultMinutes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "BonusSubtractionLogDto": {
         "type": "object",
         "properties": {
@@ -3418,8 +3751,24 @@
             "format": "date-time"
           },
           "hoursRequested": {
-            "type": "integer",
-            "format": "int32"
+            "type": "number",
+            "format": "double"
+          },
+          "startTime": {
+            "$ref": "#/components/schemas/TimeSpan"
+          },
+          "endTime": {
+            "$ref": "#/components/schemas/TimeSpan"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateRemoteWorkRequestDto": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -3812,6 +4161,17 @@
             },
             "nullable": true
           },
+          "remoteEmployeesTodayCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "remoteEmployeesTodayList": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
           "isAdmin": {
             "type": "boolean"
           },
@@ -3831,6 +4191,15 @@
             "type": "integer",
             "format": "int32"
           },
+          "employeeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "viewingProfileId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "myBonusMinutes": {
             "type": "integer",
             "format": "int32"
@@ -3838,6 +4207,20 @@
           "myDeficitMinutes": {
             "type": "integer",
             "format": "int32"
+          },
+          "myBonuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BonusSubtractionLogDto"
+            },
+            "nullable": true
+          },
+          "myDeficits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BonusSubtractionLogDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3895,6 +4278,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "totalVacationBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
           "vacationMonthlyMax": {
             "type": "integer",
             "format": "int32"
@@ -3903,7 +4290,15 @@
             "type": "integer",
             "format": "int32"
           },
+          "totalCasualLeaveBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
           "sickLeaveBalance": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalSickLeaveBalance": {
             "type": "integer",
             "format": "int32"
           },
@@ -4389,8 +4784,8 @@
             "format": "int32"
           },
           "hoursRequested": {
-            "type": "integer",
-            "format": "int32"
+            "type": "number",
+            "format": "double"
           },
           "status": {
             "$ref": "#/components/schemas/LeaveStatus"
@@ -4399,9 +4794,16 @@
             "type": "string",
             "nullable": true
           },
+          "rejectedBy": {
+            "type": "string",
+            "nullable": true
+          },
           "createdDate": {
             "type": "string",
             "format": "date-time"
+          },
+          "canApprove": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -4420,7 +4822,8 @@
           "RegularVacation",
           "Casual",
           "Sick",
-          "LeaveHours"
+          "LeaveHours",
+          "RemoteWork"
         ],
         "type": "string"
       },
@@ -4854,6 +5257,39 @@
           },
           "communication": {
             "$ref": "#/components/schemas/communication"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PaginatedLogResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalRecords": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalMonthMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BonusSubtractionLogDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

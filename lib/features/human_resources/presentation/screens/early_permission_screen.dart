@@ -203,114 +203,93 @@ class _EarlyPermissionScreenState extends State<EarlyPermissionScreen> {
                             SizedBox(height: 20.h),
 
                             // Exit Time and Expected Return Row
-                            Row(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.schedule,
-                                            color: Color(0xFF00A8D8),
-                                            size: 20,
-                                          ),
-                                          SizedBox(width: 6.w),
-                                          Text(
-                                            'وقت الخروج',
-                                            style: AppStyle.font14_700Weight
-                                                .copyWith(
-                                              color:
-                                                  ProgrammerColors.textPrimary,
-                                            ),
-                                          ),
-                                        ],
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.schedule,
+                                      color: Color(0xFF00A8D8),
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    Text(
+                                      'وقت الخروج',
+                                      style: AppStyle.font14_700Weight.copyWith(
+                                        color: ProgrammerColors.textPrimary,
                                       ),
-                                      SizedBox(height: 10.h),
-                                      GestureDetector(
-                                        onTap: () => _selectTime(context, true),
-                                        child: Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 14.w,
-                                            vertical: 12.h,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFF4F7FB),
-                                            borderRadius:
-                                                BorderRadius.circular(16.r),
-                                          ),
-                                          child: Text(
-                                            exitTime != null
-                                                ? '${exitTime!.hour.toString().padLeft(2, '0')}:${exitTime!.minute.toString().padLeft(2, '0')}'
-                                                : '--:--',
-                                            style: AppStyle.font14_700Weight
-                                                .copyWith(
-                                              color: exitTime != null
-                                                  ? ProgrammerColors.textPrimary
-                                                  : const Color(0xFFAEAEAE),
-                                            ),
-                                          ),
-                                        ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 10.h),
+                                GestureDetector(
+                                  onTap: () => _selectTime(context, true),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 14.w,
+                                      vertical: 12.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF4F7FB),
+                                      borderRadius: BorderRadius.circular(16.r),
+                                    ),
+                                    child: Text(
+                                      exitTime != null
+                                          ? '${exitTime!.hour.toString().padLeft(2, '0')}:${exitTime!.minute.toString().padLeft(2, '0')}'
+                                          : '--:--',
+                                      style: AppStyle.font14_700Weight.copyWith(
+                                        color: exitTime != null
+                                            ? ProgrammerColors.textPrimary
+                                            : const Color(0xFFAEAEAE),
                                       ),
-                                    ],
+                                    ),
                                   ),
                                 ),
-                                SizedBox(width: 12.w),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.access_time,
-                                            color: Color(0xFF00A8D8),
-                                            size: 20,
-                                          ),
-                                          SizedBox(width: 6.w),
-                                          Expanded(
-                                            child: Text(
-                                              'العودة المتوقعة',
-                                              style: AppStyle.font14_700Weight
-                                                  .copyWith(
-                                                color: ProgrammerColors
-                                                    .textPrimary,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(height: 10.h),
-                                      GestureDetector(
-                                        onTap: () =>
-                                            _selectTime(context, false),
-                                        child: Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 14.w,
-                                            vertical: 12.h,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFF4F7FB),
-                                            borderRadius:
-                                                BorderRadius.circular(16.r),
-                                          ),
-                                          child: Text(
-                                            returnTime != null
-                                                ? '${returnTime!.hour.toString().padLeft(2, '0')}:${returnTime!.minute.toString().padLeft(2, '0')}'
-                                                : '--:--',
-                                            style: AppStyle.font14_700Weight
-                                                .copyWith(
-                                              color: returnTime != null
-                                                  ? ProgrammerColors.textPrimary
-                                                  : const Color(0xFFAEAEAE),
-                                            ),
-                                          ),
+                                SizedBox(height: 16.h),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.access_time,
+                                      color: Color(0xFF00A8D8),
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    Expanded(
+                                      child: Text(
+                                        'العودة المتوقعة',
+                                        style:
+                                            AppStyle.font14_700Weight.copyWith(
+                                          color: ProgrammerColors.textPrimary,
                                         ),
                                       ),
-                                    ],
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 10.h),
+                                GestureDetector(
+                                  onTap: () => _selectTime(context, false),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 14.w,
+                                      vertical: 12.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF4F7FB),
+                                      borderRadius: BorderRadius.circular(16.r),
+                                    ),
+                                    child: Text(
+                                      returnTime != null
+                                          ? '${returnTime!.hour.toString().padLeft(2, '0')}:${returnTime!.minute.toString().padLeft(2, '0')}'
+                                          : '--:--',
+                                      style: AppStyle.font14_700Weight.copyWith(
+                                        color: returnTime != null
+                                            ? ProgrammerColors.textPrimary
+                                            : const Color(0xFFAEAEAE),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -475,12 +454,28 @@ class _EarlyPermissionScreenState extends State<EarlyPermissionScreen> {
 
     final request = CreateHrLeaveRequestModel(
       leaveType: 'LeaveHours',
-      startDate: startDate,
-      endDate: endDate,
-      hoursRequested: hours,
+      reason: reasonController.text.trim().isEmpty
+          ? null
+          : reasonController.text.trim(),
+      startDate: DateTime(
+        selectedDate!.year,
+        selectedDate!.month,
+        selectedDate!.day,
+      ),
+      endDate: DateTime(
+        selectedDate!.year,
+        selectedDate!.month,
+        selectedDate!.day,
+      ),
+      startTime: _formatTime(exitTime!),
+      endTime: _formatTime(returnTime!),
     );
 
     await context.read<HrLeaveCubit>().createLeave(request);
+  }
+
+  String _formatTime(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
   }
 
   void _showValidationMessage(String message) {

@@ -45,7 +45,6 @@ class MessagingConfig {
       'high_importance_channel',
       'High Importance Notifications',
       description: 'This channel is used for important notifications.',
-      sound: RawResourceAndroidNotificationSound('custom_sound'),
       importance: Importance.max,
     );
 
@@ -112,7 +111,6 @@ class MessagingConfig {
       log("message received");
       try {
         final RemoteNotification? notification = event.notification;
-        final AndroidNotification? android = event.notification?.android;
         log(notification!.body.toString());
         log(notification.title.toString());
 
@@ -128,14 +126,12 @@ class MessagingConfig {
               'High Importance Notifications',
               channelDescription:
                   'This channel is used for important notifications.',
-              sound: RawResourceAndroidNotificationSound('custom_sound'),
               icon: '@mipmap/ic_launcher',
             ),
             iOS: DarwinNotificationDetails(
               presentAlert: true,
               presentBadge: true,
               presentSound: true,
-              sound: 'custom_sound.caf',
             ),
           ),
           payload: event.data.toString(),
@@ -169,7 +165,6 @@ class MessagingConfig {
 
 void handleNotification(BuildContext context, Map<String, dynamic> data) {
   final String route = data['route'];
-  final String id = data['id'];
 
   if (route == 'posProfileScreen') {
   } else if (route == 'productDetailsScreen') {}

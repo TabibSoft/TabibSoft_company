@@ -25,11 +25,11 @@ Future<void> initializeApp() async {
   await ScreenUtil.ensureScreenSize();
   // print\(.*?\);
 
-   await Firebase.initializeApp(
+  await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  MessagingConfig.initFirebaseMessaging();
+  await MessagingConfig.initFirebaseMessaging();
 
   FirebaseMessaging.onBackgroundMessage(MessagingConfig.messageHandler);
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;

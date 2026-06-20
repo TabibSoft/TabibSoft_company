@@ -6,6 +6,7 @@ import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_cubit.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_state.dart';
 import 'package:tabib_soft_company/features/human_resources/data/models/hr_leave_request_model.dart';
+import 'vacation_request_screen.dart';
 
 class MyRequestsPage extends StatefulWidget {
   const MyRequestsPage({super.key});
@@ -126,18 +127,18 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
                     Row(
                       children: [
                         // Circular menu button
-                        Container(
-                          width: 48.w,
-                          height: 48.w,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.menu, color: Colors.white),
-                            onPressed: () {},
-                          ),
-                        ),
+                        // Container(
+                        //   width: 48.w,
+                        //   height: 48.w,
+                        //   decoration: BoxDecoration(
+                        //     color: Colors.white.withOpacity(0.12),
+                        //     borderRadius: BorderRadius.circular(14.r),
+                        //   ),
+                        //   child: IconButton(
+                        //     icon: const Icon(Icons.menu, color: Colors.white),
+                        //     onPressed: () {},
+                        //   ),
+                        // ),
                         const Spacer(),
                         // Title aligned right
                         Column(
@@ -341,7 +342,15 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
                             ),
                             child: Center(
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const VacationRequestScreen(),
+                                    ),
+                                  );
+                                },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF15A0C8),
                                   padding: EdgeInsets.symmetric(
@@ -364,7 +373,6 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
                     );
                   },
                 ),
-
               ],
             ),
           ),
@@ -477,16 +485,16 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
                         ),
                         SizedBox(height: 8.h),
                       ],
-                      TextButton(
-                        onPressed: () {},
-                        style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                        child: Text(
-                          'التفاصيل',
-                          style: AppStyle.font14_700Weight.copyWith(
-                            color: const Color(0xFF19A7CE),
-                          ),
-                        ),
-                      ),
+                      // TextButton(
+                      //   onPressed: () {},
+                      //   style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                      //   child: Text(
+                      //     'التفاصيل',
+                      //     style: AppStyle.font14_700Weight.copyWith(
+                      //       color: const Color(0xFF19A7CE),
+                      //     ),
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),
@@ -514,7 +522,7 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
   String _leaveTypeLabel(String? value) {
     switch (value) {
       case 'RegularVacation':
-        return 'طلب إجازة سنوية';
+        return 'طلب إجازة إعتيادية';
       case 'Casual':
         return 'طلب إجازة عارضة';
       case 'Sick':

@@ -55,7 +55,14 @@ class ApiConstants {
 
   static const String hrProfileMe = 'HRProfile/Me';
   static const String hrLeave = 'HRLeave';
+  static const String hrLaborLaws = 'HRLaborLaw/GetEgyptianLaborLaws';
   static const String hrLeaveTypes = 'HRLeave/Types';
+  static const String hrBonusTypes = 'HRBonusAdjustment/Me/Bonuses';
+  static const String hrDeficitTypes = 'HRBonusAdjustment/Me/Deficits';
+
+  static const String hrRemoteWorkSubmit = 'HRRemoteWork/submit';
+  static const String hrRemoteWorkMyRequests = 'HRRemoteWork/my-requests';
+  static const String hrRemoteWorkById = 'HRRemoteWork/{id}';
 
   static const String getAllProgrammerTasks = 'Programer/GetAll';
   static const String getProgrammerTaskById = 'Programer/GetById';

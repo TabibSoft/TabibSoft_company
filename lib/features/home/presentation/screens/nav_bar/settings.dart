@@ -35,12 +35,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         title: Text(
           'تأكيد تسجيل الخروج',
-          style: AppStyle.font20_600Weight.copyWith(color: Colors.blueGrey[800]),
+          style:
+              AppStyle.font20_600Weight.copyWith(color: Colors.blueGrey[800]),
           textAlign: TextAlign.center,
         ),
         content: Text(
           'مش ناوي تغير رأيك يعني !!!',
-          style: AppStyle.font16_700Weight.copyWith(color: Colors.blueGrey[600]),
+          style:
+              AppStyle.font16_700Weight.copyWith(color: Colors.blueGrey[600]),
           textAlign: TextAlign.center,
         ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
@@ -80,7 +82,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColor.primaryColor, // استخدام اللون الأساسي من AppColor
+        backgroundColor:
+            AppColor.primaryColor, // استخدام اللون الأساسي من AppColor
         body: SafeArea(
           bottom: false,
           child: Column(
@@ -118,7 +121,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Column(
                         children: [
                           /// كارت الموارد البشرية (الجديد)
-                          _buildHRCard(context),
+                          // _buildHRCard(context),
 
                           const SizedBox(height: 25),
 
@@ -138,105 +141,105 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   /// كارت الموارد البشرية
-  Widget _buildHRCard(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        /// الظل
-        Positioned(
-          left: 0,
-          top: 15,
-          child: Container(
-            width: MediaQuery.of(context).size.width - 40,
-            height: 135,
-            decoration: BoxDecoration(
-              color: const Color(0xff104D9D),
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
-                  offset: const Offset(4, 6),
-                  blurRadius: 12,
-                ),
-              ],
-            ),
-          ),
-        ),
+  // Widget _buildHRCard(BuildContext context) {
+  //   return Stack(
+  //     clipBehavior: Clip.none,
+  //     children: [
+  //       /// الظل
+  //       Positioned(
+  //         left: 0,
+  //         top: 15,
+  //         child: Container(
+  //           width: MediaQuery.of(context).size.width - 40,
+  //           height: 135,
+  //           decoration: BoxDecoration(
+  //             color: const Color(0xff104D9D),
+  //             borderRadius: BorderRadius.circular(25),
+  //             boxShadow: [
+  //               BoxShadow(
+  //                 color: Colors.black.withOpacity(0.25),
+  //                 offset: const Offset(4, 6),
+  //                 blurRadius: 12,
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
 
-        /// الكارت الرئيسي
-        Padding(
-          padding: const EdgeInsets.only(top: 25, left: 20),
-          child: GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const HumanResourcesScreen(),
-                ),
-              );
-            },
-            child: Container(
-              height: 135,
-              width: MediaQuery.of(context).size.width - 6,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: AppColor.accentColor, width: 4),
-              ),
-              child: Row(
-                children: [
-                  /// أيقونة
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColor.accentColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.people_alt_rounded,
-                      size: 42,
-                      color: AppColor.accentColor,
-                    ),
-                  ),
+  //       /// الكارت الخاص بالموارد البشرية
+  //       // Padding(
+  //       //   padding: const EdgeInsets.only(top: 25, left: 20),
+  //       //   child: GestureDetector(
+  //       //     onTap: () {
+  //       //       Navigator.push(
+  //       //         context,
+  //       //         MaterialPageRoute(
+  //       //           builder: (_) => const HumanResourcesScreen(),
+  //       //         ),
+  //       //       );
+  //       //     },
+  //       //     child: Container(
+  //       //       height: 135,
+  //       //       width: MediaQuery.of(context).size.width - 6,
+  //       //       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+  //       //       decoration: BoxDecoration(
+  //       //         color: Colors.white,
+  //       //         borderRadius: BorderRadius.circular(30),
+  //       //         border: Border.all(color: AppColor.accentColor, width: 4),
+  //       //       ),
+  //       //       child: Row(
+  //       //         children: [
+  //       //           /// أيقونة
+  //       //           Container(
+  //       //             padding: const EdgeInsets.all(12),
+  //       //             decoration: BoxDecoration(
+  //       //               color: AppColor.accentColor.withOpacity(0.1),
+  //       //               shape: BoxShape.circle,
+  //       //             ),
+  //       //             child: Icon(
+  //       //               Icons.people_alt_rounded,
+  //       //               size: 42,
+  //       //               color: AppColor.accentColor,
+  //       //             ),
+  //       //           ),
 
-                  const SizedBox(width: 20),
+  //       //           const SizedBox(width: 20),
 
-                  /// النص
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'الموارد البشرية',
-                          style: AppStyle.font20_600Weight.copyWith(
-                            color: AppColor.titleColor,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'إدارة طلباتك وتقاريرك',
-                          style: AppStyle.font16_700Weight.copyWith(
-                            color: AppColor.subTitleColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+  //       //           /// النص
+  //       //           Expanded(
+  //       //             child: Column(
+  //       //               crossAxisAlignment: CrossAxisAlignment.start,
+  //       //               mainAxisAlignment: MainAxisAlignment.center,
+  //       //               children: [
+  //       //                 Text(
+  //       //                   'الموارد البشرية',
+  //       //                   style: AppStyle.font20_600Weight.copyWith(
+  //       //                     color: AppColor.titleColor,
+  //       //                   ),
+  //       //                 ),
+  //       //                 const SizedBox(height: 6),
+  //       //                 Text(
+  //       //                   'إدارة طلباتك وتقاريرك',
+  //       //                   style: AppStyle.font16_700Weight.copyWith(
+  //       //                     color: AppColor.subTitleColor,
+  //       //                   ),
+  //       //                 ),
+  //       //               ],
+  //       //             ),
+  //       //           ),
 
-                  const Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: AppColor.accentColor,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  //       //           const Icon(
+  //       //             Icons.arrow_forward_ios_rounded,
+  //       //             color: AppColor.accentColor,
+  //       //           ),
+  //       //         ],
+  //       //       ),
+  //       //     ),
+  //       //   ),
+  //       // ),
+  //     ],
+  //   );
+  // }
 
   /// كارت تسجيل الخروج (محدث)
   Widget _buildLogoutCard(BuildContext context) {
@@ -262,7 +265,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
-
         Padding(
           padding: const EdgeInsets.only(top: 25, left: 20),
           child: Container(
@@ -282,7 +284,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: AppStyle.font20_600Weight,
                 ),
                 const SizedBox(height: 25),
-
                 GestureDetector(
                   onTap: () => _logout(context),
                   child: Container(
@@ -301,7 +302,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     child: Text(
                       'تسجيل الخروج',
-                      style: AppStyle.font14_400Weight.copyWith(color: Colors.white),
+                      style: AppStyle.font14_400Weight
+                          .copyWith(color: Colors.white),
                     ),
                   ),
                 ),

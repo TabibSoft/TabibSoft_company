@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:tabib_soft_company/core/utils/constant/constants.dart';
 import 'package:tabib_soft_company/features/home/presentation/widgets/home_button.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/screens/human_resources_screen.dart';
 import 'package:tabib_soft_company/features/management/presentation/screens/management_screen.dart';
 import 'package:tabib_soft_company/features/modirator/presentation/screens/mediator_screen.dart';
 import 'package:tabib_soft_company/features/programmers/presentation/screens/programmers_screen.dart';
@@ -216,6 +217,7 @@ class HomeFeaturesGrid extends StatelessWidget {
     final bool isAdmin = userRoles.contains('ADMIN');
     final bool isModerator = userRoles.contains('MODERATOR');
     final bool isTracker = userRoles.contains('TRACKER');
+    const bool canAccessHr = true;
 
     return Positioned(
       top: size.height * 0.32, // Adjusted for new header height
@@ -238,88 +240,134 @@ class HomeFeaturesGrid extends StatelessWidget {
             )
           ],
         ),
-        child: GridView.count(
-          physics: const BouncingScrollPhysics(),
-          crossAxisCount: 2,
-          mainAxisSpacing: 18,
-          crossAxisSpacing: 18,
-          childAspectRatio: 1.05,
-          children: [
-            // الإدارة
-            HomeButton(
-              index: 0,
-              iconPath: 'assets/images/pngs/manager.png',
-              label: 'الإدارة',
-              enabled: isAdmin || userRoles.contains('MANAGEMENT'),
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const ManagementScreen())),
-              primaryColor: TechColors.primaryDark,
-            ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final buttonWidth = (constraints.maxWidth - 18) / 2;
 
-            // المبيعات
-            HomeButton(
-              index: 1,
-              iconPath: 'assets/images/pngs/sales.png',
-              label: 'المبيعات',
-              enabled: isAdmin ||
-                  userRoles.contains('SALSE') ||
-                  userRoles.contains('SALESADMIN'),
-              onTap: () => _handleSalesNavigation(context, userRoles),
-              primaryColor: TechColors.accentCyan,
-            ),
-
-            // المبرمجين
-            HomeButton(
-              index: 2,
-              iconPath: 'assets/images/pngs/developers.png',
-              label: 'المبرمجين',
-              enabled: isAdmin || userRoles.contains('PROGRAMMER'),
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const ProgrammersScreen())),
-              primaryColor: TechColors.primaryMid,
-            ),
-
-            // الدعم الفني
-            HomeButton(
-              index: 3,
-              iconPath: 'assets/images/pngs/technical_support.png',
-              label: 'الدعم الفني',
-              enabled: isAdmin || userRoles.contains('SUPPORT'),
-              onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const TechnicalSupportChoiseScreen())),
-              primaryColor: TechColors.accentCyan,
-            ),
-
-            // الوسيط
-            HomeButton(
-              index: 4,
-              iconPath: 'assets/images/pngs/icons8-find-user-40 1.png',
-              label: 'الوسيط',
-              enabled: isAdmin || isModerator,
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const ModeratorScreen())),
-              primaryColor: TechColors.primaryDark,
-            ),
-
-            // المتابعة
-            HomeButton(
-              index: 5,
-              iconPath: 'assets/images/pngs/icons8-scroll-up-40 1.png',
-              label: 'المتابعة',
-              enabled: isAdmin || isTracker,
-              onTap: () {
-                if (isAdmin || isTracker) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('شاشة المتابعة قيد التطوير')),
-                  );
-                }
-              },
-              primaryColor: TechColors.primaryMid,
-            ),
-            const SizedBox(height: 80), // Padding for bottom
-          ],
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  Wrap(
+                    spacing: 18,
+                    runSpacing: 18,
+                    children: [
+                      SizedBox(
+                        width: buttonWidth,
+                        child: HomeButton(
+                          index: 0,
+                          iconPath: 'assets/images/pngs/manager.png',
+                          label: 'الإدارة',
+                          enabled: isAdmin || userRoles.contains('MANAGEMENT'),
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const ManagementScreen())),
+                          primaryColor: TechColors.primaryDark,
+                        ),
+                      ),
+                      SizedBox(
+                        width: buttonWidth,
+                        child: HomeButton(
+                          index: 1,
+                          iconPath: 'assets/images/pngs/sales.png',
+                          label: 'المبيعات',
+                          enabled: isAdmin ||
+                              userRoles.contains('SALSE') ||
+                              userRoles.contains('SALESADMIN'),
+                          onTap: () =>
+                              _handleSalesNavigation(context, userRoles),
+                          primaryColor: TechColors.accentCyan,
+                        ),
+                      ),
+                      SizedBox(
+                        width: buttonWidth,
+                        child: HomeButton(
+                          index: 2,
+                          iconPath: 'assets/images/pngs/developers.png',
+                          label: 'المبرمجين',
+                          enabled: isAdmin || userRoles.contains('PROGRAMMER'),
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const ProgrammersScreen())),
+                          primaryColor: TechColors.primaryMid,
+                        ),
+                      ),
+                      SizedBox(
+                        width: buttonWidth,
+                        child: HomeButton(
+                          index: 3,
+                          iconPath: 'assets/images/pngs/technical_support.png',
+                          label: 'الدعم الفني',
+                          enabled: isAdmin || userRoles.contains('SUPPORT'),
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      const TechnicalSupportChoiseScreen())),
+                          primaryColor: TechColors.accentCyan,
+                        ),
+                      ),
+                      SizedBox(
+                        width: buttonWidth,
+                        child: HomeButton(
+                          index: 4,
+                          iconPath:
+                              'assets/images/pngs/icons8-find-user-40 1.png',
+                          label: 'الوسيط',
+                          enabled: isAdmin || isModerator,
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const ModeratorScreen())),
+                          primaryColor: TechColors.primaryDark,
+                        ),
+                      ),
+                      SizedBox(
+                        width: buttonWidth,
+                        child: HomeButton(
+                          index: 5,
+                          iconPath:
+                              'assets/images/pngs/icons8-scroll-up-40 1.png',
+                          label: 'المتابعة',
+                          enabled: isAdmin || isTracker,
+                          onTap: () {
+                            if (isAdmin || isTracker) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('شاشة المتابعة قيد التطوير')),
+                              );
+                            }
+                          },
+                          primaryColor: TechColors.primaryMid,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: HomeButton(
+                      index: 6,
+                      iconPath: 'assets/images/pngs/manager.png',
+                      label: 'HR',
+                      enabled: canAccessHr,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HumanResourcesScreen(),
+                        ),
+                      ),
+                      primaryColor: TechColors.primaryMid,
+                      isWide: true,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

@@ -21,6 +21,9 @@ import 'package:tabib_soft_company/features/technical_support/data/repo/whatsapp
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/whatsapp/whatsapp_cubit.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_profile_cubit.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_remote_work_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_bonus_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_deficit_cubit.dart';
 
 Widget buildAppWithProviders({required Widget child}) {
   return MultiBlocProvider(
@@ -62,6 +65,16 @@ Widget buildAppWithProviders({required Widget child}) {
       ),
       BlocProvider<HrLeaveCubit>(
         create: (_) => ServicesLocator.hrLeaveCubit,
+      ),
+      BlocProvider<HrRemoteWorkCubit>(
+        create: (_) =>
+            ServicesLocator.hrRemoteWorkCubit..fetchRemoteWorkRequests(),
+      ),
+      BlocProvider<HrBonusCubit>(
+        create: (_) => ServicesLocator.hrBonusCubit,
+      ),
+      BlocProvider<HrDeficitCubit>(
+        create: (_) => ServicesLocator.hrDeficitCubit,
       ),
     ],
     child: child,

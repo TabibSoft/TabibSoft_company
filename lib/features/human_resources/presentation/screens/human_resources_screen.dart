@@ -14,6 +14,7 @@ import 'package:tabib_soft_company/features/human_resources/presentation/screens
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/early_permission_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/vacation_request_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/work_fromhome_screen.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/screens/work_laws_screen.dart';
 
 class HumanResourcesScreen extends StatefulWidget {
   const HumanResourcesScreen({super.key});
@@ -72,13 +73,6 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
                           profile.casualLeaveBalance ??
                           0;
 
-                      final vacationMonthlyMax =
-                          profile.vacationMonthlyMax ?? 0;
-                      final earlyPermissionMonthlyHours =
-                          profile.maxLeaveHoursPerMonth ?? 0;
-                      final earlyPermissionDailyHours =
-                          profile.maxLeaveHoursPerDay ?? 0;
-
                       final vacationPercent = vacationMax > 0
                           ? (vacationBalance / vacationMax).clamp(0.0, 1.0)
                           : 0.0;
@@ -95,15 +89,15 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
                         ..sort((a, b) =>
                             _requestDateTime(b).compareTo(_requestDateTime(a)));
                       final latestActivities =
-                          recentActivities.take(2).toList();
+                          recentActivities.take(1).toList();
 
                       return Padding(
                         padding: EdgeInsets.all(16.w),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _welcomeCard(context),
-                            SizedBox(height: 24.h),
+                            // _welcomeCard(context),
+                            // SizedBox(height: 10.h),
                             Text(
                               "إحصائيات الإجازات",
                               style: AppStyle.font18_600Weight.copyWith(
@@ -112,14 +106,14 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
                             ),
                             SizedBox(height: 16.h),
                             SizedBox(
-                              height: 230.h,
+                              height: 150.h,
                               child: ListView(
                                 scrollDirection: Axis.horizontal,
                                 physics: const BouncingScrollPhysics(),
                                 children: [
                                   SizedBox(width: 16.w),
                                   SizedBox(
-                                    width: 180.w,
+                                    width: 120.w,
                                     child: _StatCard(
                                       title: "إجازة اعتيادية",
                                       value: "$vacationBalance/$vacationMax",
@@ -129,7 +123,7 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
                                   ),
                                   SizedBox(width: 12.w),
                                   SizedBox(
-                                    width: 180.w,
+                                    width: 120.w,
                                     child: _StatCard(
                                       title: "إجازة مرضية",
                                       value: "$sickBalance/$sickMax",
@@ -139,7 +133,7 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
                                   ),
                                   SizedBox(width: 12.w),
                                   SizedBox(
-                                    width: 180.w,
+                                    width: 120.w,
                                     child: _StatCard(
                                       title: "إجازة عارضة",
                                       value: "$casualBalance/$casualMax",
@@ -154,7 +148,7 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
                             SizedBox(height: 12.h),
                             Container(
                               width: double.infinity,
-                              padding: EdgeInsets.all(14.w),
+                              padding: EdgeInsets.all(10.w),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(16.r),
@@ -166,26 +160,6 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    "الحدود الشهرية",
-                                    style: AppStyle.font14_700Weight.copyWith(
-                                      color: AppColor.titleColor,
-                                    ),
-                                  ),
-                                  SizedBox(height: 8.h),
-                                  Text(
-                                    "طلب الإجازة الاعتيادية: $vacationMonthlyMax يوم / شهر",
-                                    style: AppStyle.font13_400Weight.copyWith(
-                                      color: AppColor.subTitleColor,
-                                    ),
-                                  ),
-                                  SizedBox(height: 6.h),
-                                  Text(
-                                    "الاستئذان المبكر: $earlyPermissionMonthlyHours ساعة / شهر (بحد أقصى $earlyPermissionDailyHours ساعة يومياً)",
-                                    style: AppStyle.font13_400Weight.copyWith(
-                                      color: AppColor.subTitleColor,
-                                    ),
-                                  ),
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -217,7 +191,7 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
                                       ),
                                     ],
                                   ),
-                                  SizedBox(height: 12.h),
+                                  SizedBox(height: 8.h),
                                   if (latestActivities.isEmpty)
                                     Padding(
                                       padding:
@@ -246,25 +220,47 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
                                               color: _statusColor(r.status),
                                             ),
                                             if (i < latestActivities.length - 1)
-                                              SizedBox(height: 14.h),
+                                              SizedBox(height: 4.h),
                                           ],
                                         );
                                       }),
                                     ),
-                                  SizedBox(height: 30.h),
+                                  // SizedBox(height: 10.h),
                                 ],
                               ),
                             ),
-                            SizedBox(height: 30.h),
-                            Text(
-                              "الخدمات",
-                              style: AppStyle.font18_600Weight.copyWith(
-                                color: AppColor.titleColor,
-                              ),
+                            SizedBox(height: 10.h),
+                            Row(
+                              children: [
+                                Text(
+                                  "الخدمات",
+                                  style: AppStyle.font18_600Weight.copyWith(
+                                    color: AppColor.titleColor,
+                                  ),
+                                ),
+                                const Spacer(),
+                                TextButton(
+                                  child: Text(
+                                    "لائحة العمل",
+                                    style: AppStyle.font14_700Weight.copyWith(
+                                      color: AppColor.accentColor,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const WorkLawsPage(),
+                                      ),
+                                    );
+                                  },
+                                )
+                              ],
                             ),
-                            SizedBox(height: 16.h),
+                            SizedBox(height: 14.h),
                             SizedBox(
-                              height: 200.h,
+                              height: 170.h,
                               child: ListView(
                                 scrollDirection: Axis.horizontal,
                                 physics: const BouncingScrollPhysics(),
@@ -314,21 +310,21 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
                                     },
                                   ),
                                   SizedBox(width: 20.w),
-                                  _ServiceSection(
-                                    title: "سلفة راتب",
-                                    icon: Icons.payments_rounded,
-                                    bgColor: const Color(0xffEAF7E8),
-                                    iconColor: Colors.green,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const SalaryAdvanceScreen(),
-                                        ),
-                                      );
-                                    },
-                                  ),
+                                  // _ServiceSection(
+                                  //   title: "سلفة راتب",
+                                  //   icon: Icons.payments_rounded,
+                                  //   bgColor: const Color(0xffEAF7E8),
+                                  //   iconColor: Colors.green,
+                                  //   onTap: () {
+                                  //     Navigator.push(
+                                  //       context,
+                                  //       MaterialPageRoute(
+                                  //         builder: (context) =>
+                                  //             const SalaryAdvanceScreen(),
+                                  //       ),
+                                  //     );
+                                  //   },
+                                  // ),
                                 ],
                               ),
                             ),
@@ -455,71 +451,71 @@ class _HumanResourcesScreenState extends State<HumanResourcesScreen> {
         DateTime.fromMillisecondsSinceEpoch(0);
   }
 
-  Widget _welcomeCard(BuildContext context) {
-    return BlocBuilder<HrProfileCubit, HrProfileState>(
-      builder: (context, state) {
-        final name = state.profile?.employeeName ?? '';
-        return Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(18.w),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [
-                AppColor.accentColor,
-                AppColor.primaryColor,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24.r),
-            boxShadow: [
-              BoxShadow(
-                color: AppColor.primaryColor.withOpacity(.15),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              )
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(12.w),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.pending_actions_rounded,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name.isNotEmpty
-                          ? "أهلاً بك، $name 👋"
-                          : "لديك طلبات قيد المراجعة",
-                      style: AppStyle.font16_700Weight.copyWith(
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      "يمكنك متابعة حالة جميع الطلبات",
-                      style: AppStyle.font13_400Weight.copyWith(
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  // Widget _welcomeCard(BuildContext context) {
+  //   return BlocBuilder<HrProfileCubit, HrProfileState>(
+  //     builder: (context, state) {
+  //       final name = state.profile?.employeeName ?? '';
+  //       return Container(
+  //         width: double.infinity,
+  //         padding: EdgeInsets.all(18.w),
+  //         decoration: BoxDecoration(
+  //           gradient: const LinearGradient(
+  //             colors: [
+  //               AppColor.accentColor,
+  //               AppColor.primaryColor,
+  //             ],
+  //           ),
+  //           borderRadius: BorderRadius.circular(24.r),
+  //           boxShadow: [
+  //             BoxShadow(
+  //               color: AppColor.primaryColor.withOpacity(.15),
+  //               blurRadius: 20,
+  //               offset: const Offset(0, 8),
+  //             )
+  //           ],
+  //         ),
+  //         child: Row(
+  //           children: [
+  //             Container(
+  //               padding: EdgeInsets.all(12.w),
+  //               decoration: BoxDecoration(
+  //                 color: Colors.white.withOpacity(.2),
+  //                 shape: BoxShape.circle,
+  //               ),
+  //               child: const Icon(
+  //                 Icons.pending_actions_rounded,
+  //                 color: Colors.white,
+  //               ),
+  //             ),
+  //             SizedBox(width: 14.w),
+  //             // Expanded(
+  //             //   child: Column(
+  //             //     crossAxisAlignment: CrossAxisAlignment.start,
+  //             //     children: [
+  //             //       Text(
+  //             //         name.isNotEmpty
+  //             //             ? "أهلاً بك، $name 👋"
+  //             //             : "لديك طلبات قيد المراجعة",
+  //             //         style: AppStyle.font16_700Weight.copyWith(
+  //             //           color: Colors.white,
+  //             //         ),
+  //             //       ),
+  //             //       SizedBox(height: 4.h),
+  //             //       Text(
+  //             //         "يمكنك متابعة حالة جميع الطلبات",
+  //             //         style: AppStyle.font13_400Weight.copyWith(
+  //             //           color: Colors.white70,
+  //             //         ),
+  //             //       ),
+  //             //     ],
+  //             //   ),
+  //             // ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 }
 
 class _HeaderSection extends StatelessWidget {
@@ -528,7 +524,7 @@ class _HeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 240.h,
+      height: 180.h,
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -544,52 +540,81 @@ class _HeaderSection extends StatelessWidget {
           bottomRight: Radius.circular(40.r),
         ),
       ),
-      child: Padding(
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
+      child: BlocBuilder<HrProfileCubit, HrProfileState>(
+        builder: (context, state) {
+          final name = state.profile?.employeeName ?? '';
+          final vacationMonthlyMax = state.profile?.vacationMonthlyMax ?? 0;
+          final earlyPermissionMonthlyHours =
+              state.profile?.maxLeaveHoursPerMonth ?? 0;
+          final earlyPermissionDailyHours =
+              state.profile?.maxLeaveHoursPerDay ?? 0;
+
+          return Padding(
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.white30,
-                      width: 2,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const CircleAvatar(
-                    radius: 32,
-                    backgroundImage: AssetImage(
-                      "assets/images/pngs/developers.png",
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "أهلاً بك 👋",
-                        style: AppStyle.font14_400Weight.copyWith(
-                          color: Colors.white70,
+                Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.white30,
+                          width: 2,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const CircleAvatar(
+                        radius: 32,
+                        backgroundImage: AssetImage(
+                          "assets/images/pngs/developers.png",
                         ),
                       ),
-                      Text(
-                        "قسم الموارد البشرية",
-                        style: AppStyle.font24_700Weight.copyWith(
-                          color: Colors.white,
-                        ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 28.h),
+                          Text(
+                            name.isNotEmpty
+                                ? "أهلاً بك، $name 👋"
+                                : "لديك طلبات قيد المراجعة",
+                            style: AppStyle.font16_700Weight.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            "قسم الموارد البشرية",
+                            style: AppStyle.font24_700Weight.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          // SizedBox(height: 28.h),
+                          Text(
+                            "طلب الإجازة الاعتيادية: $vacationMonthlyMax يوم / شهر",
+                            style: AppStyle.font14_700Weight.copyWith(
+                              color: AppColor.titleColor,
+                            ),
+                          ),
+                          // SizedBox(height: 6.h),
+                          Text(
+                            "الاستئذان المبكر: $earlyPermissionMonthlyHours ساعة / شهر (بحد أقصى $earlyPermissionDailyHours ساعة يومياً)",
+                            style: AppStyle.font14_700Weight.copyWith(
+                              color: AppColor.titleColor,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -625,8 +650,8 @@ class _StatCard extends StatelessWidget {
       child: Column(
         children: [
           SizedBox(
-            height: 100.w,
-            width: 100.w,
+            height: 70.w,
+            width: 70.w,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -680,8 +705,8 @@ class _ActivityCard extends StatelessWidget {
         Column(
           children: [
             Container(
-              width: 46.w,
-              height: 46.w,
+              width: 40.w,
+              height: 40.w,
               decoration: BoxDecoration(
                 color: color.withOpacity(.12),
                 shape: BoxShape.circle,
@@ -689,12 +714,12 @@ class _ActivityCard extends StatelessWidget {
               child: Icon(
                 icon,
                 color: color,
-                size: 24.sp,
+                size: 18.sp,
               ),
             ),
             Container(
               width: 2.w,
-              height: 70.h,
+              height: 44.h,
               color: Colors.grey.shade300,
             ),
           ],
@@ -702,7 +727,7 @@ class _ActivityCard extends StatelessWidget {
         SizedBox(width: 14.w),
         Expanded(
           child: Container(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(22.r),
@@ -721,25 +746,27 @@ class _ActivityCard extends StatelessWidget {
                   text: status,
                   color: color,
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: 6.h),
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppStyle.font15_500Weight.copyWith(
                     color: AppColor.titleColor,
                   ),
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: 4.h),
                 Row(
                   children: [
                     Icon(
                       Icons.access_time_rounded,
-                      size: 16.sp,
+                      size: 14.sp,
                       color: AppColor.subTitleColor,
                     ),
                     SizedBox(width: 4.w),
                     Text(
                       time,
-                      style: AppStyle.font13_400Weight.copyWith(
+                      style: AppStyle.font12_600Weight.copyWith(
                         color: AppColor.subTitleColor,
                       ),
                     ),

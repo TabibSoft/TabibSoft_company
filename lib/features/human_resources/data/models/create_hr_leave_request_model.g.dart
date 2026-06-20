@@ -12,7 +12,10 @@ CreateHrLeaveRequestModel _$CreateHrLeaveRequestModelFromJson(
       leaveType: json['leaveType'] as String,
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
-      hoursRequested: (json['hoursRequested'] as num).toInt(),
+      reason: json['reason'] as String?,
+      startTime: json['startTime'] as String?,
+      endTime: json['endTime'] as String?,
+      hoursRequested: (json['hoursRequested'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$CreateHrLeaveRequestModelToJson(
@@ -21,5 +24,8 @@ Map<String, dynamic> _$CreateHrLeaveRequestModelToJson(
       'leaveType': instance.leaveType,
       'startDate': instance.startDate.toIso8601String(),
       'endDate': instance.endDate.toIso8601String(),
-      'hoursRequested': instance.hoursRequested,
+      if (instance.reason case final value?) 'reason': value,
+      if (instance.startTime case final value?) 'startTime': value,
+      if (instance.endTime case final value?) 'endTime': value,
+      if (instance.hoursRequested case final value?) 'hoursRequested': value,
     };

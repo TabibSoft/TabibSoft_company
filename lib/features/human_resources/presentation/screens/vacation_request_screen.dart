@@ -274,57 +274,42 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
                               ),
                             ),
                             SizedBox(height: 20.h),
-                            Row(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _isLeaveHoursType
-                                            ? "وقت البدء"
-                                            : "تاريخ البدء",
-                                        style:
-                                            AppStyle.font14_700Weight.copyWith(
-                                          color: ProgrammerColors.textPrimary,
-                                        ),
-                                      ),
-                                      SizedBox(height: 10.h),
-                                      _buildDateField(
-                                        _isLeaveHoursType
-                                            ? "--:--"
-                                            : "mm/dd/yyyy",
-                                        startDate,
-                                        true,
-                                      ),
-                                    ],
+                                Text(
+                                  _isLeaveHoursType
+                                      ? "وقت البدء"
+                                      : "تاريخ البدء",
+                                  style: AppStyle.font14_700Weight.copyWith(
+                                    color: ProgrammerColors.textPrimary,
                                   ),
                                 ),
-                                SizedBox(width: 12.w),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _isLeaveHoursType
-                                            ? "وقت الانتهاء"
-                                            : "تاريخ الانتهاء",
-                                        style:
-                                            AppStyle.font14_700Weight.copyWith(
-                                          color: ProgrammerColors.textPrimary,
-                                        ),
-                                      ),
-                                      SizedBox(height: 10.h),
-                                      _buildDateField(
-                                        _isLeaveHoursType
-                                            ? "--:--"
-                                            : "mm/dd/yyyy",
-                                        endDate,
-                                        false,
-                                      ),
-                                    ],
+                                SizedBox(height: 10.h),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: _buildDateField(
+                                    _isLeaveHoursType ? "--:--" : "dd/mm/yyyy",
+                                    startDate,
+                                    true,
+                                  ),
+                                ),
+                                SizedBox(height: 16.h),
+                                Text(
+                                  _isLeaveHoursType
+                                      ? "وقت الانتهاء"
+                                      : "تاريخ الانتهاء",
+                                  style: AppStyle.font14_700Weight.copyWith(
+                                    color: ProgrammerColors.textPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: 10.h),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: _buildDateField(
+                                    _isLeaveHoursType ? "--:--" : "dd/mm/yyyy",
+                                    endDate,
+                                    false,
                                   ),
                                 ),
                               ],
@@ -602,9 +587,26 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
 
     final request = CreateHrLeaveRequestModel(
       leaveType: vacationType!,
-      startDate: startDate!,
-      endDate: endDate!,
-      hoursRequested: _isLeaveHoursType ? hoursRequested : 0,
+      reason: reasonController.text.trim().isEmpty
+        ? null
+        : reasonController.text.trim(),
+      startDate: _isLeaveHoursType
+          ? DateTime(
+              startDate!.year,
+              startDate!.month,
+              startDate!.day,
+            )
+          : startDate!,
+      endDate: _isLeaveHoursType
+          ? DateTime(
+              endDate!.year,
+              endDate!.month,
+              endDate!.day,
+            )
+          : endDate!,
+      startTime: _isLeaveHoursType ? _formatTime(startDate!) : null,
+      endTime: _isLeaveHoursType ? _formatTime(endDate!) : null,
+      hoursRequested: _isLeaveHoursType ? null : 0,
     );
 
     await context.read<HrLeaveCubit>().createLeave(request);
@@ -631,6 +633,10 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
     final minutes = endDate!.difference(startDate!).inMinutes;
     if (minutes <= 0) return 0;
     return (minutes / 60).ceil();
+  }
+
+  String _formatTime(DateTime value) {
+    return '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}:00';
   }
 
   Widget _buildDateField(String hint, DateTime? date, bool isStart) {

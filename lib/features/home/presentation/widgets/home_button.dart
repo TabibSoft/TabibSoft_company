@@ -10,6 +10,7 @@ class HomeButton extends StatefulWidget {
   final VoidCallback onTap;
   final Color primaryColor;
   final int index; // Added for staggered animation
+  final bool isWide;
 
   const HomeButton({
     super.key,
@@ -19,6 +20,7 @@ class HomeButton extends StatefulWidget {
     this.enabled = true,
     this.primaryColor = AppColor.primaryColor,
     this.index = 0,
+    this.isWide = false,
   });
 
   @override
@@ -58,149 +60,231 @@ class _HomeButtonState extends State<HomeButton>
     final backgroundColor =
         Colors.grey.shade100; // خلفية فاتحة ليعمل التأثير الـ Neumorphic جيداً
 
-    return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 400 + (widget.index * 100)),
-      tween: Tween(begin: 0.0, end: 1.0),
-      curve: Curves.easeOutBack,
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: value,
-          child: Opacity(
-            opacity: value.clamp(0.0, 1.0),
-            child: child,
-          ),
-        );
-      },
-      child: GestureDetector(
-        onTapDown: (_) => _controller.forward(),
-        onTapUp: (_) => _controller.reverse(),
-        onTapCancel: () => _controller.reverse(),
-        onTap: widget.enabled ? widget.onTap : () => _showToast(context),
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            final depth = _depthAnimation.value;
-            final lightShadow = BoxShadow(
-              color: Colors.white.withOpacity(0.7),
-              offset: Offset(-depth / 2, -depth / 2),
-              blurRadius: depth,
-            );
-            final darkShadow = BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              offset: Offset(depth / 2, depth / 2),
-              blurRadius: depth,
-            );
+    return AspectRatio(
+      aspectRatio: widget.isWide ? 3.1 : 1.0,
+      child: TweenAnimationBuilder<double>(
+        duration: Duration(milliseconds: 400 + (widget.index * 100)),
+        tween: Tween(begin: 0.0, end: 1.0),
+        curve: Curves.easeOutBack,
+        builder: (context, value, child) {
+          return Transform.scale(
+            scale: value,
+            child: Opacity(
+              opacity: value.clamp(0.0, 1.0),
+              child: child,
+            ),
+          );
+        },
+        child: GestureDetector(
+          onTapDown: (_) => _controller.forward(),
+          onTapUp: (_) => _controller.reverse(),
+          onTapCancel: () => _controller.reverse(),
+          onTap: widget.enabled ? widget.onTap : () => _showToast(context),
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              final depth = _depthAnimation.value;
+              final lightShadow = BoxShadow(
+                color: Colors.white.withOpacity(0.7),
+                offset: Offset(-depth / 2, -depth / 2),
+                blurRadius: depth,
+              );
+              final darkShadow = BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                offset: Offset(depth / 2, depth / 2),
+                blurRadius: depth,
+              );
 
-            return ScaleTransition(
-              scale: _scaleAnimation,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: widget.enabled
-                      ? [lightShadow, darkShadow]
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            offset: const Offset(0, 4),
-                            blurRadius: 10,
-                          ),
-                        ],
-                ),
-                child: Stack(
-                  children: [
-                    // Decorative Gradient Corner (مُعدّل ليتناسب مع Neumorphic)
-                    if (widget.enabled)
-                      Positioned(
-                        top: -20,
-                        right: -20,
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: widget.primaryColor.withOpacity(0.1),
-                            shape: BoxShape.circle,
+              return ScaleTransition(
+                scale: _scaleAnimation,
+                child: Container(
+                  width: widget.isWide ? double.infinity : null,
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: widget.enabled
+                        ? [lightShadow, darkShadow]
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              offset: const Offset(0, 4),
+                              blurRadius: 10,
+                            ),
+                          ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Decorative Gradient Corner (مُعدّل ليتناسب مع Neumorphic)
+                      if (widget.enabled)
+                        Positioned(
+                          top: -20,
+                          right: -20,
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: widget.primaryColor.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
-                      ),
 
-                    // Main Content
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: widget.enabled
-                                    ? [
-                                        widget.primaryColor.withOpacity(0.2),
-                                        widget.primaryColor.withOpacity(0.05),
-                                      ]
-                                    : [
-                                        Colors.grey.shade200,
-                                        Colors.grey.shade100
-                                      ],
+                      // Main Content
+                      widget.isWide
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
                               ),
-                              shape: BoxShape.circle,
-                              boxShadow: widget.enabled
-                                  ? [
-                                      BoxShadow(
-                                        color: Colors.white.withOpacity(0.8),
-                                        offset: const Offset(-6, -6),
-                                        blurRadius: 12,
+                              child: Row(
+                                textDirection: TextDirection.rtl,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      widget.label,
+                                      textAlign: TextAlign.right,
+                                      style: TextStyle(
+                                        color: widget.enabled
+                                            ? const Color(0xFF2D3436)
+                                            : Colors.grey.shade500,
+                                        fontSize: size.width * 0.046,
+                                        fontWeight: FontWeight.w800,
                                       ),
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        offset: const Offset(6, 6),
-                                        blurRadius: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: widget.enabled
+                                            ? [
+                                                widget.primaryColor
+                                                    .withOpacity(0.2),
+                                                widget.primaryColor
+                                                    .withOpacity(0.05),
+                                              ]
+                                            : [
+                                                Colors.grey.shade200,
+                                                Colors.grey.shade100,
+                                              ],
                                       ),
-                                    ]
-                                  : null,
+                                      shape: BoxShape.circle,
+                                      boxShadow: widget.enabled
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.white
+                                                    .withOpacity(0.8),
+                                                offset: const Offset(-6, -6),
+                                                blurRadius: 12,
+                                              ),
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.1),
+                                                offset: const Offset(6, 6),
+                                                blurRadius: 12,
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    child: widget.enabled
+                                        ? Image.asset(
+                                            widget.iconPath,
+                                            width: size.width * 0.075,
+                                            height: size.width * 0.075,
+                                            fit: BoxFit.contain,
+                                          )
+                                        : Icon(Icons.lock_person_rounded,
+                                            size: size.width * 0.08,
+                                            color: Colors.grey.shade400),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: widget.enabled
+                                            ? [
+                                                widget.primaryColor
+                                                    .withOpacity(0.2),
+                                                widget.primaryColor
+                                                    .withOpacity(0.05),
+                                              ]
+                                            : [
+                                                Colors.grey.shade200,
+                                                Colors.grey.shade100,
+                                              ],
+                                      ),
+                                      shape: BoxShape.circle,
+                                      boxShadow: widget.enabled
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.white
+                                                    .withOpacity(0.8),
+                                                offset: const Offset(-6, -6),
+                                                blurRadius: 12,
+                                              ),
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.1),
+                                                offset: const Offset(6, 6),
+                                                blurRadius: 12,
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    child: widget.enabled
+                                        ? Image.asset(
+                                            widget.iconPath,
+                                            width: size.width * 0.12,
+                                            height: size.width * 0.12,
+                                            fit: BoxFit.contain,
+                                          )
+                                        : Icon(Icons.lock_person_rounded,
+                                            size: size.width * 0.1,
+                                            color: Colors.grey.shade400),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    widget.label,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: widget.enabled
+                                          ? const Color(0xFF2D3436)
+                                          : Colors.grey.shade500,
+                                      fontSize: size.width * 0.042,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            child: widget.enabled
-                                ? Image.asset(
-                                    widget.iconPath,
-                                    width: size.width * 0.12,
-                                    height: size.width * 0.12,
-                                    fit: BoxFit.contain,
-                                  )
-                                : Icon(Icons.lock_person_rounded,
-                                    size: size.width * 0.1,
-                                    color: Colors.grey.shade400),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            widget.label,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: widget.enabled
-                                  ? const Color(0xFF2D3436)
-                                  : Colors.grey.shade500,
-                              fontSize: size.width * 0.042,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
 
-                    // Lock indicator
-                    if (!widget.enabled)
-                      Positioned(
-                        top: 10,
-                        left: 10,
-                        child: Icon(Icons.lock_outline_rounded,
-                            size: 16, color: Colors.grey.shade400),
-                      ),
-                  ],
+                      // Lock indicator
+                      if (!widget.enabled)
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: Icon(Icons.lock_outline_rounded,
+                              size: 16, color: Colors.grey.shade400),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

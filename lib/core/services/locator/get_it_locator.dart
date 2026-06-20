@@ -37,8 +37,16 @@ import 'package:tabib_soft_company/features/technical_support/data/repo/whatsapp
 import 'package:tabib_soft_company/features/technical_support/visits/presentation/cubits/visit_cubit.dart';
 import 'package:tabib_soft_company/features/human_resources/data/repo/hr_profile_repo.dart';
 import 'package:tabib_soft_company/features/human_resources/data/repo/hr_leave_repo.dart';
+import 'package:tabib_soft_company/features/human_resources/data/repo/hr_labor_law_repo.dart';
+import 'package:tabib_soft_company/features/human_resources/data/repo/hr_bonus_repo.dart';
+import 'package:tabib_soft_company/features/human_resources/data/repo/hr_deficit_repo.dart';
+import 'package:tabib_soft_company/features/human_resources/data/repo/hr_remote_work_repo.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_profile_cubit.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_remote_work_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_labor_law_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_bonus_cubit.dart';
+import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_deficit_cubit.dart';
 
 class ServicesLocator {
   static final GetIt locator = GetIt.instance;
@@ -157,6 +165,37 @@ class ServicesLocator {
       () => HrLeaveCubit(locator<HrLeaveRepository>()),
     );
 
+    // HR Remote Work
+    locator.registerLazySingleton<HrRemoteWorkRepository>(
+      () => HrRemoteWorkRepository(locator<ApiService>()),
+    );
+    locator.registerFactory<HrRemoteWorkCubit>(
+      () => HrRemoteWorkCubit(locator<HrRemoteWorkRepository>()),
+    );
+
+    // HR Labor Law
+    locator.registerLazySingleton<HrLaborLawRepository>(
+      () => HrLaborLawRepository(locator<ApiService>()),
+    );
+    locator.registerFactory<HrLaborLawCubit>(
+      () => HrLaborLawCubit(locator<HrLaborLawRepository>()),
+    );
+
+    // HR Types - Bonuses & Deficits
+    locator.registerLazySingleton<HrBonusRepository>(
+      () => HrBonusRepository(locator<ApiService>()),
+    );
+    locator.registerFactory<HrBonusCubit>(
+      () => HrBonusCubit(locator<HrBonusRepository>()),
+    );
+
+    locator.registerLazySingleton<HrDeficitRepository>(
+      () => HrDeficitRepository(locator<ApiService>()),
+    );
+    locator.registerFactory<HrDeficitCubit>(
+      () => HrDeficitCubit(locator<HrDeficitRepository>()),
+    );
+
     // Visit Repository & Cubit
     locator.registerLazySingleton<VisitRepository>(
       () => VisitRepository(locator<ApiService>()),
@@ -203,4 +242,9 @@ class ServicesLocator {
       locator<RequirementsCubit>();
   static HrProfileCubit get hrProfileCubit => locator<HrProfileCubit>();
   static HrLeaveCubit get hrLeaveCubit => locator<HrLeaveCubit>();
+  static HrRemoteWorkCubit get hrRemoteWorkCubit =>
+      locator<HrRemoteWorkCubit>();
+  static HrLaborLawCubit get hrLaborLawCubit => locator<HrLaborLawCubit>();
+  static HrBonusCubit get hrBonusCubit => locator<HrBonusCubit>();
+  static HrDeficitCubit get hrDeficitCubit => locator<HrDeficitCubit>();
 }

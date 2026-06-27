@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -14,15 +15,146 @@ import 'package:tabib_soft_company/features/technical_support/presentation/cubit
 import 'package:tabib_soft_company/features/technical_support/presentation/cubit/customers/customer_state.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/add_tech_task_screen.dart';
 
-class ProblemDetailsScreen extends StatefulWidget {
+// ─────────────────────────────────────────────────────────────────
+//  Static helper – replaces Navigator.push(ProblemDetailsScreen)
+// ─────────────────────────────────────────────────────────────────
+Future<bool?> showProblemDetailsSheet(
+  BuildContext context,
+  ProblemModel issue,
+) {
+  // Capture cubits before dialog context is created
+  final customerCubit = context.read<CustomerCubit>();
+  final engineerCubit = context.read<EngineerCubit>();
+
+  return showGeneralDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    barrierLabel: 'problem_details',
+    barrierColor: Colors.transparent,
+    transitionDuration: const Duration(milliseconds: 620),
+    pageBuilder: (dialogContext, _, __) => MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: customerCubit),
+        BlocProvider.value(value: engineerCubit),
+      ],
+      child: Material(
+        color: Colors.transparent,
+        child: _ProblemDetailsSheet(issue: issue),
+      ),
+    ),
+    transitionBuilder: (context, animation, _, child) {
+      // ── Layer 1: dark overlay fades in first ──────────────────
+      final overlayFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+          parent: animation,
+          curve: const Interval(0.0, 0.40, curve: Curves.easeOut),
+        ),
+      );
+
+      // ── Layer 2: sheet slides from bottom (buttery easeOutCubic) ─
+      final slide = Tween<Offset>(
+        begin: const Offset(0.0, 1.0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: animation,
+        curve: const Interval(0.12, 1.0, curve: Curves.easeOutCubic),
+      ));
+
+      // ── Layer 3: subtle scale pop (easeOutBack = micro-overshoot) ─
+      final scale = Tween<double>(begin: 0.88, end: 1.0).animate(
+        CurvedAnimation(
+          parent: animation,
+          curve: const Interval(0.12, 1.0, curve: Curves.easeOutBack),
+        ),
+      );
+
+      // ── Layer 4: content fade (quick, overlaps slide start) ───
+      final contentFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+          parent: animation,
+          curve: const Interval(0.08, 0.65, curve: Curves.easeOut),
+        ),
+      );
+
+      return Stack(
+        children: [
+          // Dark overlay
+          FadeTransition(
+            opacity: overlayFade,
+            child: Container(color: Colors.black.withOpacity(0.62)),
+          ),
+          // Sheet: slide → scale → fade (all simultaneous, different curves)
+          SlideTransition(
+            position: slide,
+            child: ScaleTransition(
+              scale: scale,
+              alignment: Alignment.bottomCenter,
+              child: FadeTransition(
+                opacity: contentFade,
+                child: child,
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Public widget – kept for backward compatibility with Navigator
+// ─────────────────────────────────────────────────────────────────
+class ProblemDetailsScreen extends StatelessWidget {
   final ProblemModel issue;
   const ProblemDetailsScreen({super.key, required this.issue});
 
   @override
-  State<ProblemDetailsScreen> createState() => ProblemDetailsScreenState();
+  Widget build(BuildContext context) {
+    // When used via Navigator.push, wrap in a Scaffold that immediately
+    // shows the bottom-sheet on top of a transparent background.
+    return _ProblemDetailsSheetPage(issue: issue);
+  }
 }
 
-class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
+/// Thin wrapper that shows the sheet on top of a transparent page,
+/// so existing Navigator.push() call-sites continue to work.
+class _ProblemDetailsSheetPage extends StatefulWidget {
+  final ProblemModel issue;
+  const _ProblemDetailsSheetPage({required this.issue});
+
+  @override
+  State<_ProblemDetailsSheetPage> createState() =>
+      _ProblemDetailsSheetPageState();
+}
+
+class _ProblemDetailsSheetPageState extends State<_ProblemDetailsSheetPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final result = await showProblemDetailsSheet(context, widget.issue);
+      if (mounted) Navigator.of(context).pop(result);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(backgroundColor: Colors.transparent);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  The actual sheet widget
+// ─────────────────────────────────────────────────────────────────
+class _ProblemDetailsSheet extends StatefulWidget {
+  final ProblemModel issue;
+  const _ProblemDetailsSheet({required this.issue});
+
+  @override
+  State<_ProblemDetailsSheet> createState() => _ProblemDetailsSheetState();
+}
+
+class _ProblemDetailsSheetState extends State<_ProblemDetailsSheet>
     with SingleTickerProviderStateMixin {
   late TextEditingController nameCtl;
   late TextEditingController addressCtl;
@@ -34,6 +166,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   ProblemStatusModel? selectedSpecialty;
   EngineerModel? selectedEngineer;
@@ -41,6 +174,8 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
   bool isLoading = false;
   final GlobalKey engineerKey = GlobalKey();
   final RefreshController _refreshController = RefreshController();
+  final DraggableScrollableController _sheetController =
+      DraggableScrollableController();
 
   @override
   void initState() {
@@ -64,13 +199,20 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
     );
 
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
     _fadeAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeOut,
     );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
     _animationController.forward();
 
     context.read<CustomerCubit>().fetchProblemStatus();
@@ -106,6 +248,7 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
     specialtyCtl.dispose();
     _refreshController.dispose();
     _animationController.dispose();
+    _sheetController.dispose();
     super.dispose();
   }
 
@@ -1051,13 +1194,9 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
     if (mounted) {
       if (cubit.state.status == CustomerStatus.success &&
           cubit.state.selectedProblem != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                ProblemDetailsScreen(issue: cubit.state.selectedProblem!),
-          ),
-        );
+        // Close current sheet and reopen with updated data
+        Navigator.of(context).pop();
+        await showProblemDetailsSheet(context, cubit.state.selectedProblem!);
       } else {
         setState(() => isLoading = false);
       }
@@ -1158,447 +1297,469 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
     );
   }
 
+  // ─── BUILD ────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: TechColors.surfaceLight,
-        body: Stack(
-          children: [
-            // Premium Gradient Header
-            Container(
-              height: 180.h,
-              decoration: const BoxDecoration(
-                gradient: TechColors.premiumGradient,
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.92,
+        minChildSize: 0.92,
+        maxChildSize: 0.97,
+        controller: _sheetController,
+        snap: true,
+        snapSizes: const [0.92, 0.97],
+        builder: (context, scrollController) {
+          return Container(
+            decoration: BoxDecoration(
+              color: TechColors.surfaceLight,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(32.r),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: TechColors.primaryDark.withOpacity(0.25),
+                  blurRadius: 40,
+                  offset: const Offset(0, -8),
+                ),
+              ],
             ),
-            SafeArea(
-              child: Column(
-                children: [
-                  // Custom AppBar
-                  Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                    child: Row(
-                      children: [
-                        _buildCircleButton(
-                          icon: Icons.arrow_back_ios_rounded,
-                          onTap: () => Navigator.pop(context),
-                        ),
-                        Expanded(
-                          child: Center(
-                            child: FadeTransition(
-                              opacity: _fadeAnimation,
-                              child: Text(
-                                'تفاصيل المشكلة',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20.sp,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
+            child: Column(
+              children: [
+                // ── Sheet Header ──────────────────────────────────
+                _buildSheetHeader(),
+
+                // ── Body ──────────────────────────────────────────
+                Expanded(
+                  child: SmartRefresher(
+                    controller: _refreshController,
+                    enablePullDown: true,
+                    enablePullUp: false,
+                    header: WaterDropHeader(
+                      waterDropColor: TechColors.accentCyan,
+                      complete: Icon(Icons.check,
+                          color: TechColors.accentCyan, size: 20.r),
+                    ),
+                    onRefresh: _onRefresh,
+                    child: CustomScrollView(
+                      controller: scrollController,
+                      physics: const BouncingScrollPhysics(),
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // ── Customer info card ─────────
+                                _buildCustomerInfoCard(),
+                                SizedBox(height: 16.h),
+
+                                // ── Add-task chip ──────────────
+                                _buildAddTaskChip(),
+                                SizedBox(height: 20.h),
+
+                                // ── Section: Problem Details ───
+                                _buildSectionTitle(
+                                    'تفاصيل المشكلة', Icons.bug_report),
+                                SizedBox(height: 12.h),
+                                _buildInfoCard(children: [
+                                  _buildInfoRow(
+                                      icon: Icons.title,
+                                      label: 'عنوان المشكلة',
+                                      value: issueTitleCtl.text),
+                                  _buildDivider(),
+                                  _buildInfoRow(
+                                      icon: Icons.description,
+                                      label: 'التفاصيل',
+                                      value: issueDetailsCtl.text,
+                                      multiLine: true),
+                                  _buildDivider(),
+                                  _buildInfoRow(
+                                      icon: Icons.category,
+                                      label: 'التخصص',
+                                      value: specialtyCtl.text),
+                                  _buildDivider(),
+                                  _buildInfoRow(
+                                      icon: Icons.location_on,
+                                      label: 'العنوان',
+                                      value: addressCtl.text),
+                                ]),
+
+                                SizedBox(height: 20.h),
+
+                                // ── Section: Problem Status ────
+                                _buildSectionTitle(
+                                    'حالة المشكلة', Icons.flag_rounded),
+                                SizedBox(height: 12.h),
+                                _buildStatusDropdown(),
+
+                                SizedBox(height: 20.h),
+
+                                // ── Section: Solution ──────────
+                                _buildSectionTitle(
+                                    'الحل المقترح', Icons.lightbulb_rounded),
+                                SizedBox(height: 12.h),
+                                _buildSolutionField(),
+
+                                SizedBox(height: 20.h),
+
+                                // ── Section: Attachments ───────
+                                _buildSectionTitle(
+                                    'المرفقات', Icons.attach_file_rounded),
+                                SizedBox(height: 12.h),
+                                _buildUploadSection(),
+
+                                SizedBox(height: 32.h),
+                              ],
                             ),
                           ),
-                        ),
-                        _buildCircleButton(
-                          icon: Icons.history,
-                          onTap: showHistoryBottomSheet,
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                ),
 
-                  // Main Content
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: TechColors.surfaceLight,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(32.r),
-                          topRight: Radius.circular(32.r),
+                // ── Footer Buttons ────────────────────────────────
+                _buildFooterButtons(),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ─── Header ───────────────────────────────────────────────────────
+  Widget _buildSheetHeader() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: TechColors.premiumGradient,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(height: 12.h),
+          // drag handle
+          Center(
+            child: Container(
+              width: 44.w,
+              height: 5.h,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.35),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Row(
+              children: [
+                // close button
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: EdgeInsets.all(10.r),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.close_rounded,
+                        color: Colors.white, size: 20.r),
+                  ),
+                ),
+                // title
+                Expanded(
+                  child: Column(
+                    children: [
+                      Text(
+                        'تفاصيل المشكلة',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: TechColors.primaryDark.withOpacity(0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, -5),
-                          ),
-                        ],
+                        textAlign: TextAlign.center,
                       ),
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: SmartRefresher(
-                              controller: _refreshController,
-                              enablePullDown: true,
-                              enablePullUp: false,
-                              header: WaterDropHeader(
-                                waterDropColor: TechColors.accentCyan,
-                                complete: Icon(Icons.check,
-                                    color: TechColors.accentCyan, size: 20.r),
-                              ),
-                              onRefresh: _onRefresh,
-                              child: SingleChildScrollView(
-                                padding: EdgeInsets.all(20.r),
-                                physics: const BouncingScrollPhysics(),
-                                child: FadeTransition(
-                                  opacity: _fadeAnimation,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      // Add Task Button
-                                      Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddTechTaskScreen(
-                                                  customerName: nameCtl.text,
-                                                  customerId: widget.issue.id,
-                                                  problemId: widget
-                                                      .issue.customerSupportId,
-                                                  problemStatusId: widget
-                                                      .issue.problemStatusId
-                                                      ?.toString(),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 16.w,
-                                                vertical: 10.h),
-                                            decoration: BoxDecoration(
-                                              color: TechColors.accentCyan
-                                                  .withOpacity(0.1),
-                                              borderRadius:
-                                                  BorderRadius.circular(20.r),
-                                              border: Border.all(
-                                                  color: TechColors.accentCyan
-                                                      .withOpacity(0.3)),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(Icons.add_task,
-                                                    size: 18.r,
-                                                    color:
-                                                        TechColors.accentCyan),
-                                                SizedBox(width: 8.w),
-                                                Text(
-                                                  'إضافة مهمة',
-                                                  style: TextStyle(
-                                                    color:
-                                                        TechColors.accentCyan,
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize: 14.sp,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(height: 20.h),
+                      SizedBox(height: 2.h),
+                      // Text(
+                      //   '#${widget.issue.customerSupportId ?? '---'}',
+                      //   style: TextStyle(
+                      //     color: Colors.white.withOpacity(0.65),
+                      //     fontSize: 12.sp,
+                      //   ),
+                      //   textAlign: TextAlign.center,
+                      // ),
+                    ],
+                  ),
+                ),
+                // history button
+                GestureDetector(
+                  onTap: showHistoryBottomSheet,
+                  child: Container(
+                    padding: EdgeInsets.all(10.r),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.history_rounded,
+                        color: Colors.white, size: 20.r),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 20.h),
+        ],
+      ),
+    );
+  }
 
-                                      // Form Fields
-                                      _buildField(
-                                          label: 'اسم العميل',
-                                          controller: nameCtl,
-                                          enabled: false),
-                                      _buildField(
-                                          label: 'رقم التواصل',
-                                          controller: contactCtl,
-                                          enabled: false),
-                                      _buildField(
-                                          label: 'التخصص',
-                                          controller: specialtyCtl,
-                                          enabled: false),
-
-                                      // Status Dropdown
-                                      BlocBuilder<CustomerCubit, CustomerState>(
-                                        builder: (context, state) {
-                                          if (state.problemStatusList.isEmpty) {
-                                            return _buildFieldContainer(
-                                              label: 'حالة المشكلة',
-                                              child: Container(
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 16.w,
-                                                    vertical: 16.h),
-                                                child: Text('جاري التحميل...',
-                                                    style: TextStyle(
-                                                        color: Colors.white
-                                                            .withOpacity(0.7))),
-                                              ),
-                                            );
-                                          }
-
-                                          final allowedStatusIds = [12, 13, 15];
-                                          final filteredStatuses = state
-                                              .problemStatusList
-                                              .where((s) =>
-                                                  s.name.isNotEmpty &&
-                                                  allowedStatusIds
-                                                      .contains(s.id))
-                                              .toList();
-
-                                          if (filteredStatuses.isEmpty) {
-                                            return _buildFieldContainer(
-                                              label: 'حالة المشكلة',
-                                              child: Container(
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 16.w,
-                                                    vertical: 16.h),
-                                                child: Text(
-                                                    'لا توجد حالات متاحة',
-                                                    style: TextStyle(
-                                                        color: Colors.white
-                                                            .withOpacity(0.7))),
-                                              ),
-                                            );
-                                          }
-
-                                          if (selectedSpecialty == null) {
-                                            if (widget.issue.problemStatusId !=
-                                                null) {
-                                              selectedSpecialty =
-                                                  filteredStatuses.firstWhere(
-                                                (s) =>
-                                                    s.id ==
-                                                    widget
-                                                        .issue.problemStatusId,
-                                                orElse: () =>
-                                                    filteredStatuses.first,
-                                              );
-                                            } else {
-                                              selectedSpecialty =
-                                                  filteredStatuses.first;
-                                            }
-                                          }
-
-                                          if (!filteredStatuses.any((s) =>
-                                              s.id == selectedSpecialty!.id)) {
-                                            selectedSpecialty =
-                                                filteredStatuses.first;
-                                          }
-
-                                          return _buildFieldContainer(
-                                            label: 'حالة المشكلة',
-                                            child: PopupMenuButton<
-                                                ProblemStatusModel>(
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          16.r)),
-                                              color: Colors.white,
-                                              elevation: 8,
-                                              onSelected: (status) => setState(
-                                                  () => selectedSpecialty =
-                                                      status),
-                                              itemBuilder: (context) =>
-                                                  filteredStatuses
-                                                      .map((status) {
-                                                return PopupMenuItem(
-                                                  value: status,
-                                                  child: Text(
-                                                    status.name ?? 'غير محدد',
-                                                    style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        fontWeight:
-                                                            FontWeight.w500),
-                                                  ),
-                                                );
-                                              }).toList(),
-                                              child: Container(
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 16.w,
-                                                    vertical: 16.h),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      selectedSpecialty!.name ??
-                                                          'غير محدد',
-                                                      style: const TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 16),
-                                                    ),
-                                                    const Icon(
-                                                        Icons.arrow_drop_down,
-                                                        color: Colors.white,
-                                                        size: 28),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-
-                                      _buildField(
-                                          label: 'العنوان',
-                                          controller: addressCtl,
-                                          enabled: false),
-                                      _buildField(
-                                          label: 'عنوان المشكلة',
-                                          controller: issueTitleCtl,
-                                          enabled: false),
-                                      _buildField(
-                                          label: 'تفاصيل المشكلة',
-                                          controller: issueDetailsCtl,
-                                          enabled: false,
-                                          maxLines: 3),
-                                      _buildField(
-                                        label: 'الحل المقترح',
-                                        controller: solutionCtl,
-                                        enabled: true,
-                                        maxLines: 4,
-                                        hintText: 'اكتب تفاصيل الحل هنا...',
-                                      ),
-
-                                      SizedBox(height: 20.h),
-
-                                      // Upload Section
-                                      _buildUploadSection(),
-
-                                      SizedBox(height: 30.h),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // Bottom Buttons
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 20.w, vertical: 16.h),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      TechColors.primaryDark.withOpacity(0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, -5),
-                                ),
-                              ],
-                            ),
-                            child: widget.issue.problemStatusId == 15
-                                ? Row(
-                                    children: [
-                                      Expanded(
-                                        child: _buildActionButton(
-                                          label: (widget.issue.isArchive ==
-                                                      true ||
-                                                  widget.issue
-                                                          .statusIsArchieve ==
-                                                      true)
-                                              ? 'إلغاء الأرشفة'
-                                              : 'أرشيف',
-                                          color: TechColors.warningOrange,
-                                          onTap: isLoading
-                                              ? null
-                                              : toggleArchiveStatus,
-                                        ),
-                                      ),
-                                      SizedBox(width: 12.w),
-                                      Expanded(
-                                        child: _buildActionButton(
-                                          label: 'حفظ',
-                                          isPrimary: true,
-                                          onTap: isLoading ? null : saveChanges,
-                                          isLoading: isLoading,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : _buildActionButton(
-                                    label: 'حفظ',
-                                    isPrimary: true,
-                                    onTap: isLoading ? null : saveChanges,
-                                    isLoading: isLoading,
-                                  ),
-                          ),
-                        ],
-                      ),
+  // ─── Customer info card ───────────────────────────────────────────
+  Widget _buildCustomerInfoCard() {
+    return Container(
+      margin: EdgeInsets.only(top: 20.h),
+      padding: EdgeInsets.all(18.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24.r),
+        boxShadow: [
+          BoxShadow(
+            color: TechColors.primaryDark.withOpacity(0.07),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // avatar
+          Container(
+            width: 52.r,
+            height: 52.r,
+            decoration: const BoxDecoration(
+              gradient: TechColors.premiumGradient,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                (nameCtl.text.isNotEmpty ? nameCtl.text[0] : '؟'),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  nameCtl.text.isNotEmpty ? nameCtl.text : 'غير محدد',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w800,
+                    color: TechColors.primaryDark,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Row(
+                  children: [
+                    Icon(Icons.phone_rounded,
+                        size: 13.r, color: TechColors.accentCyan),
+                    SizedBox(width: 4.w),
+                    Text(
+                      contactCtl.text.isNotEmpty ? contactCtl.text : 'لا يوجد',
+                      style: TextStyle(
+                          fontSize: 13.sp, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Archive badge if applicable
+          if (widget.issue.isArchive == true ||
+              widget.issue.statusIsArchieve == true)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+              decoration: BoxDecoration(
+                color: TechColors.warningOrange.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: TechColors.warningOrange.withOpacity(0.4)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.archive_rounded,
+                      size: 12.r, color: TechColors.warningOrange),
+                  SizedBox(width: 4.w),
+                  Text(
+                    'مؤرشف',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: TechColors.warningOrange,
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildField({
-    required String label,
-    required TextEditingController controller,
-    bool enabled = false,
-    int maxLines = 1,
-    String? hintText,
-  }) {
-    return _buildFieldContainer(
-      label: label,
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        enabled: enabled,
-        style: const TextStyle(color: Colors.white, fontSize: 15),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          isCollapsed: true,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-          hintText: hintText,
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFieldContainer({required String label, required Widget child}) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 14.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 100.w,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w700,
-                color: TechColors.primaryDark,
+  // ─── Add Task Chip ────────────────────────────────────────────────
+  Widget _buildAddTaskChip() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddTechTaskScreen(
+                customerName: nameCtl.text,
+                customerId: widget.issue.id,
+                problemId: widget.issue.customerSupportId,
+                problemStatusId: widget.issue.problemStatusId?.toString(),
               ),
             ),
+          );
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [TechColors.accentCyan, TechColors.primaryMid],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20.r),
+            boxShadow: [
+              BoxShadow(
+                color: TechColors.accentCyan.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add_task, size: 18.r, color: Colors.white),
+              SizedBox(width: 8.w),
+              Text(
+                'إضافة مهمة',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14.sp,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── Section title ────────────────────────────────────────────────
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(8.r),
+          decoration: BoxDecoration(
+            gradient: TechColors.premiumGradient,
+            borderRadius: BorderRadius.circular(10.r),
+          ),
+          child: Icon(icon, color: Colors.white, size: 16.r),
+        ),
+        SizedBox(width: 10.w),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w800,
+            color: TechColors.primaryDark,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Info card with rows ──────────────────────────────────────────
+  Widget _buildInfoCard({required List<Widget> children}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: TechColors.primaryDark.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool multiLine = false,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      child: Row(
+        crossAxisAlignment:
+            multiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: BoxDecoration(
+              color: TechColors.accentCyan.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 16.r, color: TechColors.accentCyan),
           ),
           SizedBox(width: 12.w),
           Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: TechColors.premiumGradient,
-                borderRadius: BorderRadius.circular(20.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: TechColors.accentCyan.withOpacity(0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
-              ),
-              child: child,
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  value.isNotEmpty ? value : 'غير محدد',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: value.isNotEmpty
+                        ? TechColors.primaryDark
+                        : Colors.grey.shade400,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1606,22 +1767,216 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
     );
   }
 
+  Widget _buildDivider() {
+    return Divider(
+      height: 1,
+      indent: 52.w,
+      endIndent: 16.w,
+      color: Colors.grey.shade100,
+    );
+  }
+
+  // ─── Status Dropdown ──────────────────────────────────────────────
+  Widget _buildStatusDropdown() {
+    return BlocBuilder<CustomerCubit, CustomerState>(
+      builder: (context, state) {
+        if (state.problemStatusList.isEmpty) {
+          return _buildStatusLoadingCard();
+        }
+
+        final allowedStatusIds = [12, 13, 15];
+        final filteredStatuses = state.problemStatusList
+            .where((s) => s.name.isNotEmpty && allowedStatusIds.contains(s.id))
+            .toList();
+
+        if (filteredStatuses.isEmpty) {
+          return _buildStatusLoadingCard(text: 'لا توجد حالات متاحة');
+        }
+
+        if (selectedSpecialty == null) {
+          if (widget.issue.problemStatusId != null) {
+            selectedSpecialty = filteredStatuses.firstWhere(
+              (s) => s.id == widget.issue.problemStatusId,
+              orElse: () => filteredStatuses.first,
+            );
+          } else {
+            selectedSpecialty = filteredStatuses.first;
+          }
+        }
+
+        if (!filteredStatuses.any((s) => s.id == selectedSpecialty!.id)) {
+          selectedSpecialty = filteredStatuses.first;
+        }
+
+        return PopupMenuButton<ProblemStatusModel>(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.r)),
+          color: Colors.white,
+          elevation: 12,
+          onSelected: (status) => setState(() => selectedSpecialty = status),
+          itemBuilder: (context) => filteredStatuses.map((status) {
+            final isSelected = status.id == selectedSpecialty?.id;
+            return PopupMenuItem(
+              value: status,
+              child: Row(
+                children: [
+                  Container(
+                    width: 8.r,
+                    height: 8.r,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isSelected
+                          ? TechColors.accentCyan
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Text(
+                    status.name ?? 'غير محدد',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? TechColors.primaryDark
+                          : Colors.grey.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20.r),
+              boxShadow: [
+                BoxShadow(
+                  color: TechColors.primaryDark.withOpacity(0.06),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8.r),
+                  decoration: BoxDecoration(
+                    gradient: TechColors.premiumGradient,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child:
+                      Icon(Icons.flag_rounded, size: 16.r, color: Colors.white),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'الحالة الحالية',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        selectedSpecialty?.name ?? 'اختر الحالة',
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                          color: TechColors.primaryDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.all(6.r),
+                  decoration: BoxDecoration(
+                    color: TechColors.accentCyan.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.keyboard_arrow_down_rounded,
+                      color: TechColors.accentCyan, size: 20.r),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusLoadingCard({String text = 'جاري التحميل...'}) {
+    return Container(
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Text(text, style: TextStyle(color: Colors.grey, fontSize: 14.sp)),
+    );
+  }
+
+  // ─── Solution Field ───────────────────────────────────────────────
+  Widget _buildSolutionField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: TechColors.primaryDark.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: solutionCtl,
+        maxLines: 4,
+        textAlign: TextAlign.right,
+        style: TextStyle(
+          fontSize: 14.sp,
+          color: TechColors.primaryDark,
+          height: 1.5,
+        ),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.all(18.r),
+          hintText: 'اكتب تفاصيل الحل هنا...',
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14.sp),
+        ),
+      ),
+    );
+  }
+
+  // ─── Upload Section ───────────────────────────────────────────────
   Widget _buildUploadSection() {
     return Column(
       children: [
-        // رفع ملفات
-        SizedBox(height: 12.h),
         GestureDetector(
           onTap: pickImage,
           child: Container(
             padding: EdgeInsets.all(24.r),
             decoration: BoxDecoration(
-              color: TechColors.accentCyan.withOpacity(0.05),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(
                   color: TechColors.accentCyan.withOpacity(0.3),
                   width: 1.5,
                   style: BorderStyle.solid),
+              boxShadow: [
+                BoxShadow(
+                  color: TechColors.primaryDark.withOpacity(0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               children: [
@@ -1649,7 +2004,9 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
                 ),
                 SizedBox(height: 8.h),
                 Text(
-                  'اضغط لرفع الصور',
+                  selectedImages.isEmpty
+                      ? 'اضغط لرفع الصور'
+                      : '${selectedImages.length} صورة مضافة',
                   style: TextStyle(
                     color: TechColors.accentCyan,
                     fontWeight: FontWeight.w600,
@@ -1702,35 +2059,91 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
     );
   }
 
+  // ─── Footer Buttons ───────────────────────────────────────────────
+  Widget _buildFooterButtons() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: TechColors.primaryDark.withOpacity(0.07),
+            blurRadius: 20,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: widget.issue.problemStatusId == 15
+          ? Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    label: 'حفظ',
+                    isPrimary: true,
+                    onTap: isLoading ? null : saveChanges,
+                    isLoading: isLoading,
+                    icon: Icons.save_rounded,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: _buildActionButton(
+                    label: (widget.issue.isArchive == true ||
+                            widget.issue.statusIsArchieve == true)
+                        ? 'إلغاء الأرشفة'
+                        : 'أرشيف',
+                    color: TechColors.accentLight,
+                    onTap: isLoading ? null : toggleArchiveStatus,
+                    icon: Icons.archive_rounded,
+                  ),
+                ),
+              ],
+            )
+          : _buildActionButton(
+              label: 'حفظ التغييرات',
+              isPrimary: true,
+              onTap: isLoading ? null : saveChanges,
+              isLoading: isLoading,
+              icon: Icons.save_rounded,
+            ),
+    );
+  }
+
   Widget _buildActionButton({
     required String label,
     bool isPrimary = false,
     Color? color,
     VoidCallback? onTap,
     bool isLoading = false,
+    IconData? icon,
   }) {
     final buttonColor = color ?? (isPrimary ? null : TechColors.accentCyan);
+    final isDisabled = onTap == null;
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 54.h,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        height: 52.h,
         decoration: BoxDecoration(
-          gradient: isPrimary ? TechColors.premiumGradient : null,
-          color: isPrimary
+          gradient:
+              isPrimary && !isDisabled ? TechColors.premiumGradient : null,
+          color: isDisabled
+              ? Colors.grey.shade300
+              : (isPrimary ? null : buttonColor),
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: isDisabled
               ? null
-              : (onTap == null ? Colors.grey.shade400 : buttonColor),
-          borderRadius: BorderRadius.circular(27.r),
-          boxShadow: onTap != null
-              ? [
+              : [
                   BoxShadow(
-                    color: (isPrimary ? TechColors.accentCyan : buttonColor!)
-                        .withOpacity(0.3),
-                    blurRadius: 12,
+                    color: (isPrimary
+                            ? TechColors.accentCyan
+                            : (buttonColor ?? TechColors.accentCyan))
+                        .withOpacity(0.35),
+                    blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
-                ]
-              : null,
+                ],
         ),
         alignment: Alignment.center,
         child: isLoading
@@ -1742,13 +2155,22 @@ class ProblemDetailsScreenState extends State<ProblemDetailsScreen>
                   strokeWidth: 2.5,
                 ),
               )
-            : Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 17.sp,
-                  fontWeight: FontWeight.w700,
-                ),
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, color: Colors.white, size: 18.r),
+                    SizedBox(width: 8.w),
+                  ],
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
       ),
     );

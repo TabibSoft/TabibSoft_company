@@ -3759,6 +3759,10 @@
           },
           "endTime": {
             "$ref": "#/components/schemas/TimeSpan"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3769,6 +3773,10 @@
           "startDate": {
             "type": "string",
             "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4789,6 +4797,10 @@
           },
           "status": {
             "$ref": "#/components/schemas/LeaveStatus"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
           },
           "rejectionReason": {
             "type": "string",

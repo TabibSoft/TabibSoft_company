@@ -43,6 +43,7 @@ class CustomerRepository {
     String? address,
     int? problem,
     bool? isSearch,
+    String? engineerId,
     int pageNumber = 1,
     int pageSize = 20,
   }) async {
@@ -53,6 +54,7 @@ class CustomerRepository {
         address: address,
         problem: problem,
         isSearch: isSearch,
+        engineerId: engineerId,
         pageNumber: pageNumber,
         pageSize: pageSize,
       );

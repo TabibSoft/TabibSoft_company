@@ -721,7 +721,6 @@ class _AddProblemScreenState extends State<AddProblemScreen>
                         setState(() {
                           selectedCustomer = customer;
                           clientNameController.text = customer.name ?? '';
-                          phoneController.text = customer.phone ?? '';
                           isClientDropdownVisible = false;
                         });
                       },

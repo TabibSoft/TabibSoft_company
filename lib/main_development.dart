@@ -23,6 +23,7 @@ void main() async {
         MyApp(
           appRouter: AppRouter(),
           routeLogger: RouteLogger(),
+          navigatorKey: navigatorKey,
         ),
       );
     },

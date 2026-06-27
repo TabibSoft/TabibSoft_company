@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:tabib_soft_company/main_development.dart';
+import 'package:tabib_soft_company/features/home/notifications/presentation/screens/notification_screen.dart';
 
 class MessagingConfig {
   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -164,8 +165,22 @@ class MessagingConfig {
 }
 
 void handleNotification(BuildContext context, Map<String, dynamic> data) {
-  final String route = data['route'];
+  try {
+    final String? route = data['route']?.toString();
 
-  if (route == 'posProfileScreen') {
-  } else if (route == 'productDetailsScreen') {}
+    // If payload explicitly targets notifications, or no route provided,
+    // open the Notifications screen.
+    if (route == null || route.isEmpty || route.toLowerCase().contains('notif')) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+      );
+      return;
+    }
+
+    // TODO: handle other in-app routes (posProfileScreen, productDetailsScreen, etc.)
+  } catch (e, st) {
+    log('handleNotification error: $e');
+    log(st.toString());
+  }
 }

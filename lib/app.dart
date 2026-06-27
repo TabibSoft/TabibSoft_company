@@ -12,11 +12,13 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 class MyApp extends StatelessWidget {
   final AppRouter appRouter;
   final RouteLogger routeLogger;
+  final GlobalKey<NavigatorState> navigatorKey;
 
   const MyApp({
     super.key,
     required this.appRouter,
     required this.routeLogger,
+    required this.navigatorKey,
   });
 
   @override
@@ -44,6 +46,7 @@ class MyApp extends StatelessWidget {
           minTextAdapt: true,
           splitScreenMode: true,
           child: MaterialApp(
+            navigatorKey: navigatorKey,
             debugShowCheckedModeBanner: false,
             navigatorObservers: [
               routeLogger,

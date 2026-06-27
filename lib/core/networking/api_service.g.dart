@@ -161,6 +161,7 @@ class _ApiService implements ApiService {
     String? address,
     int? problem,
     bool? isSearch,
+    String? engineerId,
     int pageNumber = 1,
     int pageSize = 20,
   }) async {
@@ -171,6 +172,7 @@ class _ApiService implements ApiService {
       r'address': address,
       r'problem': problem,
       r'isSearch': isSearch,
+      r'engineerId': engineerId,
       r'pageNumber': pageNumber,
       r'pageSize': pageSize,
     };

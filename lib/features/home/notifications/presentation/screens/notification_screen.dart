@@ -92,6 +92,22 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     return DateFormat('dd MMM yyyy - hh:mm a', 'ar').format(localDate);
   }
 
+  bool _isLeaveNotification(NotificationModel notification) {
+    final type = notification.type?.toLowerCase() ?? '';
+    final title = notification.title.toLowerCase();
+    final body = notification.body.toLowerCase();
+
+    return type.contains('leave') ||
+        type.contains('vacation') ||
+        type.contains('hrleave') ||
+        title.contains('إجاز') ||
+        title.contains('اجاز') ||
+        title.contains('leave') ||
+        body.contains('إجاز') ||
+        body.contains('اجاز') ||
+        body.contains('leave');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -548,7 +564,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               return;
             }
 
-            if (_hasSalesRole()) {
+            if (_hasSalesRole() && !_isLeaveNotification(notification)) {
               final bool isAdminNote =
                   (notification.title ?? '').contains('ملاحظة إدارية') ||
                       (notification.title ?? '').contains('ملاحظة ادارية');

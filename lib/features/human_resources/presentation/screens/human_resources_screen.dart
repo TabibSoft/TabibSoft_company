@@ -10,7 +10,6 @@ import 'package:tabib_soft_company/features/human_resources/presentation/cubits/
 import 'package:tabib_soft_company/features/human_resources/data/models/hr_leave_request_model.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/my_request_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/my_reports_sceen.dart';
-import 'package:tabib_soft_company/features/human_resources/presentation/screens/salary_advance_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/early_permission_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/vacation_request_screen.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/screens/work_fromhome_screen.dart';

@@ -69,6 +69,7 @@ abstract class ApiService {
     @Query("address") String? address,
     @Query("problem") int? problem,
     @Query("isSearch") bool? isSearch,
+    @Query("engineerId") String? engineerId,
     @Query("pageNumber") int pageNumber = 1,
     @Query("pageSize") int pageSize = 20,
   });

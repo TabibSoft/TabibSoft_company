@@ -8,6 +8,8 @@ import 'package:tabib_soft_company/features/technical_support/data/model/custome
 import 'package:tabib_soft_company/features/technical_support/presentation/screen/problem/problem_details_screen.dart';
 import 'package:tabib_soft_company/features/technical_support/presentation/widget/new/tech_card_content.dart';
 import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_cubit.dart';
+import 'package:tabib_soft_company/features/programmers/presentation/cubit/engineer_state.dart';
 
 class TechnicalSupportScreen extends StatefulWidget {
   const TechnicalSupportScreen({super.key});
@@ -21,9 +23,12 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _doctorPhone = '';
+  String _problemLocation = '';
   String? _selectedStatus;
+  String? _selectedEngineerName;
+  DateTime? _selectedDate;
   List<String?> _statuses = [];
-  final GlobalKey _statusKey = GlobalKey();
 
   // Animation controller for smooth transitions
   late AnimationController _animationController;
@@ -62,6 +67,7 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
       });
     } else {
       context.read<CustomerCubit>().fetchProblemStatus();
+      context.read<EngineerCubit>().fetchEngineers();
       context.read<CustomerCubit>().refreshAllData();
       _animationController.forward();
     }
@@ -91,86 +97,457 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
     super.dispose();
   }
 
-  void _onStatusSelected(String? status) {
-    setState(() {
-      _selectedStatus = status;
-    });
-    final cubit = context.read<CustomerCubit>();
-    cubit.emit(cubit.state.copyWith(selectedStatus: status));
+  Widget _buildSectionHeader({required IconData icon, required String title}) {
+    return Row(
+      children: [
+        Icon(icon, size: 20.r, color: TechColors.accentCyan),
+        SizedBox(width: 8.w),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w700,
+            color: TechColors.primaryDark,
+          ),
+        ),
+      ],
+    );
   }
 
-  Future<void> _showStatusMenu() async {
-    final renderBox =
-        _statusKey.currentContext!.findRenderObject() as RenderBox;
-    final offset = renderBox.localToGlobal(Offset.zero);
-    final selected = await showMenu<String?>(
-      context: context,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + renderBox.size.height + 8,
-        offset.dx + renderBox.size.width,
-        offset.dy,
+  Widget _buildFilterTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Container(
+      height: 58.h,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: Colors.grey.shade200),
       ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      color: Colors.white,
-      elevation: 12,
-      shadowColor: TechColors.primaryMid.withOpacity(0.3),
-      items: _statuses.map((status) {
-        final label = status ?? 'جميع الحالات';
-        final isSelected = status == _selectedStatus;
-        return PopupMenuItem<String?>(
-          value: status,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? TechColors.accentCyan.withOpacity(0.1)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 24.w,
-                  height: 24.h,
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? TechColors.accentCyan
-                        : Colors.grey.shade200,
-                    shape: BoxShape.circle,
-                  ),
-                  child: isSelected
-                      ? Icon(Icons.check, color: Colors.white, size: 16.r)
-                      : null,
+      child: Row(
+        children: [
+          SizedBox(width: 16.w),
+          Icon(icon, color: Colors.grey.shade400, size: 22.r),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              keyboardType: keyboardType,
+              style: TextStyle(
+                fontSize: 15.sp,
+                color: TechColors.primaryDark,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                hintText: hintText,
+                border: InputBorder.none,
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w400,
                 ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected
-                          ? TechColors.primaryDark
-                          : Colors.grey.shade700,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        );
-      }).toList(),
+        ],
+      ),
     );
+  }
 
-    if (selected != null || (_statuses.isNotEmpty && selected == null)) {
-      _onStatusSelected(selected);
-    }
+  Widget _buildFilterChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? TechColors.accentCyan.withOpacity(0.08)
+              : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: isSelected ? TechColors.accentCyan : Colors.grey.shade200,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? TechColors.primaryMid : Colors.grey.shade700,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    final TextEditingController localSearchController =
+        TextEditingController(text: _searchQuery);
+    final TextEditingController localPhoneController =
+        TextEditingController(text: _doctorPhone);
+    final TextEditingController localLocationController =
+        TextEditingController(text: _problemLocation);
+    String? localSelectedStatus = _selectedStatus;
+    String? localSelectedEngineerName = _selectedEngineerName;
+    DateTime? localSelectedDate = _selectedDate;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(28.r),
+                  topRight: Radius.circular(28.r),
+                ),
+              ),
+              child: Column(
+                children: [
+                  SizedBox(height: 12.h),
+                  Container(
+                    width: 50.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'فلترة وتصفية المشكلات',
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w800,
+                            color: TechColors.primaryDark,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            setModalState(() {
+                              localSearchController.clear();
+                              localPhoneController.clear();
+                              localLocationController.clear();
+                              localSelectedStatus = null;
+                              localSelectedEngineerName = null;
+                              localSelectedDate = null;
+                            });
+                          },
+                          icon: Icon(Icons.refresh_rounded,
+                              size: 18.r, color: Colors.grey.shade600),
+                          label: Text(
+                            'إعادة تعيين',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 20.w, vertical: 10.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionHeader(
+                            icon: Icons.search_rounded,
+                            title: 'بحث عام بالاسم أو الرقم أو التفاصيل',
+                          ),
+                          SizedBox(height: 8.h),
+                          _buildFilterTextField(
+                            controller: localSearchController,
+                            hintText:
+                                'ابحث باسم العميل، رقم الهاتف أو تفاصيل المشكلة...',
+                            icon: Icons.search_rounded,
+                          ),
+                          SizedBox(height: 20.h),
+                          _buildSectionHeader(
+                            icon: Icons.smartphone_rounded,
+                            title: 'رقم هاتف الطبيب',
+                          ),
+                          SizedBox(height: 8.h),
+                          _buildFilterTextField(
+                            controller: localPhoneController,
+                            hintText: 'ابحث برقم هاتف الطبيب (العميل)...',
+                            icon: Icons.smartphone_rounded,
+                            keyboardType: TextInputType.phone,
+                          ),
+                          SizedBox(height: 20.h),
+                          _buildSectionHeader(
+                            icon: Icons.location_on_rounded,
+                            title: 'عنوان أو مكان المشكلة',
+                          ),
+                          SizedBox(height: 8.h),
+                          _buildFilterTextField(
+                            controller: localLocationController,
+                            hintText: 'ابحث بعنوان أو موقع المشكلة...',
+                            icon: Icons.location_on_rounded,
+                          ),
+                          SizedBox(height: 20.h),
+                          _buildSectionHeader(
+                            icon: Icons.assignment_rounded,
+                            title: 'حالة المشكلة',
+                          ),
+                          SizedBox(height: 8.h),
+                          Wrap(
+                            spacing: 8.w,
+                            runSpacing: 8.h,
+                            children: _statuses.map((status) {
+                              final label = status ?? 'الكل';
+                              final isSelected = (status == null &&
+                                      localSelectedStatus == null) ||
+                                  (status != null &&
+                                      localSelectedStatus == status);
+                              return _buildFilterChip(
+                                label: label,
+                                isSelected: isSelected,
+                                onTap: () {
+                                  setModalState(() {
+                                    localSelectedStatus = status;
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                          SizedBox(height: 20.h),
+                          _buildSectionHeader(
+                            icon: Icons.engineering_rounded,
+                            title: 'المهندس المسؤول',
+                          ),
+                          SizedBox(height: 8.h),
+                          BlocBuilder<EngineerCubit, EngineerState>(
+                            builder: (context, engineerState) {
+                              final List<String> engineers = ['الكل'];
+                              if (engineerState.engineers.isNotEmpty) {
+                                engineers.addAll(
+                                  engineerState.engineers
+                                      .map((e) => e.name ?? '')
+                                      .where((name) => name.isNotEmpty),
+                                );
+                              }
+                              return Wrap(
+                                spacing: 8.w,
+                                runSpacing: 8.h,
+                                children: engineers.map((engName) {
+                                  final isSelected = (engName == 'الكل' &&
+                                          localSelectedEngineerName == null) ||
+                                      (localSelectedEngineerName == engName);
+                                  return _buildFilterChip(
+                                    label: engName,
+                                    isSelected: isSelected,
+                                    onTap: () {
+                                      setModalState(() {
+                                        localSelectedEngineerName =
+                                            engName == 'الكل' ? null : engName;
+                                      });
+                                    },
+                                  );
+                                }).toList(),
+                              );
+                            },
+                          ),
+                          SizedBox(height: 20.h),
+                          _buildSectionHeader(
+                            icon: Icons.calendar_month_rounded,
+                            title: 'تاريخ المشكلة',
+                          ),
+                          SizedBox(height: 8.h),
+                          GestureDetector(
+                            onTap: () async {
+                              final DateTime? picked = await showDatePicker(
+                                context: context,
+                                initialDate:
+                                    localSelectedDate ?? DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2030),
+                              );
+                              if (picked != null) {
+                                setModalState(() {
+                                  localSelectedDate = picked;
+                                });
+                              }
+                            },
+                            child: Container(
+                              height: 58.h,
+                              padding: EdgeInsets.symmetric(horizontal: 16.w),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(14.r),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      localSelectedDate == null
+                                          ? 'اختر تاريخ المشكلة...'
+                                          : "${localSelectedDate!.year}-${localSelectedDate!.month.toString().padLeft(2, '0')}-${localSelectedDate!.day.toString().padLeft(2, '0')}",
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        color: localSelectedDate == null
+                                            ? Colors.grey.shade500
+                                            : TechColors.primaryDark,
+                                        fontWeight: localSelectedDate == null
+                                            ? FontWeight.w400
+                                            : FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.calendar_month_rounded,
+                                    color: Colors.grey.shade400,
+                                    size: 24.r,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 40.h),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  TechColors.accentCyan,
+                                  TechColors.primaryMid
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(18.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: TechColors.accentCyan.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(18.r),
+                                onTap: () {
+                                  setState(() {
+                                    _searchQuery =
+                                        localSearchController.text.trim();
+                                    _searchController.text = _searchQuery;
+                                    _doctorPhone =
+                                        localPhoneController.text.trim();
+                                    _problemLocation =
+                                        localLocationController.text.trim();
+                                    _selectedStatus = localSelectedStatus;
+                                    _selectedEngineerName =
+                                        localSelectedEngineerName;
+                                    _selectedDate = localSelectedDate;
+                                  });
+
+                                  _applyFilters();
+
+                                  Navigator.pop(context);
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                                  child: Center(
+                                    child: Text(
+                                      'تطبيق الفلترة',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(18.r),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(18.r),
+                                onTap: () => Navigator.pop(context),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                                  child: Center(
+                                    child: Text(
+                                      'إلغاء',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade700,
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _navigateToAddProblemScreen() async {
@@ -289,6 +666,7 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: 0.5,
+                 
                             ),
                           ),
                         ),
@@ -398,7 +776,133 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
     );
   }
 
+  void _applyFilters() {
+    final cubit = context.read<CustomerCubit>();
+    int? statusId;
+    if (_selectedStatus != null && _selectedStatus != 'الكل') {
+      final statusMatches = cubit.state.problemStatusList.where(
+        (element) => element.name == _selectedStatus,
+      );
+      if (statusMatches.isNotEmpty) {
+        statusId = statusMatches.first.id;
+      }
+    }
+
+    String? engineerId;
+    if (_selectedEngineerName != null && _selectedEngineerName != 'الكل') {
+      final engState = context.read<EngineerCubit>().state;
+      final engMatches = engState.engineers.where(
+        (element) => element.name == _selectedEngineerName,
+      );
+      if (engMatches.isNotEmpty) {
+        engineerId = engMatches.first.id;
+      }
+    }
+
+    cubit.fetchTechSupportIssues(
+      date: _selectedDate != null
+          ? "${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}"
+          : null,
+      address: _problemLocation.isNotEmpty ? _problemLocation : null,
+      problem: statusId,
+      engineerId: engineerId,
+      isSearch: true,
+    );
+  }
+
+  Widget _buildFilterTag(String label, VoidCallback onClear) {
+    return Container(
+      margin: EdgeInsets.only(left: 8.w),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: TechColors.accentCyan.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: TechColors.accentCyan.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: onClear,
+            child: Icon(
+              Icons.close_rounded,
+              size: 16.r,
+              color: TechColors.accentCyan,
+            ),
+          ),
+          SizedBox(width: 6.w),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: TechColors.primaryMid,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPremiumSearchBar() {
+    final List<Widget> tags = [];
+    if (_searchQuery.isNotEmpty) {
+      tags.add(_buildFilterTag('البحث: $_searchQuery', () {
+        setState(() {
+          _searchQuery = '';
+          _searchController.clear();
+        });
+        _applyFilters();
+      }));
+    }
+    if (_doctorPhone.isNotEmpty) {
+      tags.add(_buildFilterTag('الهاتف: $_doctorPhone', () {
+        setState(() {
+          _doctorPhone = '';
+        });
+        _applyFilters();
+      }));
+    }
+    if (_problemLocation.isNotEmpty) {
+      tags.add(_buildFilterTag('الموقع: $_problemLocation', () {
+        setState(() {
+          _problemLocation = '';
+        });
+        _applyFilters();
+      }));
+    }
+    if (_selectedStatus != null && _selectedStatus != 'الكل') {
+      tags.add(_buildFilterTag('الحالة: $_selectedStatus', () {
+        setState(() {
+          _selectedStatus = null;
+        });
+        _applyFilters();
+      }));
+    }
+    if (_selectedEngineerName != null && _selectedEngineerName != 'الكل') {
+      tags.add(_buildFilterTag('المهندس: $_selectedEngineerName', () {
+        setState(() {
+          _selectedEngineerName = null;
+        });
+        _applyFilters();
+      }));
+    }
+    if (_selectedDate != null) {
+      final formattedDate =
+          "${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}";
+      tags.add(_buildFilterTag('التاريخ: $formattedDate', () {
+        setState(() {
+          _selectedDate = null;
+        });
+        _applyFilters();
+      }));
+    }
+
+    final hasActiveFilters = tags.isNotEmpty;
+
     return Container(
       height: 58.h,
       decoration: BoxDecoration(
@@ -415,20 +919,52 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
       child: Row(
         children: [
           SizedBox(width: 16.w),
-          // Filter button
+          Icon(
+            Icons.search_rounded,
+            color:
+                hasActiveFilters ? TechColors.accentCyan : Colors.grey.shade400,
+            size: 24.r,
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: hasActiveFilters
+                ? SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: tags,
+                    ),
+                  )
+                : GestureDetector(
+                    onTap: () => _showFilterBottomSheet(context),
+                    child: Text(
+                      'ابحث عن مشكلة أو فلتر النتائج...',
+                      style: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+          ),
+          SizedBox(width: 12.w),
+          Container(
+            height: 30.h,
+            width: 1,
+            color: Colors.grey.shade200,
+          ),
+          SizedBox(width: 12.w),
           GestureDetector(
-            key: _statusKey,
-            onTap: _showStatusMenu,
+            onTap: () => _showFilterBottomSheet(context),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: EdgeInsets.all(10.r),
               decoration: BoxDecoration(
-                color: _selectedStatus != null
+                color: hasActiveFilters
                     ? TechColors.accentCyan.withOpacity(0.15)
                     : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
-                  color: _selectedStatus != null
+                  color: hasActiveFilters
                       ? TechColors.accentCyan
                       : Colors.transparent,
                   width: 1.5,
@@ -436,72 +972,12 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
               ),
               child: Icon(
                 Icons.tune_rounded,
-                color: _selectedStatus != null
-                    ? TechColors.accentCyan
-                    : Colors.grey,
+                color: hasActiveFilters ? TechColors.accentCyan : Colors.grey,
                 size: 22.r,
               ),
             ),
           ),
-          SizedBox(width: 12.w),
-          // Divider
-          Container(
-            height: 30.h,
-            width: 1,
-            color: Colors.grey.shade200,
-          ),
-          SizedBox(width: 12.w),
-          // Search input
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w500,
-                color: TechColors.primaryDark,
-              ),
-              decoration: InputDecoration(
-                hintText: 'ابحث عن مشكلة...',
-                border: InputBorder.none,
-                hintStyle: TextStyle(
-                  color: Colors.grey.shade400,
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-          ),
-          // Clear button with animation
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (child, animation) {
-              return ScaleTransition(scale: animation, child: child);
-            },
-            child: _searchQuery.isNotEmpty
-                ? IconButton(
-                    key: const ValueKey('clear'),
-                    icon: Container(
-                      padding: EdgeInsets.all(4.r),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.close_rounded,
-                        color: Colors.grey.shade600,
-                        size: 16.r,
-                      ),
-                    ),
-                    onPressed: () => _searchController.clear(),
-                  )
-                : Icon(
-                    Icons.search_rounded,
-                    key: const ValueKey('search'),
-                    color: Colors.grey.shade400,
-                    size: 24.r,
-                  ),
-          ),
-          SizedBox(width: 8.w),
+          SizedBox(width: 16.w),
         ],
       ),
     );
@@ -539,28 +1015,127 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
           );
         }
 
-        // Apply search filter
-        List<ProblemModel> searchedIssues = allIssues;
+        // Apply filters
+        List<ProblemModel> filteredIssues = allIssues;
+
+        // 1. General search filter
         if (_searchQuery.isNotEmpty) {
-          final lowerQuery = _searchQuery.toLowerCase();
-          searchedIssues = allIssues.where((issue) {
-            final customerName = (issue.customerName ?? '').toLowerCase();
+          final lowerQuery = _searchQuery.trim().toLowerCase();
+          filteredIssues = filteredIssues.where((issue) {
+            final customerName =
+                (issue.customerName ?? '').trim().toLowerCase();
             if (customerName.contains(lowerQuery)) return true;
             final phone =
-                (issue.customerPhone ?? issue.phone ?? '').toLowerCase();
+                (issue.customerPhone ?? issue.phone ?? '').trim().toLowerCase();
             if (phone.contains(lowerQuery)) return true;
-            final problemAddress = (issue.problemAddress ?? '').toLowerCase();
+            final problemAddress =
+                (issue.problemAddress ?? '').trim().toLowerCase();
             if (problemAddress.contains(lowerQuery)) return true;
-            final address = (issue.adderss ?? '').toLowerCase();
+            final address = (issue.adderss ?? '').trim().toLowerCase();
             if (address.contains(lowerQuery)) return true;
-            final details = (issue.problemDetails ?? '').toLowerCase();
+            final details = (issue.problemDetails ?? '').trim().toLowerCase();
             if (details.contains(lowerQuery)) return true;
             return false;
           }).toList();
         }
 
+        // 2. Doctor phone filter
+        if (_doctorPhone.isNotEmpty) {
+          final phoneQuery = _doctorPhone.trim().toLowerCase();
+          filteredIssues = filteredIssues.where((issue) {
+            final customerPhone =
+                (issue.customerPhone ?? '').trim().toLowerCase();
+            final phone = (issue.phone ?? '').trim().toLowerCase();
+            return customerPhone.contains(phoneQuery) ||
+                phone.contains(phoneQuery);
+          }).toList();
+        }
+
+        // 3. Location/address filter
+        if (_problemLocation.isNotEmpty) {
+          final locQuery = _problemLocation.trim().toLowerCase();
+          filteredIssues = filteredIssues.where((issue) {
+            final problemAddress =
+                (issue.problemAddress ?? '').trim().toLowerCase();
+            final address = (issue.adderss ?? '').trim().toLowerCase();
+            return problemAddress.contains(locQuery) ||
+                address.contains(locQuery);
+          }).toList();
+        }
+
+        // 4. Status filter
+        if (_selectedStatus != null && _selectedStatus != 'الكل') {
+          final lowerStatus = _selectedStatus!.trim().toLowerCase();
+          filteredIssues = filteredIssues
+              .where((issue) =>
+                  (issue.problemtype ?? '').trim().toLowerCase() == lowerStatus)
+              .toList();
+        }
+
+        // 5. Engineer filter
+        if (_selectedEngineerName != null && _selectedEngineerName != 'الكل') {
+          final lowerEngName = _selectedEngineerName!.trim().toLowerCase();
+          filteredIssues = filteredIssues.where((issue) {
+            // Check main engineerName
+            final mainEng = (issue.enginnerName ?? '').trim().toLowerCase();
+            if (mainEng == lowerEngName || mainEng.contains(lowerEngName))
+              return true;
+
+            // Check customerSupport list
+            if (issue.customerSupport != null) {
+              for (var support in issue.customerSupport!) {
+                if (support is Map) {
+                  final engName = (support['engName'] ?? '')
+                      .toString()
+                      .trim()
+                      .toLowerCase();
+                  final createdUser = (support['createdUser'] ?? '')
+                      .toString()
+                      .trim()
+                      .toLowerCase();
+                  if (engName == lowerEngName ||
+                      engName.contains(lowerEngName) ||
+                      createdUser == lowerEngName ||
+                      createdUser.contains(lowerEngName)) {
+                    return true;
+                  }
+                }
+              }
+            }
+
+            // Check underTransactions list
+            if (issue.underTransactions != null) {
+              for (var transaction in issue.underTransactions!) {
+                if (transaction is Map) {
+                  final engName = (transaction['engName'] ?? '')
+                      .toString()
+                      .trim()
+                      .toLowerCase();
+                  if (engName == lowerEngName ||
+                      engName.contains(lowerEngName)) {
+                    return true;
+                  }
+                }
+              }
+            }
+
+            return false;
+          }).toList();
+        }
+
+        // 6. Date filter
+        if (_selectedDate != null) {
+          filteredIssues = filteredIssues.where((issue) {
+            final issueDate = DateTime.tryParse(issue.problemDate ?? '');
+            if (issueDate == null) return false;
+            return issueDate.year == _selectedDate!.year &&
+                issueDate.month == _selectedDate!.month &&
+                issueDate.day == _selectedDate!.day;
+          }).toList();
+        }
+
         // Sort by date
-        final sortedIssues = List<ProblemModel>.from(searchedIssues);
+        final sortedIssues = List<ProblemModel>.from(filteredIssues);
         sortedIssues.sort((a, b) {
           final dateA =
               DateTime.tryParse(a.problemDate ?? '') ?? DateTime(1970);
@@ -569,14 +1144,7 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
           return dateB.compareTo(dateA);
         });
 
-        // Filter by status
-        final filteredIssues = _selectedStatus == null
-            ? sortedIssues
-            : sortedIssues
-                .where((issue) => issue.problemtype == _selectedStatus)
-                .toList();
-
-        if (filteredIssues.isEmpty) {
+        if (sortedIssues.isEmpty) {
           return _buildEmptyState();
         }
 
@@ -592,9 +1160,9 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
               top: 20.h,
               bottom: 100.h,
             ),
-            itemCount: filteredIssues.length,
+            itemCount: sortedIssues.length,
             itemBuilder: (context, index) {
-              final issue = filteredIssues[index];
+              final issue = sortedIssues[index];
               return TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.0, end: 1.0),
                 duration: Duration(milliseconds: 300 + (index * 50)),
@@ -611,6 +1179,7 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
                 child: TechCardContent(
                   issue: issue,
                   onDetailsPressed: () async {
+                    final cubit = context.read<CustomerCubit>();
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => ProblemDetailsScreen(issue: issue),
@@ -618,7 +1187,7 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen>
                     );
 
                     if (result == true && mounted) {
-                      context.read<CustomerCubit>().refreshAllData();
+                      cubit.refreshAllData();
                     }
                   },
                 ),

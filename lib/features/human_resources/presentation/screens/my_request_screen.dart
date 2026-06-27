@@ -6,6 +6,7 @@ import 'package:tabib_soft_company/core/utils/constant/app_color.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_cubit.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_state.dart';
 import 'package:tabib_soft_company/features/human_resources/data/models/hr_leave_request_model.dart';
+import 'package:tabib_soft_company/features/home/notifications/presentation/screens/notification_screen.dart';
 import 'vacation_request_screen.dart';
 
 class MyRequestsPage extends StatefulWidget {
@@ -276,7 +277,7 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
                                   child: _buildRequestCard(
                                     status: _statusLabel(r.status),
                                     statusColor: _statusColor(r.status),
-                                    title: _leaveTypeLabel(r.leaveType),
+                                    title: '${_leaveTypeLabel(r.leaveType)} ${r.startDate != null ? '(${_formatVacationDate(r.startDate)})' : ''}',
                                     date: _formatRequestDate(r),
                                     icon: _leaveIcon(r.leaveType),
                                     rejectionReason: r.rejectionReason,
@@ -321,7 +322,7 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
                                 child: _buildRequestCard(
                                   status: _statusLabel(r.status),
                                   statusColor: _statusColor(r.status),
-                                  title: _leaveTypeLabel(r.leaveType),
+                                  title: '${_leaveTypeLabel(r.leaveType)} ${r.startDate != null ? '(${_formatVacationDate(r.startDate)})' : ''}',
                                   date: _formatRequestDate(r),
                                   icon: _leaveIcon(r.leaveType),
                                   rejectionReason: r.rejectionReason,
@@ -389,20 +390,27 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
     required IconData icon,
     String? rejectionReason,
   }) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 14.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Stack(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 14.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
         children: [
           // Colored vertical bar on the RIGHT
           Positioned(
@@ -516,7 +524,13 @@ class _MyRequestsPageState extends State<MyRequestsPage> {
           ),
         ],
       ),
+      ),
     );
+  }
+
+  String _formatVacationDate(DateTime? date) {
+    if (date == null) return '';
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
   String _leaveTypeLabel(String? value) {

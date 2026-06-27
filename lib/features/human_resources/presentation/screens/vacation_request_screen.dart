@@ -8,6 +8,7 @@ import 'package:tabib_soft_company/features/human_resources/data/models/hr_leave
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_cubit.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_leave_state.dart';
 import 'package:tabib_soft_company/features/human_resources/presentation/cubits/hr_profile_cubit.dart';
+import 'package:tabib_soft_company/features/home/notifications/presentation/screens/notification_screen.dart';
 
 class VacationRequestScreen extends StatefulWidget {
   const VacationRequestScreen({super.key});
@@ -21,6 +22,7 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
   DateTime? startDate;
   DateTime? endDate;
   final TextEditingController reasonController = TextEditingController();
+  bool _isSubmittingLocal = false;
 
   bool get _isLeaveHoursType => vacationType == 'LeaveHours';
 
@@ -438,7 +440,8 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
                               child: BlocBuilder<HrLeaveCubit, HrLeaveState>(
                                 builder: (context, state) {
                                   final isSubmitting =
-                                      state.status == HrLeaveStatus.submitting;
+                                      state.status == HrLeaveStatus.submitting ||
+                                          _isSubmittingLocal;
                                   return ElevatedButton(
                                     onPressed: isSubmitting
                                         ? null
@@ -609,7 +612,19 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
       hoursRequested: _isLeaveHoursType ? null : 0,
     );
 
-    await context.read<HrLeaveCubit>().createLeave(request);
+    // prevent double submissions locally until cubit updates status
+    setState(() {
+      _isSubmittingLocal = true;
+    });
+    try {
+      await context.read<HrLeaveCubit>().createLeave(request);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingLocal = false;
+        });
+      }
+    }
   }
 
   void _showValidationMessage(String message) {
@@ -815,6 +830,18 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
                         .copyWith(color: ProgrammerColors.textSecondary)),
               ],
             ),
+          ),
+          // Notifications icon to open Notifications screen
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const NotificationsScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.notifications),
           ),
         ],
       ),

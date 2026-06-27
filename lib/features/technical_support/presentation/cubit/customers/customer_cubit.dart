@@ -101,13 +101,15 @@ class CustomerCubit extends Cubit<CustomerState> {
     String? address,
     int? problem,
     bool? isSearch,
+    String? engineerId,
   }) async {
     // إذا كان بحث، نحذف البيانات القديمة ونبدأ من جديد
     final isSearching = isSearch == true ||
         customerId != null ||
         date != null ||
         address != null ||
-        problem != null;
+        problem != null ||
+        engineerId != null;
 
     if (isSearching) {
       // في حالة البحث: نعيد تعيين كل شيء
@@ -133,6 +135,7 @@ class CustomerCubit extends Cubit<CustomerState> {
       address: address,
       problem: problem,
       isSearch: isSearch,
+      engineerId: engineerId,
       pageNumber: _currentPage,
       pageSize: _pageSize,
     );

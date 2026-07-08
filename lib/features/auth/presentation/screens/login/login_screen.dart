@@ -10,6 +10,7 @@ import 'package:tabib_soft_company/core/utils/widgets/custom_loading_page_widget
 import 'package:tabib_soft_company/core/utils/widgets/custom_text_form_field.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_cubit.dart';
 import 'package:tabib_soft_company/features/auth/presentation/cubits/login_state.dart';
+import 'package:tabib_soft_company/core/utils/constant/constants.dart';
 import 'package:tabib_soft_company/features/home/presentation/screens/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -295,10 +296,33 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               ),
-
+                              SizedBox(height: 16.h),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 58.h,
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    FocusManager.instance.primaryFocus?.unfocus();
+                                    Navigator.of(context).pushNamed(guestPromoScreen);
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: teal1, width: 1.5),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'الدخول كزائر',
+                                    style: TextStyle(
+                                      fontFamily: 'Cairo',
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: teal1,
+                                    ),
+                                  ),
+                                ),
+                              ),
                               SizedBox(height: 14.h),
-
-                              SizedBox(height: 18.h),
                               Container(height: 1.h, color: Colors.grey[300]),
                               SizedBox(height: 12.h),
 

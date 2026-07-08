@@ -4,6 +4,7 @@ import 'package:tabib_soft_company/core/export.dart';
 import 'package:tabib_soft_company/features/app_gate/export.dart';
 import 'package:tabib_soft_company/features/auth/presentation/screens/login/login_screen.dart';
 import 'package:tabib_soft_company/features/auth/presentation/screens/splash_screen.dart';
+import 'package:tabib_soft_company/features/auth/presentation/screens/guest_promo_screen.dart';
 import 'package:tabib_soft_company/features/home/presentation/screens/home_screen.dart';
 import 'package:tabib_soft_company/features/sales/today_calls/presentation/screens/taday_calls_screen.dart';
 import 'package:tabib_soft_company/features/sales/sales_admin/presentation/screens/sales_admin_requirements_screen.dart';
@@ -41,6 +42,13 @@ class AppRouter {
               create: (_) => ServicesLocator.loginCubit,
               child: const LoginScreen(),
             );
+          },
+        );
+
+      case guestPromoScreen:
+        return MaterialPageRoute(
+          builder: (_) {
+            return const GuestPromoScreen();
           },
         );
 

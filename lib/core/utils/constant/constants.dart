@@ -7,3 +7,4 @@ const todayCallsScreen = '/todayCallsScreen';
 const salesAdminRequirementsScreen = '/sales_admin_requirements';
 const appGateScreen = '/appGateScreen';
 const appBlockedScreen = '/appBlockedScreen';
+const guestPromoScreen = '/guestPromoScreen';
